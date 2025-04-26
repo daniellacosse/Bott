@@ -33,7 +33,7 @@ export const prompt: CommandObject = {
     let result = `
       Here's my response to your prompt: **"${prompt}"**
       
-      ${response}
+      > ${response}
     `.trim();
 
     if (result.length > DISCORD_MESSAGE_LIMIT) {

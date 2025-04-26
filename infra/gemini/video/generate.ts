@@ -37,7 +37,7 @@ export async function generateVideo(
     model,
     prompt,
     config: {
-      aspectRatio: "1:1",
+      aspectRatio: "16:9",
       enhancePrompt: true,
       fps: 24,
       numberOfVideos: 1,

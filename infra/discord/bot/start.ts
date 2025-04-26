@@ -107,6 +107,7 @@ export async function startBot({
   return client;
 }
 
+const DISCORD_DESCRIPTION_LIMIT = 100;
 function getCommandJson(name: string, {
   description,
   options,
@@ -114,7 +115,7 @@ function getCommandJson(name: string, {
   const builder = new SlashCommandBuilder().setName(name);
 
   if (description) {
-    builder.setDescription(description);
+    builder.setDescription(description.slice(0, DISCORD_DESCRIPTION_LIMIT));
   }
 
   if (options && options.length) {

@@ -15,7 +15,7 @@ export async function classifyMessage(
     return MessageClass.BOT;
   }
 
-  if (message.content.startsWith(`<@${botHandle}>`)) {
+  if (message.content.includes(`<@${botHandle}>`)) {
     return MessageClass.MENTION;
   }
 
