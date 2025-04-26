@@ -21,18 +21,18 @@ const defaultIntents = [
 
 type BotOptions = {
   commands?: Record<string, CommandObject>;
-  chatMessage?: (message: Message<true>) => void;
-  chatReply?: (message: Message<true>) => void;
-  chatMention?: (message: Message<true>) => void;
+  channelMessage?: (message: Message<true>) => void;
+  channelReply?: (message: Message<true>) => void;
+  channelMention?: (message: Message<true>) => void;
   intents?: GatewayIntentBits[];
 };
 
 // TODO: rate limiting and history
 export async function createBot({
   commands,
-  chatMessage,
-  chatReply,
-  chatMention,
+  channelMessage: chatMessage,
+  channelReply: chatReply,
+  channelMention: chatMention,
   intents = defaultIntents,
 }: BotOptions): Promise<Client> {
   const token = Deno.env.get("DISCORD_TOKEN");

@@ -16,9 +16,11 @@ const standardResponse = async (message: Message<true>) => {
 
 createBot({
   commands,
-  chatMention: standardResponse,
-  chatReply: standardResponse,
-  async chatMessage(message) {
+  directMessage: standardResponse,
+  channelMention: standardResponse,
+  channelReply: standardResponse,
+  async channelMessage(message) {
+    // if proactive mode is on, gemini is randomly asked if it would like to respond
     if (!Deno.env.get("CONFIG_PROACTIVE_MODE")) {
       return;
     }
@@ -32,6 +34,7 @@ createBot({
     });
 
     if (response === instructions.proactiveIgnore) {
+      // gemini decided to ignore this message
       return;
     }
 
