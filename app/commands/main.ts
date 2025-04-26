@@ -8,17 +8,16 @@ import {
   generateText,
   generateVideo,
 } from "../../infra/gemini/main.ts";
-import { AttachmentBuilder, InteractionReplyOptions } from "npm:discord.js";
+import { AttachmentBuilder, InteractionEditReplyOptions } from "npm:discord.js";
 import { Buffer } from "node:buffer";
 
 export const help: CommandObject = {
   description: "List the Gemini bot commands",
   command(interaction) {
-    return interaction.reply({
+    return interaction.editReply({
       embeds: [createInfoEmbed("Help Menu", {
-        description: "Get information about the Gemini AI bot",
         fields: [
-          { name: "/help", value: "Display this help menu" },
+          { name: "/help", value: "Display this help menu." },
           { name: "/generate", value: generate.description as string },
         ],
       })],
@@ -44,7 +43,7 @@ export const help: CommandObject = {
 // };
 
 export const generate: CommandObject = {
-  description: "Generate text, images, or video",
+  description: "Generate text, images, or video!",
   options: [{
     name: "prompt",
     type: CommandOptionType.STRING,
@@ -52,22 +51,22 @@ export const generate: CommandObject = {
     required: true,
   }, {
     name: "type",
-    type: CommandOptionType.BOOLEAN,
+    type: CommandOptionType.STRING,
     description:
-      "The type of thing you want to generate: text, image, or video (defaults to text)",
+      "`text`, `image`, or `video` (defaults to `text`)",
   }],
   async command(interaction) {
     const prompt = interaction.options.get("prompt")?.value as string;
     const type = interaction.options.get("type")?.value;
 
-    const reply: InteractionReplyOptions = {
-      content: `Here's the ${type} for your prompt: ${prompt}`,
+    const reply: InteractionEditReplyOptions = {
+      content: `**Here's the ${type ?? "text"} for your prompt: "${prompt}"**`,
     };
 
     if (!type || type === "text") {
       reply.content += "\n\n" + await generateText(prompt);
 
-      return interaction.reply(reply);
+      return interaction.editReply(reply);
     }
 
     let attachmentData;
@@ -87,6 +86,6 @@ export const generate: CommandObject = {
       }),
     ];
 
-    return interaction.reply(reply);
+    return interaction.editReply(reply);
   },
 };

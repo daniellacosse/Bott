@@ -18,28 +18,26 @@ const defaultIntents = [
   GatewayIntentBits.GuildMembers,
 ];
 
+type BotResponder = (message: Message<true>, client: Client) => Promise<Message<true> | undefined>;
+
 type BotOptions = {
+  token: string;
   commands?: Record<string, CommandObject>;
-  channelMessage?: (message: Message<true>) => void;
-  channelReply?: (message: Message<true>) => void;
-  channelMention?: (message: Message<true>) => void;
+  channelMessage?: BotResponder;
+  channelReply?: BotResponder;
+  channelMention?: BotResponder;
   intents?: GatewayIntentBits[];
 };
 
 // TODO(#1): rate limiting by channel
 export async function createBot({
+  token,
   commands,
   channelMessage,
   channelReply,
   channelMention,
   intents = defaultIntents,
 }: BotOptions): Promise<Client> {
-  const token = Deno.env.get("DISCORD_TOKEN");
-
-  if (!token) {
-    throw new Error("DISCORD_TOKEN is not set");
-  }
-
   const client = new Client({ intents });
 
   await client.login(token);
@@ -56,15 +54,15 @@ export async function createBot({
       const messageClass = await classifyMessage(message, botHandle);
 
       if (messageClass === MessageClass.MENTION) {
-        return channelMention?.(message as Message<true>);
+        return channelMention?.(message as Message<true>, client);
       }
 
       if (messageClass === MessageClass.REPLY) {
-        return channelReply?.(message as Message<true>);
+        return channelReply?.(message as Message<true>, client);
       }
 
       if (messageClass === MessageClass.USER) {
-        return channelMessage?.(message as Message<true>);
+        return channelMessage?.(message as Message<true>, client);
       }
     } catch (error) {
       await message.reply({ embeds: [createErrorEmbed(error as Error)] });
@@ -81,10 +79,12 @@ export async function createBot({
       return;
     }
 
+    await interaction.deferReply();
+
     try {
       await commands[interaction.commandName]?.command(interaction);
     } catch (error) {
-      await interaction.reply({ embeds: [createErrorEmbed(error as Error)] });
+      await interaction.editReply({ embeds: [createErrorEmbed(error as Error)] });
     }
   });
 

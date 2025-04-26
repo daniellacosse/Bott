@@ -1,6 +1,6 @@
 # gemini discord bot
 
-Duplicate `.env.example` to `.env` and fill it out.
+Duplicate `app/.env.example` to `app/.env` and fill it out.
 
 Then run:
 

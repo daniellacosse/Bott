@@ -40,6 +40,7 @@ export async function generateVideo(
       enhancePrompt: true,
       fps: 24,
       numberOfVideos: 1,
+      durationSeconds: 5, // to keep it under Discord's 8MB limit
       personGeneration: PersonGeneration.ALLOW_ADULT,
       resolution: "720p",
     },

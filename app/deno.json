@@ -1,6 +1,6 @@
 {
   "tasks": {
     "setup": "sh ./setup.sh",
-    "start": "deno ./main.ts"
+    "start": "deno --allow-all --env-file ./main.ts"
   }
 }

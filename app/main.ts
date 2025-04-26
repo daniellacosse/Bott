@@ -1,23 +1,36 @@
+import { Message, Client, Collection } from "npm:discord.js";
 import { createBot } from "@infra/discord";
 import { generateText } from "@infra/gemini";
 import * as commands from "./commands/main.ts";
 import * as instructions from "./instructions/main.ts";
-import { Message } from "npm:discord.js";
 import { HISTORY_LENGTH } from "./constants.ts";
 
-const formatMessage = (message: Message) =>
-  `${message.author.id}: ${message.content.trim()}`;
+const formatMessage = (message: Message) => {
+  const content = message.content.trim();
 
-const standardResponse = async (message: Message<true>) => {
+  if (!content) return undefined;
+
+  return `${message.author.id}: ${message.content.trim()}`;
+}
+
+const formatMessageCollection = (collection: Collection<string, Message>) => {
+  return collection.map(formatMessage).slice(1).filter(text => text !== undefined)
+};
+
+async function standardResponse(message: Message<true>, client: Client) {
+  const formattedMessage = formatMessage(message);
+
+  if (!formattedMessage) return;
+
   await message.channel.sendTyping();
 
   const recentHistory = await message.channel.messages.fetch({
     limit: HISTORY_LENGTH,
   });
 
-  const response = await generateText(formatMessage(message), {
-    instructions: instructions.standard.trim(),
-    context: recentHistory.map(formatMessage),
+  const response = await generateText(formattedMessage, {
+    instructions: instructions.standard(client.user?.id).trim(),
+    context: formatMessageCollection(recentHistory),
   });
 
   return message.reply(response);
@@ -25,22 +38,27 @@ const standardResponse = async (message: Message<true>) => {
 
 createBot({
   commands,
+  token: Deno.env.get("DISCORD_TOKEN")!,
   // directMessage: standardResponse,
   channelMention: standardResponse,
   channelReply: standardResponse,
-  async channelMessage(message) {
+  async channelMessage(message, client) {
     // if proactive mode is on, gemini is randomly asked if it would like to respond
     if (Math.random() > Number(Deno.env.get("CONFIG_PROACTIVE_REPLY_CHANCE"))) {
       return;
     }
 
+    const formattedMessage = formatMessage(message);
+
+    if (!formattedMessage) return;
+
     const recentHistory = await message.channel.messages.fetch({
       limit: HISTORY_LENGTH,
     });
 
-    const response = await generateText(formatMessage(message), {
-      instructions: instructions.proactive.trim(),
-      context: recentHistory.map(formatMessage),
+    const response = await generateText(formattedMessage, {
+      instructions: instructions.proactive(client.user?.id).trim(),
+      context: formatMessageCollection(recentHistory)
     });
 
     if (response === instructions.proactiveIgnore) {
