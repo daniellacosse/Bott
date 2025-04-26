@@ -126,7 +126,7 @@ export const help: CommandObject = {
           {
             name: "About",
             value:
-              "@Bott is a helpful agent that responds to your messages and generates images and videos.",
+              "@Bott (they/them) is a helpful agent that responds to your messages and generates images and videos.",
           },
           {
             name: "Limitations",
