@@ -1,4 +1,4 @@
 {
-  "name": "@infra/discord",
+  "name": "@bott/discord",
   "exports": "./main.ts"
 }

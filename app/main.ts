@@ -1,6 +1,6 @@
-import { Message, Client, Collection } from "npm:discord.js";
-import { createBot } from "@infra/discord";
-import { generateText } from "@infra/gemini";
+import { Client, Collection, Message } from "npm:discord.js";
+import { startBot } from "@bott/discord";
+import { generateText } from "@bott/gemini";
 import * as commands from "./commands/main.ts";
 import * as instructions from "./instructions/main.ts";
 import { HISTORY_LENGTH } from "./constants.ts";
@@ -11,10 +11,12 @@ const formatMessage = (message: Message) => {
   if (!content) return undefined;
 
   return `${message.author.id}: ${message.content.trim()}`;
-}
+};
 
 const formatMessageCollection = (collection: Collection<string, Message>) => {
-  return collection.map(formatMessage).slice(1).filter(text => text !== undefined)
+  return collection.map(formatMessage).slice(1).filter((text) =>
+    text !== undefined
+  );
 };
 
 async function standardResponse(message: Message<true>, client: Client) {
@@ -34,11 +36,12 @@ async function standardResponse(message: Message<true>, client: Client) {
   });
 
   return message.reply(response);
-};
+}
 
-createBot({
+startBot({
   commands,
-  token: Deno.env.get("DISCORD_TOKEN")!,
+  identityToken: Deno.env.get("DISCORD_TOKEN")!,
+  // TODO(#): support direct messages
   // directMessage: standardResponse,
   channelMention: standardResponse,
   channelReply: standardResponse,
@@ -58,7 +61,7 @@ createBot({
 
     const response = await generateText(formattedMessage, {
       instructions: instructions.proactive(client.user?.id).trim(),
-      context: formatMessageCollection(recentHistory)
+      context: formatMessageCollection(recentHistory),
     });
 
     if (response === instructions.proactiveIgnore) {

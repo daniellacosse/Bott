@@ -18,10 +18,13 @@ const defaultIntents = [
   GatewayIntentBits.GuildMembers,
 ];
 
-type BotResponder = (message: Message<true>, client: Client) => Promise<Message<true> | undefined>;
+type BotResponder = (
+  message: Message<true>,
+  client: Client,
+) => Promise<Message<true> | undefined>;
 
 type BotOptions = {
-  token: string;
+  identityToken: string;
   commands?: Record<string, CommandObject>;
   channelMessage?: BotResponder;
   channelReply?: BotResponder;
@@ -30,8 +33,8 @@ type BotOptions = {
 };
 
 // TODO(#1): rate limiting by channel
-export async function createBot({
-  token,
+export async function startBot({
+  identityToken: token,
   commands,
   channelMessage,
   channelReply,
@@ -84,7 +87,9 @@ export async function createBot({
     try {
       await commands[interaction.commandName]?.command(interaction);
     } catch (error) {
-      await interaction.editReply({ embeds: [createErrorEmbed(error as Error)] });
+      await interaction.editReply({
+        embeds: [createErrorEmbed(error as Error)],
+      });
     }
   });
 
