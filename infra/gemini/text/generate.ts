@@ -46,14 +46,14 @@ export async function generateText(prompt: string, {
 
   let citationText = "";
   if (citations) {
-    citationText = "\n## Sources";
+    citationText = "\n### Sources";
 
     for (const { uri } of citations) {
       if (!uri) {
         continue;
       }
 
-      citationText += `\n* ${uri}`;
+      citationText += `\n- [${uri}](${uri})`;
     }
   }
 
