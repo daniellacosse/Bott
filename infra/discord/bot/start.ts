@@ -41,7 +41,7 @@ export async function startBot({
   channelReply,
   channelMention,
   intents = defaultIntents,
-  mount: handleMount
+  mount: handleMount,
 }: BotOptions): Promise<Client> {
   const client = new Client({ intents });
 

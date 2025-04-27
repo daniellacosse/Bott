@@ -1,9 +1,16 @@
 import { Client, Collection, Message } from "npm:discord.js";
+
 import { startBot } from "@bott/discord";
 import { generateText } from "@bott/gemini";
-import * as commands from "./commands/main.ts";
-import * as instructions from "./instructions/main.ts";
+
 import { HISTORY_LENGTH } from "./constants.ts";
+import {
+  focusMarker,
+  ignoreMarker,
+  proactiveInstructions,
+  standardInstructions,
+} from "./instructions/main.ts";
+import commands from "./commands/main.ts";
 
 const formatMessage = (message: Message, focus?: boolean) => {
   const content = message.content.trim();
@@ -13,7 +20,7 @@ const formatMessage = (message: Message, focus?: boolean) => {
   let log = `<@${message.author.id}>: ${content}`;
 
   if (focus) {
-    log = `${instructions.focusMarker} ${log}`;
+    log = `${focusMarker} ${log}`;
   }
 
   return log;
@@ -37,7 +44,7 @@ async function standardResponse(message: Message<true>, client: Client) {
   });
 
   const response = await generateText(formattedMessage, {
-    instructions: instructions.standard(client.user?.id).trim(),
+    instructions: standardInstructions(client.user?.id).trim(),
     context: formatMessageCollection(recentHistory),
   });
 
@@ -66,11 +73,11 @@ startBot({
     });
 
     const response = await generateText(formattedMessage, {
-      instructions: instructions.proactive(client.user?.id).trim(),
+      instructions: proactiveInstructions(client.user?.id).trim(),
       context: formatMessageCollection(recentHistory),
     });
 
-    if (response === instructions.ignoreMarker) {
+    if (response === ignoreMarker) {
       // gemini decided to ignore this message
       return;
     }
@@ -78,6 +85,8 @@ startBot({
     return message.reply(response);
   },
   mount(client) {
-    console.info(`[INFO] @Bott running at id <@${client?.user?.id ?? "unknown"}>`)
-  }
+    console.info(
+      `[INFO] @Bott running at id <@${client?.user?.id ?? "unknown"}>`,
+    );
+  },
 });

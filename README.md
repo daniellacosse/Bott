@@ -6,8 +6,8 @@ A Discord Bot, powered by Gemini.
 
 ## Getting started
 
-Duplicate `.env.example` to `.env` and fill it out.
-Also need to generate a `gcp-key.json`.
+Duplicate `.env.example` to `.env` and fill it out. Also need to generate a
+`gcp-key.json`.
 
 Then run:
 
