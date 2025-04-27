@@ -18,17 +18,18 @@ const defaultIntents = [
   GatewayIntentBits.GuildMembers,
 ];
 
-type BotResponder = (
+type BotChannelResponder = (
   message: Message<true>,
   client: Client,
 ) => Promise<Message<true> | undefined>;
 
 type BotOptions = {
   identityToken: string;
+  mount?: (client?: Client) => void;
   commands?: Record<string, CommandObject>;
-  channelMessage?: BotResponder;
-  channelReply?: BotResponder;
-  channelMention?: BotResponder;
+  channelMessage?: BotChannelResponder;
+  channelReply?: BotChannelResponder;
+  channelMention?: BotChannelResponder;
   intents?: GatewayIntentBits[];
 };
 
@@ -40,21 +41,25 @@ export async function startBot({
   channelReply,
   channelMention,
   intents = defaultIntents,
+  mount: handleMount
 }: BotOptions): Promise<Client> {
   const client = new Client({ intents });
 
   await client.login(token);
 
+  // this is the bot user object
   if (!client.user) {
-    throw new Error("Client user is not set");
+    throw new Error("Bot user is not set");
   }
 
-  const botHandle = client.user.id;
+  const botId = client.user.id;
+
+  handleMount?.(client);
 
   // delegate messages
   client.on(Events.MessageCreate, async (message) => {
     try {
-      const messageClass = await classifyMessage(message, botHandle);
+      const messageClass = await classifyMessage(message, botId);
 
       if (messageClass === MessageClass.MENTION) {
         return channelMention?.(message as Message<true>, client);
@@ -93,14 +98,14 @@ export async function startBot({
     }
   });
 
-  // sync commands with discord origin
+  // sync commands with discord origin via their custom http client 🙄
   const body = [];
   for (const [commandName, commandObject] of Object.entries(commands)) {
     body.push(getCommandJson(commandName, commandObject));
   }
 
   await new REST({ version: "10" }).setToken(token).put(
-    Routes.applicationCommands(botHandle),
+    Routes.applicationCommands(botId),
     { body },
   );
 

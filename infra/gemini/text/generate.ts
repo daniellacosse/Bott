@@ -20,6 +20,7 @@ export async function generateText(prompt: string, {
       },
     ],
     config: {
+      tools: [{ googleSearch: {} }],
       candidateCount: 1,
       systemInstruction: instructions
         ? {

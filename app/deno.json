@@ -1,6 +1,10 @@
 {
   "tasks": {
     "setup": "sh ./setup.sh",
-    "start": "deno --allow-all --env-file ./main.ts"
+    "start": "deno --allow-all ./main.ts"
+  },
+  "imports": {
+    "@bott/gemini": "../infra/gemini/main.ts",
+    "@bott/discord": "../infra/discord/main.ts"
   }
 }

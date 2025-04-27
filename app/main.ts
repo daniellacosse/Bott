@@ -20,9 +20,9 @@ const formatMessage = (message: Message, focus?: boolean) => {
 };
 
 const formatMessageCollection = (collection: Collection<string, Message>) => {
-  return collection.map(message => formatMessage(message)).slice(1).filter((text) =>
-    text !== undefined
-  );
+  return collection.map((message) => formatMessage(message)).slice(1).filter((
+    text,
+  ) => text !== undefined);
 };
 
 async function standardResponse(message: Message<true>, client: Client) {
@@ -77,4 +77,7 @@ startBot({
 
     return message.reply(response);
   },
+  mount(client) {
+    console.info(`[INFO] @Bott running at id <@${client?.user?.id ?? "unknown"}>`)
+  }
 });

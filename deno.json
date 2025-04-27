@@ -1,4 +1,8 @@
 {
+  "tasks": {
+    "setup": "sh ./setup.sh",
+    "start": "docker build -t bott . && docker run --env-file .env bott"
+  },
   "workspace": [
     "./infra/gemini",
     "./infra/discord",
