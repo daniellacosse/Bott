@@ -13,7 +13,7 @@ const truncateString = (str: string, maxLength?: number) => {
   return str.slice(0, maxLength - 1).trim() + "…";
 };
 
-const ESTIMATED_CHARACTERS_PER_TOKEN = 4;
+// const ESTIMATED_CHARACTERS_PER_TOKEN = 4;
 
 export async function generateText(prompt: string, {
   context = [],
@@ -36,10 +36,10 @@ export async function generateText(prompt: string, {
     ],
     config: {
       tools: [{ googleSearch: {} }],
-      maxOutputTokens: characterLimit !== undefined
-        ? Math.floor(characterLimit / ESTIMATED_CHARACTERS_PER_TOKEN)
-        : undefined,
-      candidateCount: 1,
+      // maxOutputTokens: characterLimit !== undefined
+      //   ? Math.floor(characterLimit / ESTIMATED_CHARACTERS_PER_TOKEN)
+      //   : undefined,
+      // candidateCount: 1,
       systemInstruction: instructions
         ? {
           role: "system",
