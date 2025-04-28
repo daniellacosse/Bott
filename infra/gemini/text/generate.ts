@@ -1,6 +1,18 @@
 import _gemini from "../client.ts";
 import type { PromptParameters } from "../types.ts";
 
+const truncateString = (str: string, maxLength?: number) => {
+  if (maxLength === undefined) {
+    return str;
+  }
+
+  if (str.length <= maxLength) {
+    return str;
+  }
+
+  return str.slice(0, maxLength - 1).trim() + "…";
+};
+
 const ESTIMATED_CHARACTERS_PER_TOKEN = 4;
 
 export async function generateText(prompt: string, {
@@ -44,29 +56,20 @@ export async function generateText(prompt: string, {
   // response.text automatically returns the first candidate
   const citations = response.candidates![0].citationMetadata?.citations;
 
-  let citationText = "";
-  if (citations) {
-    citationText = "\n### Sources";
+  if (!citations) {
+    return truncateString(response.text, characterLimit);
+  }
 
-    for (const { uri } of citations) {
-      if (!uri) {
-        continue;
-      }
-
+  let citationText = "\n### Sources";
+  for (const { uri } of citations) {
+    if (uri) {
+      // we use bullet points because Gemini doesn't return all the sources cited
       citationText += `\n- [${uri}](${uri})`;
     }
   }
 
-  let result = "";
-  if (characterLimit !== undefined && citations) {
-    result += response.text.slice(0, characterLimit - citationText.length - 1);
-  } else if (characterLimit !== undefined) {
-    result += response.text.slice(0, characterLimit - 1);
-  }
-
-  if (result.length < response.text.length) {
-    result += "…";
-  }
-
-  return result + citationText;
+  return truncateString(
+    response.text,
+    characterLimit ? characterLimit - citationText.length : undefined,
+  ) + citationText;
 }

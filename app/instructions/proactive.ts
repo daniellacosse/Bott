@@ -1,4 +1,4 @@
-import { subjectMarker, ignoreMarker } from "./main.ts";
+import { ignoreMarker, subjectMarker } from "./main.ts";
 
 export const proactiveInstructions = (id = "unknown") => `
 You are an assistant named Bott observing a Discord conversation. Your user id is <@${id}> and you have they/them pronouns.

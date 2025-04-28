@@ -5,10 +5,10 @@ import { generateText } from "@bott/gemini";
 
 import { DISCORD_MESSAGE_LIMIT, HISTORY_LENGTH } from "./constants.ts";
 import {
-  subjectMarker,
   ignoreMarker,
   proactiveInstructions,
   standardInstructions,
+  subjectMarker,
 } from "./instructions/main.ts";
 import commands from "./commands/main.ts";
 
@@ -32,6 +32,15 @@ const formatMessageCollection = (collection: Collection<string, Message>) => {
   ) => text !== undefined);
 };
 
+const parseMessageText = (message: string, client: Client) => {
+    // Gemini sometimes sends a response in the same format as we send it in
+    if (message.startsWith(`<@${client.user?.id}>: `)) {
+      return message.slice(`<@${client.user?.id}>: `.length);
+    }
+
+    return message;
+}
+
 async function standardResponse(message: Message<true>, client: Client) {
   const formattedMessage = formatMessage(message, true);
 
@@ -51,7 +60,7 @@ async function standardResponse(message: Message<true>, client: Client) {
     context: formatMessageCollection(recentHistory),
   });
 
-  return message.reply(response);
+  return message.reply(parseMessageText(response, client));
 }
 
 startBot({
@@ -71,7 +80,9 @@ startBot({
 
     if (!formattedMessage) return;
 
-    console.info(`[INFO] Proactively considering a response to message "${formattedMessage}".`);
+    console.info(
+      `[INFO] Proactively considering a response to message "${formattedMessage}".`,
+    );
 
     const recentHistory = await message.channel.messages.fetch({
       limit: HISTORY_LENGTH,
@@ -84,11 +95,13 @@ startBot({
     });
 
     if (response === ignoreMarker) {
-      console.info(`[INFO] Decided against responding to message "${formattedMessage}".`);
+      console.info(
+        `[INFO] Decided against responding to message "${formattedMessage}".`,
+      );
       return;
     }
 
-    return message.reply(response);
+    return message.reply(parseMessageText(response, client));
   },
   mount(client) {
     console.info(

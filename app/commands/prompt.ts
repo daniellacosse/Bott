@@ -23,16 +23,18 @@ export const prompt: CommandObject = {
         `Try to keep your response under ${DISCORD_MESSAGE_LIMIT} characters.`,
     });
 
-    return interaction.editReply(`
+    return interaction.editReply(
+      `
       Here's my response to your prompt: **"${prompt}"**
       
       ${
-      // Gemini likes to use triple carriage returns in highly structured responses
-      // that don't translate well to discord
-      response.replaceAll("\n\n\n", "\n\n").split("\n").map((line) =>
-        `> ${line}`
-      )
-        .join("\n")}
-    `.trim().slice(0, DISCORD_MESSAGE_LIMIT));
+        // Gemini likes to use triple carriage returns in highly structured responses
+        // that don't translate well to discord
+        response.replaceAll("\n\n\n", "\n\n").split("\n").map((line) =>
+          `> ${line}`
+        )
+          .join("\n")}
+    `.trim().slice(0, DISCORD_MESSAGE_LIMIT),
+    );
   },
 };
