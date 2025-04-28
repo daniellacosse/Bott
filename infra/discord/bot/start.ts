@@ -3,7 +3,7 @@ import {
   Events,
   GatewayIntentBits,
   type Message,
-  MessageReaction,
+  type MessageReaction,
   REST,
   Routes,
   SlashCommandBuilder,
