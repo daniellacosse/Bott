@@ -22,9 +22,18 @@ export async function generateText(prompt: string, {
 }: PromptParameters = {}): Promise<string> {
   const response = await gemini.models.generateContent({
     model,
+    // contents: [
+    //   ...context.map((text) => ({
+    //     parts: [{ text }],
+    //   })),
+    //   {
+    //     role: "user",
+    //     parts: [{ text: prompt }],
+    //   },
+    // ],
     contents: [
-      prompt,
-      ...context
+      ...context.reverse(),
+      prompt
     ],
     config: {
       tools: [{ googleSearch: {} }],
