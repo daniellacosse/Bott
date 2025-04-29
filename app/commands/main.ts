@@ -1,7 +1,7 @@
 import { type CommandObject, createInfoEmbed } from "@bott/discord";
 
-import { image } from "./image.ts";
-import { prompt } from "./prompt.ts";
+import { photo } from "./photo.ts";
+import { text } from "./text.ts";
 import { video } from "./video.ts";
 
 const help: CommandObject = {
@@ -20,8 +20,8 @@ const help: CommandObject = {
             value:
               "Currently, @Bott can only read text when responding, and does not look at the chat when generating media.",
           },
-          { name: "/prompt", value: prompt.description! },
-          { name: "/image", value: image.description! },
+          { name: "/text", value: text.description! },
+          { name: "/photo", value: photo.description! },
           { name: "/video", value: video.description! },
           { name: "/help", value: "Display this Help Menu." },
         ],
@@ -33,7 +33,7 @@ const help: CommandObject = {
 
 export default {
   help,
-  image,
-  prompt,
+  photo,
+  text,
   video,
 } as const;

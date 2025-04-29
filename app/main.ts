@@ -1,114 +1,119 @@
-import { Client, Collection, Message } from "npm:discord.js";
+import {
+  ChannelType,
+  Client,
+  Collection,
+  Message,
+  TextChannel,
+} from "npm:discord.js";
+import { Chat, Content } from "npm:@google/genai";
 
 import { startBot } from "@bott/discord";
-import { generateText } from "@bott/gemini";
+import { createChat, messageChat } from "@bott/gemini";
 
-import { DISCORD_MESSAGE_LIMIT, HISTORY_LENGTH } from "./constants.ts";
-import {
-  ignoreMarker,
-  proactiveInstructions,
-  standardInstructions,
-  subjectMarker,
-  okayMarker
-} from "./instructions/main.ts";
+import { HISTORY_LENGTH } from "./constants.ts";
+import { standardInstructions } from "./instructions/main.ts";
 import commands from "./commands/main.ts";
+import { noResponseMarker } from "./instructions/markers.ts";
 
-const formatMessage = (message: Message, focus?: boolean) => {
+const formatMessage = (message: Message) => {
   const content = message.content.trim();
 
   if (!content) return undefined;
 
-  let log = `<@${message.author.id}>: ${content}`;
-
-  if (focus) {
-    log = `${subjectMarker} ${log}`;
-  }
-
-  return log;
+  return `<@${message.author.id}>: ${content}`;
 };
 
-const formatMessageCollection = (collection: Collection<string, Message>) => {
+const formatMessageCollection = (
+  collection: Collection<string, Message>,
+  client: Client,
+): Content[] => {
   return collection.map((message) => formatMessage(message)).slice(1).filter((
     text,
-  ) => text !== undefined);
+  ) => text !== undefined).map((messageText) => ({
+    part: [messageText],
+    role: messageText.startsWith(`<@${client.user?.id}>`) ? "model" : "user",
+  }));
 };
 
 const parseMessageText = (message: string, client: Client) => {
-    // Gemini sometimes sends a response in the same format as we send it in
-    if (message.startsWith(`<@${client.user?.id}>: `)) {
-      return message.slice(`<@${client.user?.id}>: `.length);
-    }
-
-    return message;
-}
-
-async function standardResponse(message: Message<true>, client: Client) {
-  const formattedMessage = formatMessage(message, true);
-
-  if (!formattedMessage) return;
-
-  console.info(`[INFO] Recieved message "${formattedMessage}".`);
-
-  await message.channel.sendTyping();
-
-  const recentHistory = await message.channel.messages.fetch({
-    limit: HISTORY_LENGTH,
-  });
-
-  const response = await generateText(formattedMessage, {
-    characterLimit: DISCORD_MESSAGE_LIMIT,
-    instructions: standardInstructions(client.user?.id).trim(),
-    context: formatMessageCollection(recentHistory),
-  });
-
-  const parsedResponse = parseMessageText(response, client);
-
-  if (parsedResponse === okayMarker) {
-    return message.react('👍');
+  // Gemini sometimes sends a response in the same format as we send it in
+  if (message.startsWith(`<@${client.user?.id}>: `)) {
+    return message.slice(`<@${client.user?.id}>: `.length);
   }
 
-  return message.reply(parsedResponse);
-}
+  return message;
+};
+
+const channelMap = new Map<string, { chat: Chat }>();
 
 startBot({
   commands,
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
-  // TODO(#7): support direct messages
-  // directMessage: standardResponse,
-  channelMention: standardResponse,
-  channelReply: standardResponse,
-  async channelMessage(message, client) {
-    // if proactive mode is on, gemini is randomly asked if it would like to respond
-    if (Math.random() > Number(Deno.env.get("CONFIG_PROACTIVE_REPLY_CHANCE"))) {
-      return;
-    }
-
-    const formattedMessage = formatMessage(message, true);
+  async message(message, client) {
+    const formattedMessage = formatMessage(message);
 
     if (!formattedMessage) return;
 
-    console.info(
-      `[INFO] Proactively considering a response to message "${formattedMessage}".`,
+    console.info(`[INFO] Recieved message "${formattedMessage}".`);
+
+    if ("sendTyping" in message.channel) {
+      try {
+        await message.channel.sendTyping();
+      } catch (error) {
+        console.warn(
+          `[WARN] Could not send typing indicator in channel ${message.channel.id}:`,
+          error,
+        );
+      }
+    }
+
+    let chat: Chat;
+    const channelId = message.channel.id;
+
+    if (channelMap.has(channelId)) {
+      chat = channelMap.get(channelId)!.chat;
+    } else {
+      const recentHistory = await message.channel.messages.fetch({
+        limit: HISTORY_LENGTH,
+      });
+
+      let channelName = "DM";
+      let channelTopic = "Direct Message";
+
+      if (message.channel.type === ChannelType.GuildText) {
+        const textChannel = message.channel as TextChannel;
+        channelName = textChannel.name;
+        channelTopic = textChannel.topic ?? "No topic set";
+      } else if ("name" in message.channel && message.channel.name) {
+        channelName = message.channel.name;
+        channelTopic = "N/A";
+      }
+
+      chat = createChat(
+        formatMessageCollection(recentHistory, client),
+        {
+          instructions: standardInstructions(
+            client.user!.id,
+            channelName,
+            channelTopic,
+          ),
+        },
+      );
+      channelMap.set(channelId, { chat });
+    }
+
+    const response = await messageChat(
+      formattedMessage,
+      channelMap.get(message.channel.id)!.chat,
     );
 
-    const recentHistory = await message.channel.messages.fetch({
-      limit: HISTORY_LENGTH,
-    });
+    const parsedResponse = parseMessageText(response, client);
 
-    const response = await generateText(formattedMessage, {
-      characterLimit: DISCORD_MESSAGE_LIMIT,
-      instructions: proactiveInstructions(client.user?.id).trim(),
-      context: formatMessageCollection(recentHistory),
-    });
-
-    if (response === ignoreMarker) {
-      console.info(
-        `[INFO] Decided against responding to message "${formattedMessage}".`,
-      );
+    if (parsedResponse === noResponseMarker) {
       return;
     }
 
-    return message.reply(parseMessageText(response, client));
+    return message.reply(parsedResponse);
   },
   mount(client) {
     console.info(

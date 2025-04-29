@@ -8,7 +8,6 @@ import {
   Routes,
   SlashCommandBuilder,
 } from "npm:discord.js";
-import { classifyMessage, MessageClass } from "../message/classify.ts";
 import { createErrorEmbed } from "../message/embed/error.ts";
 import { type CommandObject, CommandOptionType } from "./types.ts";
 
@@ -20,17 +19,15 @@ const defaultIntents = [
 ];
 
 type BotChannelResponder = (
-  message: Message<true>,
+  message: Message,
   client: Client,
-) => Promise<Message<true> | MessageReaction | undefined>;
+) => Promise<Message | MessageReaction | undefined>;
 
 type BotOptions = {
   identityToken: string;
   mount?: (client?: Client) => void;
   commands?: Record<string, CommandObject>;
-  channelMessage?: BotChannelResponder;
-  channelReply?: BotChannelResponder;
-  channelMention?: BotChannelResponder;
+  message?: BotChannelResponder;
   intents?: GatewayIntentBits[];
 };
 
@@ -38,9 +35,7 @@ type BotOptions = {
 export async function startBot({
   identityToken: token,
   commands,
-  channelMessage,
-  channelReply,
-  channelMention,
+  message: handleMessage,
   intents = defaultIntents,
   mount: handleMount,
 }: BotOptions): Promise<Client> {
@@ -58,23 +53,11 @@ export async function startBot({
   handleMount?.(client);
 
   // delegate messages
-  client.on(Events.MessageCreate, async (message) => {
+  client.on(Events.MessageCreate, (message) => {
     try {
-      const messageClass = await classifyMessage(message, botId);
-
-      if (messageClass === MessageClass.MENTION) {
-        return channelMention?.(message as Message<true>, client);
-      }
-
-      if (messageClass === MessageClass.REPLY) {
-        return channelReply?.(message as Message<true>, client);
-      }
-
-      if (messageClass === MessageClass.USER) {
-        return channelMessage?.(message as Message<true>, client);
-      }
+      return handleMessage?.(message, client);
     } catch (error) {
-      await message.reply({ embeds: [createErrorEmbed(error as Error)] });
+      return message.reply({ embeds: [createErrorEmbed(error as Error)] });
     }
   });
 

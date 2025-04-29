@@ -1,10 +1,11 @@
+import { AttachmentBuilder } from "npm:discord.js";
+
 import {
   ActionThrottler,
   type CommandObject,
   CommandOptionType,
 } from "@bott/discord";
-import { generateImage } from "@bott/gemini";
-import { AttachmentBuilder } from "npm:discord.js";
+import { generatePhoto } from "@bott/gemini";
 import { RATE_LIMIT_IMAGES, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
 const imageThrottler = new ActionThrottler(
@@ -12,30 +13,30 @@ const imageThrottler = new ActionThrottler(
   RATE_LIMIT_IMAGES,
 );
 
-export const image: CommandObject = {
+export const photo: CommandObject = {
   description:
-    `Ask @Bott to generate an image: you can generate ${RATE_LIMIT_IMAGES} images a month. @Bott won't generate images containing people or sensitive subjects.`,
+    `Ask @Bott to generate a photo: you can generate ${RATE_LIMIT_IMAGES} photos a month. @Bott won't generate photos containing people or sensitive subjects.`,
   options: [{
     name: "prompt",
     type: CommandOptionType.STRING,
-    description: "A description of the image you want to generate.",
+    description: "A description of the photo you want to generate.",
     required: true,
   }],
   async command(interaction) {
     if (!imageThrottler.attemptAction(interaction.user.id)) {
       throw new Error(
-        `You have generated the maximum number of videos this month (${RATE_LIMIT_IMAGES}).`,
+        `You have generated the maximum number of photos this month (${RATE_LIMIT_IMAGES}).`,
       );
     }
 
     const prompt = interaction.options.get("prompt")!.value as string;
 
-    console.info(`[INFO] Recieved image prompt "${prompt}".`);
+    console.info(`[INFO] Recieved photo prompt "${prompt}".`);
 
     return interaction.editReply({
-      content: `Here's my image for your prompt: **"${prompt}"**`,
+      content: `Here's my photo for your prompt: **"${prompt}"**`,
       files: [
-        new AttachmentBuilder(await generateImage(prompt), {
+        new AttachmentBuilder(await generatePhoto(prompt), {
           name: "generated.png",
         }),
       ],

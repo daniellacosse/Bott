@@ -1,11 +1,11 @@
-import { SafetyFilterLevel } from "npm:@google/genai";
+import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 import { Buffer } from "node:buffer";
 
 import _gemini from "../client.ts";
 import type { PromptParameters } from "../types.ts";
 
-export async function generateImage(prompt: string, {
+export async function generatePhoto(prompt: string, {
   model = "imagen-3.0-fast-generate-001",
   gemini = _gemini,
 }: PromptParameters = {}): Promise<Buffer> {
@@ -13,11 +13,12 @@ export async function generateImage(prompt: string, {
     model,
     prompt,
     config: {
-      numberOfImages: 1,
-      safetyFilterLevel: SafetyFilterLevel.BLOCK_ONLY_HIGH,
-      includeRaiReason: true,
       addWatermark: true,
       enhancePrompt: true,
+      includeRaiReason: true,
+      numberOfImages: 1,
+      personGeneration: PersonGeneration.ALLOW_ADULT,
+      safetyFilterLevel: SafetyFilterLevel.BLOCK_ONLY_HIGH,
     },
   });
 
@@ -28,7 +29,7 @@ export async function generateImage(prompt: string, {
   const [imageData] = response.generatedImages;
 
   if (imageData.raiFilteredReason) {
-    throw new Error(`Image blocked: ${imageData.raiFilteredReason}`);
+    throw new Error(`Photo blocked: ${imageData.raiFilteredReason}`);
   }
 
   if (!imageData.image) {
