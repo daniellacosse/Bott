@@ -24,7 +24,6 @@ export async function generateText(prompt: string, {
     model,
     contents: [
       ...context.map((text) => ({
-        role: "user",
         parts: [{ text }],
       })),
       {
