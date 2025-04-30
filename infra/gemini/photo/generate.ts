@@ -1,4 +1,4 @@
-import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
+import { /* PersonGeneration, */ SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 import { Buffer } from "node:buffer";
 

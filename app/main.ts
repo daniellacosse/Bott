@@ -1,3 +1,4 @@
+// TODO: encapsulate these concepts in infra
 import {
   ChannelType,
   Client,
@@ -5,6 +6,7 @@ import {
   Message,
   TextChannel,
 } from "npm:discord.js";
+// TODO: encapsulate these concepts in infra
 import { Chat, Content } from "npm:@google/genai";
 
 import { startBot } from "@bott/discord";

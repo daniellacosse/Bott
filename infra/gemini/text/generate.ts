@@ -1,10 +1,11 @@
 import _gemini from "../client.ts";
 import type { PromptParameters } from "../types.ts";
+import { Buffer } from "node:buffer";
 
 export async function generateText(prompt: string, {
   model = "gemini-2.5-flash-preview-04-17",
   gemini = _gemini,
-}: PromptParameters = {}): Promise<string> {
+}: PromptParameters = {}): Promise<Buffer> {
   const response = await gemini.models.generateContent({
     model,
     contents: prompt,
@@ -32,5 +33,5 @@ export async function generateText(prompt: string, {
     throw new Error("No text in sanitized response");
   }
 
-  return sanitizedResponse.text;
+  return Buffer.from(sanitizedResponse.text);
 }

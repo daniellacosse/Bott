@@ -1,10 +1,12 @@
+// TODO: encapsulate these concepts in infra
+import { AttachmentBuilder } from "npm:discord.js";
+
 import {
   ActionThrottler,
   type CommandObject,
   CommandOptionType,
 } from "@bott/discord";
 import { generateVideo } from "@bott/gemini";
-import { AttachmentBuilder } from "npm:discord.js";
 import { RATE_LIMIT_VIDEOS, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
 const videoThrottler = new ActionThrottler(

@@ -1,3 +1,4 @@
+// TODO: encapsulate these concepts in infra
 import { AttachmentBuilder } from "npm:discord.js";
 
 import {
