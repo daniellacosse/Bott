@@ -54,6 +54,10 @@ export async function startBot({
 
   // delegate messages
   client.on(Events.MessageCreate, (message) => {
+    if (message.author.bot) {
+      return;
+    }
+
     try {
       return handleMessage?.(message, client);
     } catch (error) {
