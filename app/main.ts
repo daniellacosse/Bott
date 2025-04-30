@@ -1,4 +1,4 @@
-// TODO: encapsulate these concepts in infra
+// TODO(#16): encapsulate these concepts in infra
 import {
   ChannelType,
   Client,

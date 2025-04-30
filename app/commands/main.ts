@@ -18,7 +18,7 @@ const help: CommandObject = {
           {
             name: "Limitations",
             value:
-              "Currently, @Bott can only read text when responding, and does not look at the chat when generating media.",
+              "Currently, @Bott can only read text when responding, and does not look at the chat when generating media. They may sometimes say things that are not correct.",
           },
           { name: "/text", value: text.description! },
           { name: "/photo", value: photo.description! },
