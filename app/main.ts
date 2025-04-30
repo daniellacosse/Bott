@@ -12,7 +12,7 @@ import { Chat, Content } from "npm:@google/genai";
 import { startBot } from "@bott/discord";
 import { createChat, messageChat } from "@bott/gemini";
 
-import { HISTORY_LENGTH } from "./constants.ts";
+import { DISCORD_MESSAGE_LIMIT, HISTORY_LENGTH } from "./constants.ts";
 import { standardInstructions } from "./instructions/main.ts";
 import commands from "./commands/main.ts";
 import { noResponseMarker } from "./instructions/markers.ts";
@@ -41,6 +41,10 @@ const parseMessageText = (message: string, client: Client) => {
   // Gemini sometimes sends a response in the same format as we send it in
   if (message.startsWith(`<@${client.user?.id}>: `)) {
     return message.slice(`<@${client.user?.id}>: `.length);
+  }
+
+  if (message.length > DISCORD_MESSAGE_LIMIT) {
+    return message.slice(0, DISCORD_MESSAGE_LIMIT - 1) + "…";
   }
 
   return message;
@@ -103,7 +107,6 @@ startBot({
     if (parsedResponse === noResponseMarker) {
       return;
     }
-
 
     if ("sendTyping" in message.channel) {
       try {
