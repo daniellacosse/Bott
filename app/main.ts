@@ -60,6 +60,39 @@ const parseMessageText = (message: string, client: Client) => {
   return message;
 };
 
+// Helper function to split response by \n\n+ while preserving code blocks
+function splitResponsePreservingCodeBlocks(response: string): string[] {
+  const codeBlockRegex = /```[\s\S]*?```/g; // Matches ```code``` blocks
+  const placeholders: string[] = [];
+  let placeholderIndex = 0;
+  const placeholderPrefix = "__CODEBLOCK_PLACEHOLDER__"; // Unique prefix
+
+  // 1. Replace code blocks with unique placeholders
+  const placeholderString = response.replace(codeBlockRegex, (match) => {
+    const placeholder = `${placeholderPrefix}${placeholderIndex}__`;
+    placeholders[placeholderIndex] = match; // Store the original code block
+    placeholderIndex++;
+    return placeholder;
+  });
+
+  // 2. Split the string containing placeholders by \n\n+
+  const initialParts = placeholderString.split(/\n\n+/)
+    .map(part => part.trim()) // Trim whitespace from parts
+    .filter(part => part.length > 0); // Filter out empty parts
+
+  // 3. Restore code blocks into the parts
+  const finalParts = initialParts.map(part => {
+    let restoredPart = part;
+    // Iterate placeholders in reverse to handle potential nesting (though unlikely here)
+    for (let i = placeholders.length - 1; i >= 0; i--) {
+      restoredPart = restoredPart.replace(`${placeholderPrefix}${i}__`, placeholders[i]);
+    }
+    return restoredPart;
+  });
+
+  return finalParts;
+}
+
 const channelMap = new Map<string, { chat: Chat }>();
 
 startBot({
@@ -118,8 +151,7 @@ startBot({
       return;
     }
 
-    // Split the response into parts based on one or more newlines
-    const messageParts = parsedResponse.split(/\n+/).filter(part => part.trim().length > 0);
+    const messageParts = splitResponsePreservingCodeBlocks(parsedResponse);
 
     if (messageParts.length === 0) {
       return;
