@@ -10,6 +10,7 @@ AttachmentBuilder,
 // TODO: encapsulate these concepts in infra
 import { Chat, Content } from "npm:@google/genai";
 import { Buffer } from "node:buffer";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import { startBot } from "@bott/discord";
 import { createChat, messageChat } from "@bott/gemini";
@@ -117,46 +118,41 @@ startBot({
       return;
     }
 
-    if ("sendTyping" in message.channel) {
-      try {
+    // Split the response into parts based on one or more newlines
+    const messageParts = parsedResponse.split(/\n+/).filter(part => part.trim().length > 0);
+
+    if (messageParts.length === 0) {
+      return;
+    }
+
+    const wordsPerMinute = 60;
+    const canSendTyping = "sendTyping" in message.channel;
+    const canSend = "send" in message.channel;
+
+    for (const [index, part] of messageParts.entries()) {
+      if (canSendTyping) {
         await message.channel.sendTyping();
-      } catch (error) {
-        console.warn(
-          `[WARN] Could not send typing indicator in channel ${message.channel.id}:`,
-          error,
-        );
+      }
+
+      const words = part.split(/\s+/).length;
+      const delayMs = Math.max(500, (words / wordsPerMinute) * 60 * 1000);
+      const cappedDelayMs = Math.min(delayMs, 7000);
+      await sleep(cappedDelayMs);
+
+      let file: AttachmentBuilder | undefined;
+      if (part.length > DISCORD_MESSAGE_LIMIT) {
+        file = new AttachmentBuilder(Buffer.from(part), { name: `response_part_${index + 1}.txt` });
+      }
+      const payload = file ? { files: [file] } : part;
+
+      if (canSend){
+        await message.channel.send(payload);
+      } else {
+        await message.reply(payload);
       }
     }
 
-    let file: AttachmentBuilder | undefined;;
-    if (parsedResponse.length > DISCORD_MESSAGE_LIMIT) {
-      file = new AttachmentBuilder(Buffer.from(parsedResponse), {
-        name: "response.txt",
-      });
-    }
-
-    const payload = file ? { files: [file] } : parsedResponse;
-
-    const wordsPerMinute = 60; // Average typing speed
-    const words = parsedResponse.split(/\s+/).length;
-    const delayMs = Math.max(500, (words / wordsPerMinute) * 60 * 1000);
-    const cappedDelayMs = Math.min(delayMs, 7000);
-
-    return new Promise((resolve, reject) => {
-      setTimeout(async () => {
-        try {
-          if ("send" in message.channel){
-            await message.channel.send(payload);
-          } else {
-            await message.reply(payload);
-          }
-        } catch (error) {
-          reject(error);
-        } finally {
-          resolve(message);
-        }
-      }, cappedDelayMs);
-    });
+    return message; // Return the original message after attempting to send all parts
   },
   mount(client) {
     console.info(
