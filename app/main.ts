@@ -53,11 +53,7 @@ const formatMessageHistory = (
 
 const parseMessageText = (message: string, client: Client) => {
   // Gemini sometimes sends a response in the same format as we send it in
-  if (message.startsWith(`<@${client.user?.id}>: `)) {
-    return message.slice(`<@${client.user?.id}>: `.length);
-  }
-
-  return message;
+  return message.replaceAll(`<@${client.user?.id}>: `, "");
 };
 
 // Helper function to split response by \n\n+ while preserving code blocks
