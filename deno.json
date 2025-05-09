@@ -4,8 +4,9 @@
     "deploy": "sh ./deploy.sh"
   },
   "workspace": [
-    "./infra/gemini",
-    "./infra/discord",
+    "./data",
+    "./helpers/gemini",
+    "./helpers/discord",
     "./app"
   ]
 }

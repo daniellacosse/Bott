@@ -1,4 +1,5 @@
 import { assertExists } from "jsr:@std/assert";
+import { getSchema } from "./client.ts";
 
 Deno.test("database smoke test", async () => {
   const tempDbFile = await Deno.makeTempFile();
@@ -14,10 +15,14 @@ Deno.test("database smoke test", async () => {
   addUsers(userNancy, userBob);
 
   // channels
-  const { addChannels } = await import ("./channels.ts");
+  const { addChannels } = await import("./channels.ts");
 
   const channelMain = { id: 1, name: "main" };
-  const channelRandom = { id: 2, name: "random", description: "random channel" };
+  const channelRandom = {
+    id: 2,
+    name: "random",
+    description: "random channel",
+  };
 
   addChannels(channelMain, channelRandom);
 
@@ -30,7 +35,7 @@ Deno.test("database smoke test", async () => {
     user: userNancy,
     channel: channelMain,
     data: new TextEncoder().encode("Hello"),
-    timestamp: new Date()
+    timestamp: new Date(),
   };
   const bobReply = {
     id: 2,
@@ -39,7 +44,7 @@ Deno.test("database smoke test", async () => {
     channel: channelMain,
     parent: nancyGreeting,
     data: new TextEncoder().encode("Hi"),
-    timestamp: new Date()
+    timestamp: new Date(),
   };
   const nancyReaction = {
     id: 3,
@@ -48,10 +53,12 @@ Deno.test("database smoke test", async () => {
     channel: channelMain,
     parent: bobReply,
     data: new TextEncoder().encode("👍"),
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 
   addEvents(nancyGreeting, bobReply, nancyReaction);
+
+  console.log(getSchema());
 
   // test
   const [dbResult] = getEvents(nancyReaction.id);

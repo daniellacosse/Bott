@@ -19,7 +19,11 @@ function isSqlInstructions(value: any): value is SqlInstructions {
 // naive sql tag
 export function sql(
   strings: TemplateStringsArray,
-  ...interpolations: (SupportedValueType | SqlInstructions | (SqlInstructions | SupportedValueType)[])[]
+  ...interpolations: (
+    | SupportedValueType
+    | SqlInstructions
+    | (SqlInstructions | SupportedValueType)[]
+  )[]
 ): SqlInstructions {
   let resultQuery = "";
   const resultParams: SupportedValueType[] = [];
@@ -62,8 +66,8 @@ export function sql(
 
   return {
     query: resultQuery + strings.raw.at(-1),
-    params: resultParams
-  }
+    params: resultParams,
+  };
 }
 
 export const exec = ({ query, params }: SqlInstructions): any => {
@@ -72,7 +76,16 @@ export const exec = ({ query, params }: SqlInstructions): any => {
 
   if (isReadQuery) {
     return statement.all(...params);
-  } 
-  
+  }
+
   return statement.run(...params);
-}
+};
+
+export const getSchema = () => {
+  return exec(sql`
+    select name, sql 
+    from sqlite_master 
+    where type = 'table' and name not like 'sqlite_%'
+    order by name
+  `);
+};
