@@ -16,7 +16,7 @@ exec(
 
 export const getUsers = (...ids: number[]): User[] =>
   exec(
-    sql`select * from users where id in (${ids.join(", ")})`
+    sql`select * from users where id in (${ids})`
   );
 
 export const addUsers = (...users: User[]): boolean => {
@@ -25,8 +25,7 @@ export const addUsers = (...users: User[]): boolean => {
       sql`
         insert into users
         (id, name)
-        values (${users.map(u => [u.id, u.name]).join(", ")})
-      `
+        values ${users.map((user) => sql`(${user.id}, ${user.name})`)}`
     );
     return true;
   } catch (_) {

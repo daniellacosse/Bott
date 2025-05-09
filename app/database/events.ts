@@ -6,8 +6,7 @@ import { User } from "./users.ts";
 export enum EventType {
   MESSAGE = 0,
   REPLY = 1,
-  REACTION = 2,
-  ATTACHMENT = 3
+  REACTION = 2
 }
 
 export interface Event {
@@ -16,9 +15,10 @@ export interface Event {
   parent?: Event;
   user?: User;
   type: EventType;
-  data: Blob;
+  data: Uint8Array;
   timestamp: Date;
 }
+
 exec(
   sql`
     create table if not exists events (
@@ -38,7 +38,6 @@ export const getEvents = (...ids: number[]): Event[] => {
     sql`
       select
         e.id as e_id, e.type as e_type, e.data as e_data, e.timestamp as e_ts,
-        e.parent_id as e_parent_fk_id, e.channel_id as e_channel_fk_id, e.user_id as e_user_fk_id,
         p.id as p_id, p.type as p_type, p.data as p_data, p.timestamp as p_ts,
         c.id as c_id, c.name as c_name, c.description as c_description,
         u.id as u_id, u.name as u_name
@@ -51,41 +50,42 @@ export const getEvents = (...ids: number[]): Event[] => {
       left join
         users u on e.user_id = u.id
       where
-        e.id in (${ids.join(", ")})
+        e.id in (${ids})
     `
   ) as any[];
 
-  return rows.map(({e_id: id, e_type: type, e_data: data, e_ts: timestamp, ...row}) => {
+  return rows.map(({e_id: id, e_type: type, e_data: data, e_ts: timestamp, ...context}) => {
     const event: Event = {
       id,
       type,
-      data: new Blob([data]),
+      data: new Uint8Array(data),
       timestamp: new Date(timestamp),
     };
 
-    if (row.c_id) {
+    if (context.c_id) {
       event.channel = {
-        id: row.c_id,
-        name: row.c_name,
-        description: row.c_description,
+        id: context.c_id,
+        name: context.c_name,
+        description: context.c_description,
       };
     }
 
-    if (row.u_id) {
+    if (context.u_id) {
       event.user = {
-        id: row.u_id,
-        name: row.u_name,
+        id: context.u_id,
+        name: context.u_name,
       };
     }
 
-    if (row.p_id) {
+    if (context.p_id) {
       event.parent = {
-        id: row.p_id,
-        type: row.p_type,
-        data: new Blob([row.p_data]),
-        timestamp: new Date(row.p_ts),
+        id: context.p_id,
+        type: context.p_type,
+        data: new Uint8Array(context.p_data),
+        timestamp: new Date(context.p_ts),
       };
     }
+
     return event;
   });
 };
@@ -95,8 +95,8 @@ export const addEvents = (...events: Event[]): boolean => {
     exec(
       sql`
         insert into events
-        (type, data, parent_id, channel_id, user_id, timestamp)
-        values (${events.map(e => [e.type, e.data, e.parent?.id, e.channel?.id, e.user?.id, e.timestamp]).join(", ")})
+        (id, type, data, parent_id, channel_id, user_id, timestamp)
+        values ${events.map((event) => sql`(${event.id}, ${event.type}, ${event.data}, ${event.parent?.id ?? null}, ${event.channel?.id ?? null}, ${event.user?.id ?? null}, ${event.timestamp.toISOString()})`)}
       `
     );
     return true;

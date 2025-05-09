@@ -6,17 +6,19 @@ export interface Channel {
   description?: string;
 }
 
-sql`
-  create table if not exists channels (
-    id integer primary key not null,
-    name text,
-    description text
-  )
-`();
+exec(
+  sql`
+    create table if not exists channels (
+      id integer primary key not null,
+      name text,
+      description text
+    )
+  `
+);
 
 export const getChannels = (...ids: number[]): Channel[] =>
   exec(
-    sql`select * from channels where id in (${ids.join(", ")})`
+    sql`select * from channels where id in (${ids})`
   );
 
 export const addChannels = (...channels: Channel[]): boolean => {
@@ -25,7 +27,7 @@ export const addChannels = (...channels: Channel[]): boolean => {
       sql`
         insert into channels
         (id, name, description)
-        values (${channels.map(c => [c.id, c.name, c.description]).join(", ")})
+        values ${channels.map((channel) => sql`(${channel.id}, ${channel.name ?? null}, ${channel.description ?? null})`)}
       `
     );
     return true;
