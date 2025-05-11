@@ -1,4 +1,4 @@
-import { exec, sql } from "./client.ts";
+import { exec, sql } from "../client.ts";
 
 exec(
   sql`
@@ -25,7 +25,8 @@ export const addUsers = (...users: BottUser[]): boolean => {
       sql`
         insert into users
         (id, name)
-        values ${users.map((user) => sql`(${user.id}, ${user.name})`)}`,
+        values ${users.map((user) => sql`(${user.id}, ${user.name})`)}
+        on conflict update`,
     );
     return true;
   } catch (_) {

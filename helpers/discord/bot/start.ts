@@ -12,7 +12,15 @@ import { createErrorEmbed } from "../message/embed/error.ts";
 import { type CommandObject, CommandOptionType } from "./types.ts";
 
 import { SwapTaskQueue } from "./task/queue.ts";
-import { type BottEvent, EventType } from "@bott/data";
+import {
+  addChannels,
+  addEvents,
+  addUsers,
+  type BottChannel,
+  type BottEvent,
+  type BottUser,
+  EventType,
+} from "@bott/data";
 
 const defaultIntents = [
   GatewayIntentBits.Guilds,
@@ -21,20 +29,22 @@ const defaultIntents = [
   GatewayIntentBits.GuildMembers,
 ];
 
-type Bot = {
+type BotContext = {
   id: string;
-  sentMessage: (text: string) => BottEvent;
-  startTyping: () => void;
+  // react: (event: BottEvent) => void;
+  // reply: (event: BottEvent) => void;
+  // send: (event: BottEvent) => void;
+  // startTyping: () => void;
   tasks: SwapTaskQueue;
   wpm: number;
 };
 
 type BotOptions = {
-  identityToken: string;
-  mount?: (this: Bot) => void;
   commands?: Record<string, CommandObject>;
-  event?: (this: Bot, event: BottEvent) => void;
+  event?: (this: BotContext, event: BottEvent) => void;
+  identityToken: string;
   intents?: GatewayIntentBits[];
+  mount?: (this: BotContext) => void;
 };
 
 export async function startBot({
@@ -48,25 +58,69 @@ export async function startBot({
 
   await client.login(token);
 
-  // TODO: hydrate DB if not exist
-
   // this is the bot user object
   if (!client.user) {
     throw new Error("Bot user is not set");
   }
 
-  const self = {
+  const baseSelf = {
     id: client.user.id,
-    // TODO:
-    sentMessage: (text: string) => {
-      return {} as BottEvent;
-    },
-    startTyping: () => {},
     tasks: new SwapTaskQueue(),
     wpm: 200,
   };
 
-  handleMount?.call(self);
+  client.once(Events.ClientReady, async () => {
+    try {
+      const userIndex = new Map<string, BottUser>();
+      const channelIndex = new Map<string, BottChannel>();
+      const events: BottEvent[] = [];
+
+      // Discord "guilds" are equivalent to Bott's "spaces":
+      for (const space of client.guilds.cache.values()) {
+        // Add users:
+        await space.members.fetch();
+        for (const { user: { id, username } } of space.members.cache.values()) {
+          userIndex.set(id, { id: Number(id), name: username });
+        }
+
+        // Add channels:
+        for (const channel of space.channels.cache.values()) {
+          if (channel.type !== ChannelType.GuildText) {
+            continue;
+          }
+
+          channelIndex.set(channel.id, {
+            id: Number(channel.id),
+            name: channel.name,
+            description: channel.topic ?? undefined,
+          });
+
+          // Add events:
+          const messages = await channel.messages.fetch();
+          for (const message of messages.values()) {
+            const baseEvent = messageToBaseEvent(message as Message<true>);
+            if (message.reference?.messageId) {
+              baseEvent.type = EventType.REPLY;
+              baseEvent.parent = {
+                id: Number(message.reference.messageId),
+              } as BottEvent;
+            }
+            events.push(baseEvent);
+          }
+        }
+      }
+
+      addUsers(...userIndex.values());
+      addChannels(...channelIndex.values());
+      addEvents(
+        ...events.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+      );
+    } catch (error) {
+      console.error("[ERROR] Database hydration failed:", error);
+    }
+
+    handleMount?.call(baseSelf);
+  });
 
   client.on(Events.MessageCreate, async (message) => {
     if (message.channel.type !== ChannelType.GuildText) {
@@ -96,7 +150,8 @@ export async function startBot({
       parent: parentEvent,
     };
 
-    handleEvent?.call(self, event);
+    // TODO: inject context-aware hooks
+    handleEvent?.call({ ...baseSelf }, event);
   });
 
   client.on(Events.MessageReactionAdd, (reaction) => {
@@ -128,14 +183,15 @@ export async function startBot({
       event.parent = messageToBaseEvent(reaction.message as Message<true>);
     }
 
-    handleEvent?.call(self, event);
+    // TODO: inject context-aware hooks
+    handleEvent?.call({ ...baseSelf }, event);
   });
 
+  // Handle commands, if they exist
   if (!commands) {
     return;
   }
 
-  // delegate commands
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) {
       return;
@@ -152,14 +208,14 @@ export async function startBot({
     }
   });
 
-  // sync commands with discord origin via their custom http client 🙄
+  // Sync commands with discord origin via their custom http client 🙄
   const body = [];
   for (const [commandName, commandObject] of Object.entries(commands)) {
     body.push(getCommandJson(commandName, commandObject));
   }
 
   await new REST({ version: "10" }).setToken(token).put(
-    Routes.applicationCommands(self.id),
+    Routes.applicationCommands(baseSelf.id),
     { body },
   );
 }

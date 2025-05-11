@@ -1,4 +1,4 @@
-import { exec, sql } from "./client.ts";
+import { exec, sql } from "../client.ts";
 
 import type { BottChannel } from "./channels.ts";
 import type { BottUser } from "./users.ts";
@@ -117,7 +117,7 @@ export const addEvents = (...events: BottEvent[]): boolean => {
             event.user?.id ?? null
           }, ${event.timestamp.toISOString()})`
         )
-      }
+      } on conflict do nothing
       `,
     );
     return true;

@@ -1,4 +1,4 @@
-export class TaskThrottler {
+export class TaskLimiter {
   throttleWindowMs: number;
   maxTaskCount: number;
   taskRecord: Record<string, Date[]> = {};

@@ -1,7 +1,6 @@
-import { exec, sql } from "./client.ts";
+import { exec, sql } from "../client.ts";
 import type { BottEvent } from "./events.ts";
 
-// TODO: fix this later
 exec(
   sql`
     create if not exists table files (
@@ -53,7 +52,7 @@ export const addFiles = (...files: BottFile[]): boolean => {
       files.map((file) =>
         sql`(${file.name}, ${file.data}, ${file.mimetype}, ${file.event.id})`
       )
-    }
+    } on conflict do nothing
     `,
   );
 };

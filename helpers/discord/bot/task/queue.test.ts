@@ -1,5 +1,5 @@
 import { SwapTaskQueue } from "./queue.ts";
-import { assertSpyCall, assertSpyCalls, spy } from "jsr:@std/testing/mock";
+import { assertSpyCalls, spy } from "jsr:@std/testing/mock";
 import { assert, assertEquals } from "jsr:@std/assert";
 import { delay } from "jsr:@std/async/delay";
 
@@ -8,13 +8,12 @@ const DEFAULT_INITIAL_SWAPS = 6;
 Deno.test("SwapTaskQueue - single task execution", async () => {
   const queue = new SwapTaskQueue();
   const taskSpy = spy(
-    (_controller: AbortController) => Promise.resolve(),
+    (_signal: AbortSignal) => Promise.resolve(),
   );
 
   queue.push(1, taskSpy);
   await delay(10); // Allow microtasks to settle
 
-  assertSpyCall(taskSpy, 0, { args: [new AbortController()] }); // Controller will be different
   assertSpyCalls(taskSpy, 1);
 });
 
@@ -22,19 +21,19 @@ Deno.test("SwapTaskQueue - task swapping and abort", async () => {
   const queue = new SwapTaskQueue();
   let firstTaskAborted = false;
 
-  const firstTask = spy(async (controller: AbortController) => {
-    controller.signal.onabort = () => {
+  const firstTask = spy(async (signal: AbortSignal) => {
+    signal.onabort = () => {
       firstTaskAborted = true;
     };
     await delay(100); // Simulate work
-    if (controller.signal.aborted) {
+    if (signal.aborted) {
       return;
-    };
+    }
     throw new Error("First task should have been aborted");
   });
 
   const secondTask = spy(
-    (_controller: AbortController) => Promise.resolve(),
+    (_signal: AbortSignal) => Promise.resolve(),
   );
 
   queue.push(1, firstTask);
@@ -60,7 +59,7 @@ Deno.test("SwapTaskQueue - swap limit and blocking", async () => {
   let liveTaskCompleter: () => void = () => {};
 
   for (let i = 0; i < DEFAULT_INITIAL_SWAPS; i++) {
-    const task = spy(async (controller: AbortController) => {
+    const task = spy(async (signal: AbortSignal) => {
       // The last one before blocking will be the "live" one
       if (i === DEFAULT_INITIAL_SWAPS - 1) {
         await new Promise<void>((resolve) => {
@@ -69,7 +68,7 @@ Deno.test("SwapTaskQueue - swap limit and blocking", async () => {
       } else {
         // Other tasks should be aborted quickly
         await delay(50);
-        if (controller.signal.aborted) return;
+        if (signal.aborted) return;
         throw new Error(`Task ${i} should have been aborted`);
       }
     });
@@ -79,7 +78,7 @@ Deno.test("SwapTaskQueue - swap limit and blocking", async () => {
   }
 
   const blockedTaskSpy = spy(
-    (_controller: AbortController) => Promise.resolve(),
+    (_signal: AbortSignal) => Promise.resolve(),
   );
   queue.push(1, blockedTaskSpy); // This one should be blocked
 
@@ -112,8 +111,8 @@ Deno.test("SwapTaskQueue - swap limit and blocking", async () => {
 
 Deno.test("SwapTaskQueue - multiple independent buckets", async () => {
   const queue = new SwapTaskQueue();
-  const task1Spy = spy((_ctl: AbortController) => delay(20));
-  const task2Spy = spy((_ctl: AbortController) => delay(20));
+  const task1Spy = spy((_signal: AbortSignal) => delay(20));
+  const task2Spy = spy((_signal: AbortSignal) => delay(20));
 
   queue.push(1, task1Spy);
   queue.push(2, task2Spy);
@@ -125,7 +124,7 @@ Deno.test("SwapTaskQueue - multiple independent buckets", async () => {
 
   // Swap one bucket, ensure other is unaffected
   const task1SwapSpy = spy(
-    (_ctl: AbortController) => Promise.resolve(),
+    (_signal: AbortSignal) => Promise.resolve(),
   );
   queue.push(1, task1SwapSpy);
   await delay(10);
@@ -144,11 +143,11 @@ Deno.test("SwapTaskQueue - queue flushing order (simple)", async () => {
   const queue = new SwapTaskQueue();
   const callOrder: number[] = [];
 
-  const task1 = spy(async (_ctl: AbortController) => {
+  const task1 = spy(async (_signal: AbortSignal) => {
     await delay(30);
     callOrder.push(1);
   });
-  const task2 = spy(async (_ctl: AbortController) => {
+  const task2 = spy(async (_signal: AbortSignal) => {
     await delay(10);
     callOrder.push(2);
   });
@@ -170,12 +169,12 @@ Deno.test("SwapTaskQueue - queue flushing order (simple)", async () => {
 
 Deno.test("SwapTaskQueue - task error handling", async () => {
   const queue = new SwapTaskQueue();
-  const errorTaskSpy = spy(async (_controller: AbortController) => {
+  const errorTaskSpy = spy(async (_signal: AbortSignal) => {
     await delay(10);
     throw new Error("Task failed intentionally");
   });
   const successTaskSpy = spy(
-    (_controller: AbortController) => Promise.resolve(),
+    (_signal: AbortSignal) => Promise.resolve(),
   );
 
   queue.push(1, errorTaskSpy);
@@ -200,9 +199,9 @@ Deno.test("SwapTaskQueue - pushing same task ID rapidly (swap exhaustion)", asyn
 
   // Push DEFAULT_INITIAL_SWAPS tasks that will be swapped
   for (let i = 0; i < DEFAULT_INITIAL_SWAPS; i++) {
-    const task = spy(async (controller: AbortController) => {
+    const task = spy(async (signal: AbortSignal) => {
       await delay(100); // Simulate work
-      if (controller.signal.aborted) return;
+      if (signal.aborted) return;
       // Only the last of these initial swaps should potentially complete if not swapped again
       if (i === DEFAULT_INITIAL_SWAPS - 1) {
         await new Promise<void>((resolve) => lastTaskCompleter = resolve);
@@ -218,7 +217,7 @@ Deno.test("SwapTaskQueue - pushing same task ID rapidly (swap exhaustion)", asyn
   }
 
   // This task should be blocked as swaps are exhausted
-  const blockedTaskSpy = spy((_ctl: AbortController) => Promise.resolve());
+  const blockedTaskSpy = spy((_signal: AbortSignal) => Promise.resolve());
   queue.push(1, blockedTaskSpy);
 
   await delay(50); // Allow swaps and aborts to process

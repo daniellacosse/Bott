@@ -4,12 +4,12 @@ import { AttachmentBuilder } from "npm:discord.js";
 import {
   type CommandObject,
   CommandOptionType,
-  TaskThrottler,
+  TaskLimiter,
 } from "@bott/discord";
 import { generatePhoto } from "@bott/gemini";
 import { RATE_LIMIT_IMAGES, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
-const imageThrottler = new TaskThrottler(
+const photoLimiter = new TaskLimiter(
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_IMAGES,
 );
@@ -24,13 +24,13 @@ export const photo: CommandObject = {
     required: true,
   }],
   async command(interaction) {
-    if (!imageThrottler.canRun(interaction.user.id)) {
+    if (!photoLimiter.canRun(interaction.user.id)) {
       throw new Error(
         `You have generated the maximum number of photos this month (${RATE_LIMIT_IMAGES}).`,
       );
     }
 
-    imageThrottler.recordRun(interaction.user.id);
+    photoLimiter.recordRun(interaction.user.id);
 
     const prompt = interaction.options.get("prompt")!.value as string;
 

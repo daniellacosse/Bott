@@ -6,7 +6,7 @@ Deno.test("database smoke test", async () => {
   Deno.env.set("DB_PATH", tempDbFile);
 
   // users
-  const { addUsers } = await import("./users.ts");
+  const { addUsers } = await import("./model/users.ts");
 
   const userNancy = { id: 1, name: "Nancy" };
   const userBob = { id: 2, name: "Bob" };
@@ -14,7 +14,7 @@ Deno.test("database smoke test", async () => {
   addUsers(userNancy, userBob);
 
   // channels
-  const { addChannels } = await import("./channels.ts");
+  const { addChannels } = await import("./model/channels.ts");
 
   const channelMain = { id: 1, name: "main" };
   const channelRandom = {
@@ -26,7 +26,7 @@ Deno.test("database smoke test", async () => {
   addChannels(channelMain, channelRandom);
 
   // events
-  const { addEvents, getEvents, EventType } = await import("./events.ts");
+  const { addEvents, getEvents, EventType } = await import("./model/events.ts");
 
   const nancyGreeting = {
     id: 1,

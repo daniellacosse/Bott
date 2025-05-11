@@ -4,12 +4,12 @@ import { AttachmentBuilder } from "npm:discord.js";
 import {
   type CommandObject,
   CommandOptionType,
-  TaskThrottler,
+  TaskLimiter,
 } from "@bott/discord";
 import { generateVideo } from "@bott/gemini";
 import { RATE_LIMIT_VIDEOS, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
-const videoThrottler = new TaskThrottler(
+const videoLimiter = new TaskLimiter(
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_VIDEOS,
 );
@@ -24,13 +24,13 @@ export const video: CommandObject = {
     required: true,
   }],
   async command(interaction) {
-    if (!videoThrottler.canRun(interaction.user.id)) {
+    if (!videoLimiter.canRun(interaction.user.id)) {
       throw new Error(
         `You have generated the maximum number of videos this month (${RATE_LIMIT_VIDEOS}).`,
       );
     }
 
-    videoThrottler.recordRun(interaction.user.id);
+    videoLimiter.recordRun(interaction.user.id);
 
     const prompt = interaction.options.get("prompt")!.value as string;
 
