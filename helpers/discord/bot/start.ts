@@ -3,7 +3,9 @@ import {
   Client,
   Events,
   GatewayIntentBits,
+  type GuildTextBasedChannel,
   type Message,
+  type MessageReaction,
   REST,
   Routes,
   SlashCommandBuilder,
@@ -21,6 +23,7 @@ import {
   type BottUser,
   EventType,
 } from "@bott/data";
+import { promises } from "node:dns";
 
 const defaultIntents = [
   GatewayIntentBits.Guilds,
@@ -31,10 +34,8 @@ const defaultIntents = [
 
 type BotContext = {
   id: string;
-  // react: (event: BottEvent) => void;
-  // reply: (event: BottEvent) => void;
-  // send: (event: BottEvent) => void;
-  // startTyping: () => void;
+  send: (event: BottEvent) => Promise<Message<true> | MessageReaction | undefined>;
+  startTyping: () => Promise<void>;
   tasks: SwapTaskQueue;
   wpm: number;
 };
@@ -68,6 +69,31 @@ export async function startBot({
     tasks: new SwapTaskQueue(),
     wpm: 200,
   };
+
+  const makeSelf = (currentChannel?: GuildTextBasedChannel) => ({
+    ...baseSelf,
+    startTyping: () => {
+      if (!currentChannel) return Promise.resolve();
+
+      return currentChannel.sendTyping();
+    },
+    send: async (event: BottEvent) => {
+      if (!currentChannel) return;
+
+      switch (event.type) {
+        case EventType.MESSAGE:
+          return currentChannel.send(event.details.content);
+        case EventType.REPLY: {
+          const message = await currentChannel.messages.fetch(String(event.parent!.id));
+          return message.reply(event.details.content);
+        }
+        case EventType.REACTION: {
+          const message = await currentChannel.messages.fetch(String(event.parent!.id));
+          return message.react(event.details.content);
+        }
+      }
+    },
+  });
 
   client.once(Events.ClientReady, async () => {
     try {
@@ -119,11 +145,13 @@ export async function startBot({
       console.error("[ERROR] Database hydration failed:", error);
     }
 
-    handleMount?.call(baseSelf);
+    handleMount?.call(makeSelf());
   });
 
   client.on(Events.MessageCreate, async (message) => {
-    if (message.channel.type !== ChannelType.GuildText) {
+    const currentChannel = message.channel;
+
+    if (currentChannel.type !== ChannelType.GuildText) {
       return;
     }
 
@@ -134,7 +162,7 @@ export async function startBot({
       eventType = EventType.REPLY;
       try {
         parentEvent = messageToBaseEvent(
-          await message.channel.messages.fetch(message.reference.messageId),
+          await currentChannel.messages.fetch(message.reference.messageId),
         );
       } catch (error) {
         console.error(
@@ -150,23 +178,25 @@ export async function startBot({
       parent: parentEvent,
     };
 
-    // TODO: inject context-aware hooks
-    handleEvent?.call({ ...baseSelf }, event);
+    handleEvent?.call(makeSelf(currentChannel), event);
   });
 
   client.on(Events.MessageReactionAdd, (reaction) => {
-    if (reaction.message.channel.type !== ChannelType.GuildText) {
+    const currentChannel = reaction.message.channel;
+
+    if (currentChannel.type !== ChannelType.GuildText) {
       return;
     }
+
     const event: BottEvent = {
-      // It's okay if we lose reaction data 
+      // It's okay if we lose reaction data
       id: Math.round(Math.random() * Number.MAX_SAFE_INTEGER),
       type: EventType.REACTION,
       details: { content: reaction.emoji.toString() },
       timestamp: new Date(),
       channel: {
-        id: Number(reaction.message.channel.id),
-        name: reaction.message.channel.name,
+        id: Number(currentChannel.id),
+        name: currentChannel.name,
       },
     };
 
@@ -182,8 +212,7 @@ export async function startBot({
       event.parent = messageToBaseEvent(reaction.message as Message<true>);
     }
 
-    // TODO: inject context-aware hooks
-    handleEvent?.call({ ...baseSelf }, event);
+    handleEvent?.call(makeSelf(currentChannel), event);
   });
 
   // Handle commands, if they exist

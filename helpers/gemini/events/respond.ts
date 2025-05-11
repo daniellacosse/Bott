@@ -4,7 +4,7 @@ import type { BottEvent } from "@bott/data";
 export const respondEvents = (history: BottEvent[]): BottEvent[] => {
   // TODO
   return [];
-}
+};
 
 export function bottEventToContent(event: BottEvent): Content {
   // TODO
