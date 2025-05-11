@@ -1,6 +1,8 @@
-import type { BottUser, BottChannel } from "@bott/data";
+import type { BottChannel, BottUser } from "@bott/data";
 
-export const getIdentity = ({ user, channel }: { user: BottUser; channel: BottChannel; }) => `
+export const getIdentity = (
+  { user, channel }: { user: BottUser; channel: BottChannel },
+) => `
 ## Identity
 - Your name is "Bott".
 - Your pronouns are they/them.

@@ -25,6 +25,11 @@ export const addSpaces = (...spaces: BottSpace[]): boolean => {
         id,
         name,
         description
-      ) values ${spaces.map((space) => sql`(${space.id}, ${space.name}, ${space.description})`)}
+      ) values ${
+      spaces.map((space) =>
+        sql`(${space.id}, ${space.name}, ${space.description})`
+      )
+    }
     `,
-  )}
+  );
+};

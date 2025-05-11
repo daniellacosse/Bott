@@ -15,14 +15,14 @@ import { type CommandObject, CommandOptionType } from "./types.ts";
 
 import { SwapTaskQueue } from "./task/queue.ts";
 import {
-  addSpaces,
   addChannels,
   addEvents,
+  addSpaces,
   addUsers,
   type BottChannel,
   type BottEvent,
-  type BottUser,
   type BottSpace,
+  type BottUser,
   EventType,
 } from "@bott/data";
 
@@ -70,7 +70,7 @@ export async function startBot({
   const baseSelf = {
     user: {
       id: Number(client.user.id),
-      name: client.user.username
+      name: client.user.username,
     },
     tasks: new SwapTaskQueue(),
     wpm: 200,
@@ -119,7 +119,7 @@ export async function startBot({
           id: Number(space.id),
           name: space.name,
           description: space.description ?? "N/A",
-          channels: [] // TODO: worry about this later
+          channels: [], // TODO: worry about this later
         });
 
         // Add users:

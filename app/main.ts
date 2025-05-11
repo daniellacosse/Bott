@@ -61,7 +61,12 @@ startBot({
           return;
         }
 
-        await this.send(event);
+        const result = await this.send(event);
+
+        if (result && "id" in result) {
+          event.id = Number(result.id);
+        }
+
         addEvents(event);
       }
     });
