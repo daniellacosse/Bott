@@ -1,7 +1,7 @@
 import { BinaryHeap as Heap } from "jsr:@std/data-structures"; 
 
 type SwapBucketId = number;
-type CancellableTask = (signal: AbortSignal) => Promise<void>;
+type CancellableTask = (controller: AbortController) => Promise<void>;
 type Comparison = -1 | 0 | 1;
 
 interface SwapJob {
@@ -88,7 +88,7 @@ export class SwapTaskQueue {
     this.liveJob = job
        
     try {
-      await job.task(job.abortController.signal);
+      await job.task(job.abortController);
     } catch (_) {
       // do nothing
     } finally {

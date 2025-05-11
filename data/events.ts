@@ -26,14 +26,14 @@ export enum EventType {
   REACTION = "reaction",
 }
 
-export interface BottEvent {
+export interface BottEvent<D extends object = { content: string; }> {
   id: number;
+  type: EventType;
+  details: D;
+  timestamp: Date;
   channel?: BottChannel;
   parent?: BottEvent;
   user?: BottUser;
-  type: EventType;
-  details: Uint8Array;
-  timestamp: Date;
 }
 
 export const getEvents = (...ids: number[]): BottEvent[] => {
@@ -62,7 +62,7 @@ export const getEvents = (...ids: number[]): BottEvent[] => {
       const event: BottEvent = {
         id,
         type,
-        details,
+        details: JSON.parse(details),
         timestamp: new Date(timestamp),
       };
 
@@ -85,7 +85,7 @@ export const getEvents = (...ids: number[]): BottEvent[] => {
         event.parent = {
           id: context.p_id,
           type: context.p_type,
-          details: context.p_details,
+          details: JSON.parse(context.p_details),
           timestamp: new Date(context.p_ts),
         };
       }
@@ -103,7 +103,7 @@ export const addEvents = (...events: BottEvent[]): boolean => {
         (id, type, details, parent_id, channel_id, user_id, timestamp)
         values ${
         events.map((event) =>
-          sql`(${event.id}, ${event.type}, ${event.details}, ${
+          sql`(${event.id}, ${event.type}, ${JSON.stringify(event.details)}, ${
             event.parent?.id ?? null
           }, ${event.channel?.id ?? null}, ${
             event.user?.id ?? null

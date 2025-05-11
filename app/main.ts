@@ -2,6 +2,8 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { addEvents, type BottEvent } from "@bott/data";
 import { startBot } from "@bott/discord";
+
+// TODO: messageChannel or whatever it is
 import { messageChannel } from "@bott/gemini";
 
 import { standardInstructions } from "./instructions/main.ts";
@@ -16,7 +18,7 @@ startBot({
       `[INFO] @Bott running at id <@${this.id}>`,
     );
   },
-  async event(event) {
+  event(event) {
     if (!event.channel) {
       return;
     }
@@ -24,36 +26,42 @@ startBot({
     // 0. Persist event - TODO: create user/channel if not exist
     addEvents(event);
 
-    // 1. Get response from gemini
+    this.tasks.push(event.channel.id, async (ctl: AbortController) => {
+          // 1. Get response from gemini
     const baseMessageEvent: BottEvent = await messageChannel(
       event.channel,
       standardInstructions(
         this.id,
-        event.channel.name,
-        event.channel.description ?? "N/A",
+        event.channel!.name,
+        event.channel?.description ?? "N/A",
       ),
+      ctl
     );
 
     // 2. Ignore or split
-    const baseMessageText = baseMessageEvent.data.toString();
-    if (baseMessageText === noResponseMarker) {
+    if (baseMessageEvent.details.content === noResponseMarker) {
       return;
     }
 
-    const messageTexts = splitMessagePreservingCodeBlocks(baseMessageText);
+    const messageTexts = splitMessagePreservingCodeBlocks(baseMessageEvent.details.content);
 
     // 3. Send events, writing to disk as we go
     for (const messageText of messageTexts) {
-      this.sendTyping();
+      this.startTyping();
 
       const words = messageText.split(/\s+/).length;
       const delayMs = (words / this.wpm) * 60 * 1000;
       const cappedDelayMs = Math.min(delayMs, 7000);
       await sleep(cappedDelayMs);
 
+      if (ctl.signal.aborted) {
+        return;
+      }
+
       // TODO: change behavior based on reaction/reply
-      addEvents(this.send(messageText));
+      addEvents(this.sentMessage(messageText));
     }
+    });
   },
 });
 

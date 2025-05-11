@@ -11,6 +11,7 @@ import {
 import { createErrorEmbed } from "../message/embed/error.ts";
 import { type CommandObject, CommandOptionType } from "./types.ts";
 
+import { SwapTaskQueue } from "./task/queue.ts";
 import { type BottEvent, EventType } from "@bott/data";
 
 const defaultIntents = [
@@ -22,8 +23,9 @@ const defaultIntents = [
 
 type Bot = {
   id: string;
-  send: (text: string) => BottEvent;
-  sendTyping: () => void;
+  sentMessage: (text: string) => BottEvent;
+  startTyping: () => void;
+  tasks: SwapTaskQueue;
   wpm: number;
 };
 
@@ -56,10 +58,11 @@ export async function startBot({
   const self = {
     id: client.user.id,
     // TODO:
-    send: (text: string) => {
+    sentMessage: (text: string) => {
       return {} as BottEvent;
     },
-    sendTyping: () => {},
+    startTyping: () => {},
+    tasks: new SwapTaskQueue(),
     wpm: 200,
   };
 
@@ -105,7 +108,7 @@ export async function startBot({
       // especially if 'events.id' is a primary key. This needs to be addressed for data integrity.
       id: Number(reaction.message.id),
       type: EventType.REACTION,
-      data: new TextEncoder().encode(reaction.emoji.toString()),
+      details: { content: reaction.emoji.toString() },
       timestamp: new Date(),
       channel: {
         id: Number(reaction.message.channel.id),
@@ -165,7 +168,7 @@ const messageToBaseEvent = (message: Message<true>): BottEvent => {
   const event: BottEvent = {
     id: Number(message.id),
     type: EventType.MESSAGE,
-    data: new TextEncoder().encode(message.content),
+    details: { content: message.content },
     timestamp: new Date(message.createdTimestamp),
     channel: {
       id: Number(message.channel.id),

@@ -1,5 +1,4 @@
 import { assertExists } from "jsr:@std/assert";
-import { getSchema } from "./client.ts";
 
 Deno.test("database smoke test", async () => {
   const tempDbFile = await Deno.makeTempFile();
@@ -34,7 +33,7 @@ Deno.test("database smoke test", async () => {
     type: EventType.MESSAGE,
     user: userNancy,
     channel: channelMain,
-    data: new TextEncoder().encode("Hello"),
+    details: { content: "Hello" },
     timestamp: new Date(),
   };
   const bobReply = {
@@ -43,7 +42,7 @@ Deno.test("database smoke test", async () => {
     user: userBob,
     channel: channelMain,
     parent: nancyGreeting,
-    data: new TextEncoder().encode("Hi"),
+    details: { content: "Hi" },
     timestamp: new Date(),
   };
   const nancyReaction = {
@@ -52,13 +51,11 @@ Deno.test("database smoke test", async () => {
     user: userNancy,
     channel: channelMain,
     parent: bobReply,
-    data: new TextEncoder().encode("👍"),
+    details: { content: "👍" },
     timestamp: new Date(),
   };
 
   addEvents(nancyGreeting, bobReply, nancyReaction);
-
-  console.log(getSchema());
 
   // test
   const [dbResult] = getEvents(nancyReaction.id);
@@ -67,7 +64,7 @@ Deno.test("database smoke test", async () => {
 
   assertExists(dbResult.id);
   assertExists(dbResult.type);
-  assertExists(dbResult.data);
+  assertExists(dbResult.details);
   assertExists(dbResult.timestamp);
   assertExists(dbResult.channel);
   assertExists(dbResult.channel.id);
@@ -78,6 +75,6 @@ Deno.test("database smoke test", async () => {
   assertExists(dbResult.parent);
   assertExists(dbResult.parent.id);
   assertExists(dbResult.parent.type);
-  assertExists(dbResult.parent.data);
+  assertExists(dbResult.parent.details);
   assertExists(dbResult.parent.timestamp);
 });
