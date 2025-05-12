@@ -119,7 +119,7 @@ export async function startBot({
           id: Number(space.id),
           name: space.name,
           description: space.description ?? "N/A",
-          channels: [], // TODO: worry about this later
+          channels: [], // We add the channels below.
         });
 
         // Add users:

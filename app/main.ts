@@ -3,7 +3,6 @@ import { delay } from "jsr:@std/async/delay";
 import { addEvents, type BottEvent, getChannelHistory } from "@bott/data";
 import { startBot } from "@bott/discord";
 
-// TODO: messageChannel or whatever it is
 import { respondEvents } from "@bott/gemini";
 import { getIdentity } from "./identity.ts";
 

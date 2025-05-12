@@ -108,15 +108,20 @@ function transformContentToBottEvents(content: Content): BottEvent[] {
       partialEvent.details.content,
     );
 
+    let type = partialEvent.type ?? BottEventType.MESSAGE;
+
     for (const messagePart of splitDetails) {
       result.push({
         id: partialEvent.id ??
           Math.round(Math.random() * Number.MAX_SAFE_INTEGER),
-        type: partialEvent.type ?? BottEventType.MESSAGE,
+        type,
         details: { content: messagePart },
         timestamp: new Date(),
         ...partialEvent,
       });
+
+      // Don't string multiple replies in the same message stream
+      type = BottEventType.MESSAGE;
     }
   }
 
