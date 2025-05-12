@@ -19,6 +19,8 @@ deno task start
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/daniellacosse-code/Bott.git)
 
+Duplicate `.env.example` to `.env.production` and fill it out.
+
 ```
 gcloud login
 deno task deploy

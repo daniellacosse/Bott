@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source .env
+source .env.production
 
 docker buildx build --platform linux/amd64 -t bott .
 docker tag bott us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/bot-farm/bott:latest
