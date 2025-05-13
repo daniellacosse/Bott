@@ -1,5 +1,20 @@
 import { BinaryHeap as Heap } from "jsr:@std/data-structures";
 
+/**
+ * @fileoverview A task queue that allows for swapping out tasks in a given "bucket"
+ * (identified by a number) with a new task.
+ *
+ * Each bucket has a limited number of swaps available, and once exhausted,
+ * no new tasks can be swapped in the bucket until the current task completes.
+ *
+ * This is useful for scenarios where you want to allow users to change their
+ * minds about a task they've submitted, but want to prevent them from
+ * spamming the system with rapid changes.
+ *
+ * The queue is implemented using a priority queue (min-heap) to ensure that
+ * tasks with the fewest remaining swaps are executed first.
+ */
+
 type SwapBucketId = number;
 type CancellableTask = (signal: AbortSignal) => Promise<void>;
 type Comparison = -1 | 0 | 1;
@@ -46,7 +61,7 @@ export class SwapTaskQueue {
 
       this.readyJobs.set(job.id, job);
 
-      return this.try(job);
+      return this.immediatelyRunJob(job);
     }
 
     if (this.readyJobs.has(id)) {
@@ -58,6 +73,48 @@ export class SwapTaskQueue {
     return this.flushQueue();
   }
 
+  /**
+   * Runs the given job immediately, if it is still the current ready job.
+   * Handles job execution, error handling, and cleanup (blocked job promotion).
+   */
+  private async immediatelyRunJob(job: SwapJob) {
+    const readyJob = this.readyJobs.get(job.id);
+
+    // Skip if this job is outdated:
+    if (!readyJob || readyJob !== job) {
+      return;
+    }
+
+    this.liveJob = job;
+
+    try {
+      await job.task(job.abortController.signal);
+    } catch (_) {
+      // Job failed or was aborted: do nothing.
+    } finally {
+      // Cleanup step: promote blocked jobs and flush only if the job instance
+      // whose task just completed was indeed the one considered 'live'.
+
+      // This prevents outdated jobs from cluttering the execution.
+      if (this.liveJob === job) {
+        this.liveJob = undefined;
+
+        if (this.blockedJobs.has(job.id)) {
+          const blocked = this.blockedJobs.get(job.id)!;
+          this.blockedJobs.delete(job.id);
+          this.readyJob(blocked);
+        }
+
+        // Since the live job finished, always attempt to flush the queue
+        // to process the next available task (could be the one just promoted, or another).
+        this.flushQueue();
+      }
+    }
+  }
+
+  /**
+   * Attempts to flush the queue, processing jobs until it's empty.
+   */
   private async flushQueue() {
     if (this.isFlushing) {
       return;
@@ -71,36 +128,10 @@ export class SwapTaskQueue {
         continue;
       }
 
-      await this.try(potentialJob);
+      await this.immediatelyRunJob(potentialJob);
     }
 
     this.isFlushing = false;
-  }
-
-  private async try(job: SwapJob) {
-    const readyJob = this.readyJobs.get(job.id);
-
-    // Skip if this job is outdated:
-    if (!readyJob || readyJob !== job) {
-      return;
-    }
-
-    this.liveJob = job;
-
-    try {
-      await job.task(job.abortController.signal);
-    } catch (_) {
-      // do nothing
-    } finally {
-      const previousLiveJob = this.liveJob;
-      this.liveJob = undefined;
-      if (previousLiveJob !== job && this.blockedJobs.has(job.id)) {
-        const blocked = this.blockedJobs.get(job.id)!;
-        this.blockedJobs.delete(job.id);
-        this.readyJob(blocked);
-        this.flushQueue();
-      }
-    }
   }
 
   private readyJob(job: SwapJob) {

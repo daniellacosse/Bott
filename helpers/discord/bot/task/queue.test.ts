@@ -77,8 +77,8 @@ Deno.test("SwapTaskQueue - multiple independent buckets", async () => {
     queue.readyJobs.get(1)?.remainingSwaps,
     DEFAULT_INITIAL_SWAPS - 2,
   );
-  // @ts-ignore: access private member for test
   assertEquals(
+    // @ts-ignore: access private member for test
     queue.readyJobs.get(2)?.remainingSwaps,
     DEFAULT_INITIAL_SWAPS - 1,
   );
