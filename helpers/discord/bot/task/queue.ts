@@ -31,7 +31,7 @@ export class SwapTaskQueue {
     const job: SwapJob = {
       id,
       task,
-      remainingSwaps: this.initialSwaps,
+      remainingSwaps: this.initialSwaps - 1,
       abortController: new AbortController(),
     };
 
@@ -44,7 +44,7 @@ export class SwapTaskQueue {
 
       job.remainingSwaps = this.liveJob.remainingSwaps - 1;
 
-      this.readyJob(job);
+      this.readyJobs.set(job.id, job);
 
       return this.try(job);
     }
@@ -92,12 +92,13 @@ export class SwapTaskQueue {
     } catch (_) {
       // do nothing
     } finally {
+      const previousLiveJob = this.liveJob;
       this.liveJob = undefined;
-
-      // Promote previous blocked job to "ready":
-      if (this.blockedJobs.has(job.id)) {
-        this.readyJob(this.blockedJobs.get(job.id)!);
+      if (previousLiveJob !== job && this.blockedJobs.has(job.id)) {
+        const blocked = this.blockedJobs.get(job.id)!;
         this.blockedJobs.delete(job.id);
+        this.readyJob(blocked);
+        this.flushQueue();
       }
     }
   }
@@ -112,11 +113,11 @@ export class SwapTaskQueue {
   }
 
   private isSwapLocked(id: SwapBucketId) {
-    if (this.liveJob?.id === id && this.liveJob.remainingSwaps > 0) {
+    if (this.liveJob?.id === id && this.liveJob.remainingSwaps <= 0) {
       return true;
     }
 
-    if (this.readyJobs.has(id) && this.readyJobs.get(id)!.remainingSwaps > 0) {
+    if (this.readyJobs.has(id) && this.readyJobs.get(id)!.remainingSwaps <= 0) {
       return true;
     }
 

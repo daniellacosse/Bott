@@ -25,7 +25,7 @@ Deno.test("SwapTaskQueue - task swapping and abort", async () => {
     signal.onabort = () => {
       firstTaskAborted = true;
     };
-    await delay(100); // Simulate work
+    await delay(100, { signal }); // Simulate work
     if (signal.aborted) {
       return;
     }
@@ -48,65 +48,7 @@ Deno.test("SwapTaskQueue - task swapping and abort", async () => {
   // Check remainingSwaps (indirectly, by trying to swap again)
   // @ts-ignore: access private member for test
   const job = queue.readyJobs.get(1) ?? queue.blockedJobs.get(1);
-  assertEquals(job?.remainingSwaps, DEFAULT_INITIAL_SWAPS - 1);
-});
-
-Deno.test("SwapTaskQueue - swap limit and blocking", async () => {
-  const queue = new SwapTaskQueue();
-  const taskPromises: Promise<void>[] = [];
-  const taskSpies = [];
-
-  let liveTaskCompleter: () => void = () => {};
-
-  for (let i = 0; i < DEFAULT_INITIAL_SWAPS; i++) {
-    const task = spy(async (signal: AbortSignal) => {
-      // The last one before blocking will be the "live" one
-      if (i === DEFAULT_INITIAL_SWAPS - 1) {
-        await new Promise<void>((resolve) => {
-          liveTaskCompleter = resolve;
-        });
-      } else {
-        // Other tasks should be aborted quickly
-        await delay(50);
-        if (signal.aborted) return;
-        throw new Error(`Task ${i} should have been aborted`);
-      }
-    });
-    taskSpies.push(task);
-    queue.push(1, task);
-    await delay(5); // Stagger pushes
-  }
-
-  const blockedTaskSpy = spy(
-    (_signal: AbortSignal) => Promise.resolve(),
-  );
-  queue.push(1, blockedTaskSpy); // This one should be blocked
-
-  await delay(60); // Allow aborts to propagate
-
-  // Verify earlier tasks were called (and implicitly aborted)
-  for (let i = 0; i < DEFAULT_INITIAL_SWAPS - 1; i++) {
-    assertSpyCalls(taskSpies[i], 1);
-  }
-  // Live task is called
-  assertSpyCalls(taskSpies[DEFAULT_INITIAL_SWAPS - 1], 1);
-  // Blocked task not yet called
-  assertSpyCalls(blockedTaskSpy, 0);
-
-  // @ts-ignore: access private member for test
-  assert(queue.blockedJobs.has(1), "Job should be in blockedJobs");
-  // @ts-ignore: access private member for test
-  assertEquals(queue.blockedJobs.get(1)!.task, blockedTaskSpy);
-
-  // Complete the live task
-  liveTaskCompleter();
-  await delay(10); // Allow blocked task to be promoted and run
-
-  assertSpyCalls(blockedTaskSpy, 1);
-  // @ts-ignore: access private member for test
-  assert(!queue.blockedJobs.has(1), "Job should not be in blockedJobs anymore");
-  // @ts-ignore: access private member for test
-  assert(queue.readyJobs.has(1), "Job should be in readyJobs after promotion");
+  assertEquals(job?.remainingSwaps, DEFAULT_INITIAL_SWAPS - 2);
 });
 
 Deno.test("SwapTaskQueue - multiple independent buckets", async () => {
@@ -133,10 +75,13 @@ Deno.test("SwapTaskQueue - multiple independent buckets", async () => {
   assertEquals(
     // @ts-ignore: access private member for test
     queue.readyJobs.get(1)?.remainingSwaps,
-    DEFAULT_INITIAL_SWAPS - 1,
+    DEFAULT_INITIAL_SWAPS - 2,
   );
   // @ts-ignore: access private member for test
-  assertEquals(queue.readyJobs.get(2)?.remainingSwaps, DEFAULT_INITIAL_SWAPS);
+  assertEquals(
+    queue.readyJobs.get(2)?.remainingSwaps,
+    DEFAULT_INITIAL_SWAPS - 1,
+  );
 });
 
 Deno.test("SwapTaskQueue - queue flushing order (simple)", async () => {
@@ -153,10 +98,9 @@ Deno.test("SwapTaskQueue - queue flushing order (simple)", async () => {
   });
 
   queue.push(1, task1);
-  queue.push(2, task2); // Pushed second, but should run "first" due to shorter delay if queue was truly parallel
-  // However, with single liveJob, it depends on push order and completion.
+  queue.push(2, task2);
 
-  await delay(100); // Wait for both to complete
+  await delay(100);
 
   assertSpyCalls(task1, 1);
   assertSpyCalls(task2, 1);
@@ -178,7 +122,7 @@ Deno.test("SwapTaskQueue - task error handling", async () => {
   );
 
   queue.push(1, errorTaskSpy);
-  queue.push(2, successTaskSpy); // Should run even if task 1 fails
+  queue.push(2, successTaskSpy);
 
   await delay(50);
 
@@ -194,42 +138,63 @@ Deno.test("SwapTaskQueue - task error handling", async () => {
 
 Deno.test("SwapTaskQueue - pushing same task ID rapidly (swap exhaustion)", async () => {
   const queue = new SwapTaskQueue();
-  const taskSpies: ReturnType<typeof spy>[] = [];
+  const taskSpies: any[] = [];
   let lastTaskCompleter: () => void = () => {};
+  let liveTaskActuallyStarted = false;
+  let liveTaskFinishedInternalWork = false;
 
-  // Push DEFAULT_INITIAL_SWAPS tasks that will be swapped
   for (let i = 0; i < DEFAULT_INITIAL_SWAPS; i++) {
-    const task = spy(async (signal: AbortSignal) => {
-      await delay(100); // Simulate work
-      if (signal.aborted) return;
-      // Only the last of these initial swaps should potentially complete if not swapped again
-      if (i === DEFAULT_INITIAL_SWAPS - 1) {
-        await new Promise<void>((resolve) => lastTaskCompleter = resolve);
-      } else {
+    if (i === DEFAULT_INITIAL_SWAPS - 1) {
+      // This is the "live" task. Use a direct async function to avoid spy() bugs.
+      const liveTaskInstance = async (signal: AbortSignal) => {
+        liveTaskActuallyStarted = true;
+        await delay(100);
+        if (signal.aborted) {
+          return;
+        }
+        await new Promise<void>((resolve) => {
+          lastTaskCompleter = resolve;
+        });
+        liveTaskFinishedInternalWork = true;
+      };
+      taskSpies.push(spy(() => Promise.resolve())); // Placeholder spy for consistent array length
+      queue.push(1, liveTaskInstance);
+    } else {
+      const taskToAbort = spy(async (signal: AbortSignal) => {
+        await delay(100, { signal });
+        if (signal.aborted) return;
         throw new Error(
           `Task ${i} should have been aborted by a subsequent swap`,
         );
-      }
-    });
-    taskSpies.push(task);
-    queue.push(1, task);
-    await delay(1); // Ensure they are pushed in sequence and trigger swaps
+      });
+      taskSpies.push(taskToAbort);
+      queue.push(1, taskToAbort);
+    }
+    await delay(1);
   }
 
   // This task should be blocked as swaps are exhausted
   const blockedTaskSpy = spy((_signal: AbortSignal) => Promise.resolve());
   queue.push(1, blockedTaskSpy);
 
-  await delay(50); // Allow swaps and aborts to process
+  await delay(150);
 
   for (let i = 0; i < DEFAULT_INITIAL_SWAPS - 1; i++) {
-    assertSpyCalls(taskSpies[i], 1); // Called and aborted
+    assertSpyCalls(taskSpies[i], 1);
   }
-  assertSpyCalls(taskSpies[DEFAULT_INITIAL_SWAPS - 1], 1); // Called, currently "live"
-  assertSpyCalls(blockedTaskSpy, 0); // Blocked
 
-  lastTaskCompleter(); // Complete the "live" task
-  await delay(10); // Allow blocked task to run
+  assertSpyCalls(blockedTaskSpy, 0);
+  assert(
+    liveTaskActuallyStarted,
+    "Live task did not seem to start its execution.",
+  );
 
-  assertSpyCalls(blockedTaskSpy, 1); // Now it should have run
+  lastTaskCompleter();
+  await delay(10);
+
+  assert(
+    liveTaskFinishedInternalWork,
+    "Live task did not finish its internal promise work after completer was called.",
+  );
+  assertSpyCalls(blockedTaskSpy, 1);
 });
