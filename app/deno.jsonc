@@ -3,6 +3,7 @@
     "reset": "rm test.db",
     // TODO: remove --env-file :/
     "start": "deno run --allow-all --env-file=../.env.staging ./main.ts"
+    // "start": "deno run --allow-all ./main.ts"
   },
   "imports": {
     "@bott/data": "../data/main.ts",
