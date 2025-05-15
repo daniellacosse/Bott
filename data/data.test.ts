@@ -1,62 +1,37 @@
+import { addEvents, BottEventType, getEvents } from "./model/events.ts";
+
 import { assertExists } from "jsr:@std/assert";
-import { exec, sql } from "./client.ts";
+import { setSchema } from "./model/schema.ts";
 
 Deno.test("database smoke test", async () => {
   const tempDbFile = await Deno.makeTempFile();
 
   Deno.env.set("DB_PATH", tempDbFile);
 
+  setSchema();
+
   // spaces
-  const { addSpaces } = await import("./model/spaces.ts");
-
-  const chatWorld = {
-    id: 1,
-    name: "Chat World"
+  const spaceChatWorld = {
+    id: "1",
+    name: "Chat World",
   };
 
-  addSpaces(chatWorld);
+  const channelMain = { id: "1", name: "main", space: spaceChatWorld };
 
-  console.log("spaces table:", exec(sql`select * from spaces`));
-
-  // channels
-  const { addChannels } = await import("./model/channels.ts");
-  
-  const channelMain = { id: 1, name: "main", space: chatWorld };
-  const channelRandom = {
-    id: 2,
-    space: chatWorld,
-    name: "random",
-    description: "random channel",
-  };
-
-  addChannels(channelMain, channelRandom);
-
-  console.log("channel table:", exec(sql`select * from channels`));
-
-  // users
-  const { addUsers } = await import("./model/users.ts");
-
-  const userNancy = { id: 1, name: "Nancy" };
-  const userBob = { id: 2, name: "Bob" };
-
-  addUsers(userNancy, userBob);
-
-  console.log("user table:", exec(sql`select * from users`));
-
-  // events
-  const { addEvents, getEvents, EventType } = await import("./model/events.ts");
+  const userNancy = { id: "1", name: "Nancy" };
+  const userBob = { id: "2", name: "Bob" };
 
   const nancyGreeting = {
-    id: 1,
-    type: EventType.MESSAGE,
+    id: "1",
+    type: BottEventType.MESSAGE,
     user: userNancy,
     channel: channelMain,
     details: { content: "Hello" },
     timestamp: new Date(),
   };
   const bobReply = {
-    id: 2,
-    type: EventType.REPLY,
+    id: "2",
+    type: BottEventType.REPLY,
     user: userBob,
     channel: channelMain,
     parent: nancyGreeting,
@@ -64,8 +39,8 @@ Deno.test("database smoke test", async () => {
     timestamp: new Date(),
   };
   const nancyReaction = {
-    id: 3,
-    type: EventType.REACTION,
+    id: "3",
+    type: BottEventType.REACTION,
     user: userNancy,
     channel: channelMain,
     parent: bobReply,
@@ -74,8 +49,6 @@ Deno.test("database smoke test", async () => {
   };
 
   addEvents(nancyGreeting, bobReply, nancyReaction);
-
-  console.log("event table:", exec(sql`select * from events`));
 
   // test
   const [dbResult] = getEvents(nancyReaction.id);

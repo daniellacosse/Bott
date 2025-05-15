@@ -1,0 +1,12 @@
+{
+  "tasks": {
+    "reset": "rm test.db",
+    // TODO: remove --env-file :/
+    "start": "deno run --allow-all --env-file=../.env.staging ./main.ts"
+  },
+  "imports": {
+    "@bott/data": "../data/main.ts",
+    "@bott/gemini": "../helpers/gemini/main.ts",
+    "@bott/discord": "../helpers/discord/main.ts"
+  }
+}

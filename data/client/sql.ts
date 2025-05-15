@@ -1,0 +1,66 @@
+import type { SupportedValueType } from "node:sqlite";
+
+export interface SqlInstructions {
+  query: string;
+  params: SupportedValueType[];
+}
+
+function isSqlInstructions(value: any): value is SqlInstructions {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof value.query === "string" &&
+    Array.isArray(value.params)
+  );
+}
+
+// Helper to process a single non-array interpolation item.
+// It returns the query string part for this item and pushes its parameters to the paramsCollector.
+function processInterpolationValue(
+  item: SupportedValueType | SqlInstructions,
+  paramsCollector: SupportedValueType[],
+): string {
+  if (isSqlInstructions(item)) {
+    paramsCollector.push(...item.params);
+    return item.query;
+  }
+  // It's a SupportedValueType
+  paramsCollector.push(item);
+  return "?";
+}
+
+export function sql( // naive sql tag
+  strings: TemplateStringsArray,
+  ...interpolations: (
+    | SupportedValueType
+    | SqlInstructions
+    | (SqlInstructions | SupportedValueType)[]
+  )[]
+): SqlInstructions {
+  let [query] = strings.raw;
+  const params: SupportedValueType[] = [];
+
+  for (let i = 0; i < interpolations.length; i++) {
+    const interpolation = interpolations[i];
+
+    if (Array.isArray(interpolation)) {
+      // Handle array interpolations (e.g., for IN clauses or multiple VALUES)
+      // Each item in the array is processed, and their query parts are joined by ", "
+      const arrayQueryParts = interpolation.map((item) =>
+        processInterpolationValue(item, params)
+      );
+      query += arrayQueryParts.join(", ");
+    } else {
+      // Handle single SqlInstructions or SupportedValueType
+      query += processInterpolationValue(interpolation, params);
+    }
+
+    // Add the static string part that follows this interpolation
+    query += strings.raw[i + 1];
+  }
+
+  return {
+    query,
+    params,
+  };
+}

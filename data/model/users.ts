@@ -1,36 +1,29 @@
-import { exec, sql } from "../client.ts";
-
-exec(
-  sql`
-    create table if not exists users (
-      id integer primary key not null,
-      name text not null
-    )
-  `,
-);
+import { commit } from "../client/commit.ts";
+import { sql } from "../client/sql.ts";
 
 export interface BottUser {
-  id: number;
+  id: string;
   name: string;
 }
 
-export const getUsers = (...ids: number[]): BottUser[] =>
-  exec(
-    sql`select * from users where id in (${ids})`,
-  );
+export const usersTableSql = sql`
+  create table if not exists users (
+    id varchar(36) primary key not null,
+    name text not null
+  )
+`;
 
-export const addUsers = (...users: BottUser[]): boolean => {
-  try {
-    exec(
-      sql`
-        insert into users
-        (id, name)
-        values ${users.map((user) => sql`(${user.id}, ${user.name})`)}
-        on conflict(id) do update set
-          name = excluded.name`,
-    );
-    return true;
-  } catch (_) {
-    return false;
-  }
+export const getAddUsersSql = (...users: BottUser[]) => {
+  const values = users.map((user) => sql`(${user.id}, ${user.name})`);
+
+  return sql`
+    insert into users (id, name)
+    values ${values}
+    on conflict(id) do update set
+      name = excluded.name
+  `;
+};
+
+export const addUsers = (...users: BottUser[]) => {
+  return commit(getAddUsersSql(...users));
 };

@@ -1,12 +1,13 @@
 import { delay } from "jsr:@std/async/delay";
 
-import { addEvents, type BottEvent, getChannelHistory } from "@bott/data";
+import { addEvents, type BottEvent, getEventIdsForChannel } from "@bott/data";
 import { startBot } from "@bott/discord";
 
 import { respondEvents } from "@bott/gemini";
 import { getIdentity } from "./identity.ts";
 
 import commands from "./commands/main.ts";
+import { getEvents } from "../data/model/events.ts";
 
 const MS_IN_MINUTE = 60 * 1000;
 const MAX_TYPING_TIME_MS = 3000;
@@ -16,7 +17,7 @@ startBot({
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {
     console.info(
-      `[INFO] @Bott running at id <@${this.user.id}>`,
+      `[INFO] Running at id <@${this.user.id}>`,
     );
   },
   event(event) {
@@ -24,16 +25,12 @@ startBot({
       return;
     }
 
-    // Persist input event:
     addEvents(event);
 
-    // This will be executed in accordance to @bott/discord/bot/tasks/queue.
-    // Subsequent triggering events will interrupt this process to start a new one,
-    // until a certain "interruption limit" is reached (to ensure Bott is not "soft-blocked").
     this.tasks.push(event.channel.id, async (abortSignal: AbortSignal) => {
-      // 1. Get list of bot events from Gemini:
+      // 1. Get list of bot events (responses) from Gemini:
       const messageEvents: BottEvent[] = await respondEvents(
-        getChannelHistory(event.channel!.id),
+        getEvents(...getEventIdsForChannel(event.channel!.id)),
         {
           abortSignal,
           identity: getIdentity({
@@ -63,7 +60,7 @@ startBot({
         const result = await this.send(event);
 
         if (result && "id" in result) {
-          event.id = Number(result.id);
+          event.id = result.id;
         }
 
         addEvents(event);

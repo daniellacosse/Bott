@@ -1,7 +1,7 @@
 import type { Content } from "npm:@google/genai";
 
 import gemini from "../client.ts";
-import { type BottEvent, EventType as BottEventType } from "@bott/data";
+import { type BottEvent, BottEventType } from "@bott/data";
 
 import baseInstructions from "./baseInstructions.ts";
 
@@ -18,9 +18,9 @@ export const respondEvents = async (
 ): Promise<BottEvent[]> => {
   // TODO: explicitly pass in model id?
   const modelIdMatch = identity.match(/<@(\d+)>/);
-  const modelUserId = modelIdMatch ? Number(modelIdMatch[1]) : -1;
+  const modelUserId = modelIdMatch ? modelIdMatch[1] : "-1";
 
-  if (modelUserId === -1) {
+  if (modelUserId === "-1") {
     console.error(
       "[ERROR] Could not extract modelUserId from identity string. Bot messages might be misattributed in history sent to Gemini.",
     );
@@ -61,7 +61,7 @@ export const respondEvents = async (
 
 const transformBottEventToContent = (
   event: BottEvent,
-  modelUserId: number,
+  modelUserId: string,
 ): Content => ({
   role: (event.user && event.user.id === modelUserId) ? "model" : "user",
   parts: [{ text: JSON.stringify(event) }],
@@ -112,8 +112,7 @@ function transformContentToBottEvents(content: Content): BottEvent[] {
 
     for (const messagePart of splitDetails) {
       result.push({
-        id: partialEvent.id ??
-          Math.round(Math.random() * Number.MAX_SAFE_INTEGER),
+        id: partialEvent.id ?? crypto.randomUUID(),
         type,
         details: { content: messagePart },
         timestamp: new Date(),

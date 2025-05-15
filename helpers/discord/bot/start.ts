@@ -15,15 +15,12 @@ import { type CommandObject, CommandOptionType } from "./types.ts";
 
 import { SwapTaskQueue } from "./task/queue.ts";
 import {
-  addChannels,
   addEvents,
-  addSpaces,
-  addUsers,
   type BottChannel,
   type BottEvent,
+  BottEventType,
   type BottSpace,
   type BottUser,
-  EventType,
 } from "@bott/data";
 
 const defaultIntents = [
@@ -69,7 +66,7 @@ export async function startBot({
 
   const baseSelf = {
     user: {
-      id: Number(client.user.id),
+      id: client.user.id,
       name: client.user.username,
     },
     tasks: new SwapTaskQueue(),
@@ -87,36 +84,39 @@ export async function startBot({
       if (!currentChannel) return;
 
       switch (event.type) {
-        case EventType.MESSAGE:
+        case BottEventType.MESSAGE:
           return currentChannel.send(event.details.content);
-        case EventType.REPLY: {
+        case BottEventType.REPLY: {
           const message = await currentChannel.messages.fetch(
             String(event.parent!.id),
           );
           return message.reply(event.details.content);
         }
-        case EventType.REACTION: {
+        case BottEventType.REACTION: {
           const message = await currentChannel.messages.fetch(
             String(event.parent!.id),
           );
           return message.react(event.details.content);
         }
+        default:
+          return;
       }
     },
   });
 
   client.once(Events.ClientReady, async () => {
-    try {
-      const spaceIndex = new Map<string, BottSpace>();
-      const userIndex = new Map<string, BottUser>();
-      const channelIndex = new Map<string, BottChannel>();
-      const events: BottEvent[] = [];
+    // Attempt to hydrate the DB.
+    const spaceIndex = new Map<string, BottSpace>();
+    const userIndex = new Map<string, BottUser>();
+    const channelIndex = new Map<string, BottChannel>();
+    const events: BottEvent[] = [];
 
-      // Discord "guilds" are equivalent to Bott's "spaces":
-      for (const space of client.guilds.cache.values()) {
+    // Discord "guilds" are equivalent to Bott's "spaces":
+    for (const space of client.guilds.cache.values()) {
+      try {
         // Add space:
         const spaceObject = {
-          id: Number(space.id),
+          id: space.id,
           name: space.name,
           description: space.description ?? undefined,
         };
@@ -124,8 +124,10 @@ export async function startBot({
 
         // Add users:
         await space.members.fetch();
-        for (const { user: { id, username } } of space.members.cache.values()) {
-          userIndex.set(id, { id: Number(id), name: username });
+        for (
+          const { user: { id, username } } of space.members.cache.values()
+        ) {
+          userIndex.set(id, { id, name: username });
         }
 
         // Add channels:
@@ -133,37 +135,39 @@ export async function startBot({
           if (channel.type !== ChannelType.GuildText) {
             continue;
           }
+          try {
+            channelIndex.set(channel.id, {
+              id: channel.id,
+              name: channel.name,
+              description: channel.topic ?? undefined,
+              space: spaceObject,
+            });
 
-          channelIndex.set(channel.id, {
-            id: Number(channel.id),
-            name: channel.name,
-            description: channel.topic ?? undefined,
-            space: spaceObject
-          });
-
-          // Add events:
-          const messages = await channel.messages.fetch();
-          for (const message of messages.values()) {
-            const baseEvent = messageToBaseEvent(message as Message<true>);
-            if (message.reference?.messageId) {
-              baseEvent.type = EventType.REPLY;
-              baseEvent.parent = {
-                id: Number(message.reference.messageId),
-              } as BottEvent;
+            // Add events:
+            const messages = await channel.messages.fetch();
+            for (const message of messages.values()) {
+              const baseEvent = messageToBaseEvent(message as Message<true>);
+              if (message.reference?.messageId) {
+                baseEvent.type = BottEventType.REPLY;
+                baseEvent.parent = {
+                  id: message.reference.messageId,
+                } as BottEvent;
+              }
+              events.push(baseEvent);
             }
-            events.push(baseEvent);
+          } catch (_) {
+            // Continue to the next channel
           }
         }
+      } catch (_) {
+        // Continue to the next guild
       }
+    }
 
-      addSpaces(...spaceIndex.values());
-      addChannels(...channelIndex.values());
-      addUsers(...userIndex.values());
-      addEvents(
-        ...events.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-      );
-    } catch (error) {
-      console.error("[ERROR] Database hydration failed:", error);
+    const result = addEvents(...events);
+
+    if ("error" in result) {
+      console.error("[ERROR] Failed to hydrate database:", result.error);
     }
 
     handleMount?.call(makeSelf());
@@ -176,11 +180,11 @@ export async function startBot({
       return;
     }
 
-    let eventType = EventType.MESSAGE;
+    let eventType = BottEventType.MESSAGE;
     let parentEvent: BottEvent | undefined;
 
     if (message.reference && message.reference.messageId) {
-      eventType = EventType.REPLY;
+      eventType = BottEventType.REPLY;
       try {
         parentEvent = messageToBaseEvent(
           await currentChannel.messages.fetch(message.reference.messageId),
@@ -210,16 +214,15 @@ export async function startBot({
     }
 
     const event: BottEvent = {
-      // It's okay if we lose reaction data
-      id: Math.round(Math.random() * Number.MAX_SAFE_INTEGER),
-      type: EventType.REACTION,
+      id: crypto.randomUUID(),
+      type: BottEventType.REACTION,
       details: { content: reaction.emoji.toString() },
       timestamp: new Date(),
       channel: {
-        id: Number(currentChannel.id),
+        id: currentChannel.id,
         name: currentChannel.name,
         space: {
-          id: Number(currentChannel.guild.id),
+          id: currentChannel.guild.id,
           name: currentChannel.guild.name,
         },
       },
@@ -228,7 +231,7 @@ export async function startBot({
     const reactor = reaction.users.cache.first();
     if (reactor) {
       event.user = {
-        id: Number(reactor.id),
+        id: reactor.id,
         name: reactor.username,
       };
     }
@@ -275,15 +278,18 @@ export async function startBot({
 
 const messageToBaseEvent = (message: Message<true>): BottEvent => {
   const event: BottEvent = {
-    id: Number(message.id),
-    type: EventType.MESSAGE,
-    details: { content: message.content },
+    id: message.id,
+    type: BottEventType.MESSAGE,
+    details: {
+      content: (message.content || message.embeds.at(0)?.description) ??
+        "NO CONTENT",
+    },
     timestamp: new Date(message.createdTimestamp),
     channel: {
-      id: Number(message.channel.id),
+      id: message.channel.id,
       name: message.channel.name,
       space: {
-        id: Number(message.guild?.id),
+        id: message.guild?.id,
         name: message.guild?.name,
       },
     },
@@ -291,7 +297,7 @@ const messageToBaseEvent = (message: Message<true>): BottEvent => {
 
   if (message.author) {
     event.user = {
-      id: Number(message.author.id),
+      id: message.author.id,
       name: message.author.username,
     };
   }

@@ -15,7 +15,7 @@ import { BinaryHeap as Heap } from "jsr:@std/data-structures";
  * tasks with the fewest remaining swaps are executed first.
  */
 
-type SwapBucketId = number;
+type SwapBucketId = string;
 type CancellableTask = (signal: AbortSignal) => Promise<void>;
 type Comparison = -1 | 0 | 1;
 

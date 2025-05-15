@@ -1,34 +1,18 @@
-import { exec, sql } from "../client.ts";
+import { commit } from "../client/commit.ts";
+import { sql } from "../client/sql.ts";
 
-import type { BottChannel } from "./channels.ts";
-import type { BottUser } from "./users.ts";
+import { type BottChannel, getAddChannelsSql } from "./channels.ts";
+import { type BottUser, getAddUsersSql } from "./users.ts";
 
-exec(
-  sql`
-    create table if not exists events (
-      id integer primary key not null,
-      type varchar(16) not null,
-      details text,
-      parent_id integer,
-      channel_id integer,
-      user_id integer,
-      timestamp datetime not null,
-      foreign key(parent_id) references events(id),
-      foreign key(channel_id) references channels(id),
-      foreign key(user_id) references users(id)
-    )
-  `,
-);
-
-export enum EventType {
+export enum BottEventType {
   MESSAGE = "message",
   REPLY = "reply",
   REACTION = "reaction",
 }
 
 export interface BottEvent<D extends object = { content: string }> {
-  id: number;
-  type: EventType;
+  id: string;
+  type: BottEventType;
   details: D;
   timestamp: Date;
   channel?: BottChannel;
@@ -36,8 +20,66 @@ export interface BottEvent<D extends object = { content: string }> {
   user?: BottUser;
 }
 
-export const getEvents = (...ids: number[]): BottEvent[] => {
-  const rows = exec(
+export const eventsTableSql = sql`
+  create table if not exists events (
+    id varchar(36) primary key not null,
+    type varchar(16) not null,
+    details text,
+    parent_id varchar(36),
+    channel_id varchar(36),
+    user_id varchar(36),
+    timestamp datetime not null,
+    foreign key(parent_id) references events(id),
+    foreign key(channel_id) references channels(id),
+    foreign key(user_id) references users(id)
+  )
+`;
+
+const getAddEventsSql = (...events: BottEvent[]) => {
+  const values = events.map((event) =>
+    sql`(${event.id}, ${event.type}, ${JSON.stringify(event.details)}, ${
+      event.parent?.id ?? null
+    }, ${event.channel?.id ?? null}, ${
+      event.user?.id ?? null
+    }, ${event.timestamp.toISOString()})`
+  );
+
+  return sql`
+    insert into events (id, type, details, parent_id, channel_id, user_id, timestamp)
+    values ${values} 
+    on conflict(id) do nothing
+  `;
+};
+
+export const addEvents = (...events: BottEvent[]) => {
+  const channels = [];
+  const users = [];
+  const parents = [];
+
+  for (const event of events) {
+    if (event.channel) {
+      channels.push(event.channel);
+    }
+
+    if (event.user) {
+      users.push(event.user);
+    }
+
+    if (event.parent) {
+      parents.push(event.parent);
+    }
+  }
+
+  return commit(
+    getAddChannelsSql(...channels),
+    getAddUsersSql(...users),
+    getAddEventsSql(...parents),
+    getAddEventsSql(...events),
+  );
+};
+
+export const getEvents = (...ids: string[]): BottEvent[] => {
+  const result = commit(
     sql`
       select
         e.id as e_id, e.type as e_type, e.details as e_details, e.timestamp as e_timestamp,
@@ -58,9 +100,13 @@ export const getEvents = (...ids: number[]): BottEvent[] => {
       where
         e.id in (${ids})
     `,
-  ) as any[];
+  );
 
-  return rows.map(
+  if ("error" in result) {
+    throw result.error;
+  }
+
+  return result.reads.map(
     (
       {
         e_id: id,
@@ -88,7 +134,9 @@ export const getEvents = (...ids: number[]): BottEvent[] => {
             description: context.s_description,
           },
         };
-        if (context.c_config) event.channel.config = JSON.parse(context.c_config);
+        if (context.c_config) {
+          event.channel.config = JSON.parse(context.c_config);
+        }
       }
 
       if (context.u_id) {
@@ -112,26 +160,18 @@ export const getEvents = (...ids: number[]): BottEvent[] => {
   );
 };
 
-export const addEvents = (...events: BottEvent[]): boolean => {
-  try {
-    exec(
-      sql`
-        insert into events
-        (id, type, details, parent_id, channel_id, user_id, timestamp)
-        values ${
-        events.map((event) =>
-          sql`(${event.id}, ${event.type}, ${JSON.stringify(event.details)}, ${
-            event.parent?.id ?? null
-          }, ${event.channel?.id ?? null}, ${
-            event.user?.id ?? null
-          }, ${event.timestamp.toISOString()})`
-        )
-      } on conflict(id) do nothing
-      `,
-    );
-    return true;
-  } catch (_) {
-    console.log(_);
-    return false;
+// TODO: do this in a single query
+export const getEventIdsForChannel = (channelId: string): string[] => {
+  const result = commit(
+    sql`
+      select e.id
+      from events e
+      where e.channel_id = ${channelId}`,
+  );
+
+  if ("error" in result) {
+    throw result.error;
   }
+
+  return result.reads.map(({ e_id: id }) => id);
 };
