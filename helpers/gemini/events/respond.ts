@@ -1,4 +1,5 @@
-import type { Content } from "npm:@google/genai";
+import type { Content, Schema } from "npm:@google/genai";
+import { Type } from "npm:@google/genai";
 
 import gemini from "../client.ts";
 import {
@@ -18,6 +19,48 @@ type GeminiResponseContext = {
     channel: BottChannel;
   };
   model?: string;
+};
+
+// Define the schema for a single event object in the response
+const outputEventSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    type: {
+      type: Type.STRING,
+      enum: [
+        BottEventType.MESSAGE,
+        BottEventType.REPLY,
+        BottEventType.REACTION,
+      ],
+      description:
+        "The type of event to send: 'message', 'reply', or 'reaction'.",
+    },
+    details: {
+      type: Type.OBJECT,
+      properties: {
+        content: {
+          type: Type.STRING,
+          description:
+            "The content of the message or reaction (e.g., an emoji for reactions).",
+        },
+      },
+      required: ["content"],
+    },
+    parent: {
+      type: Type.OBJECT,
+      properties: {
+        id: {
+          type: Type.STRING,
+          description:
+            "The string ID of the message being replied or reacted to. Required if 'parent' object is present.",
+        },
+      },
+      required: ["id"],
+    },
+  },
+  required: ["type", "details"],
+  description:
+    "An event object representing an action to take (message, reply, or reaction).",
 };
 
 export const respondEvents = async (
@@ -56,6 +99,13 @@ export const respondEvents = async (
       candidateCount: 1,
       systemInstruction: context.identity + baseInstructions,
       tools: [{ googleSearch: {} }],
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: outputEventSchema,
+        description:
+          "A list of event objects to send. Send an empty array if no response is warranted.",
+      },
     },
   });
 
@@ -95,25 +145,8 @@ function transformContentToBottEvents(content: Content, context: {
     return [];
   }
 
-  let jsonString = content.parts[0].text;
+  const jsonString = content.parts[0].text;
   let parsedOutput: Partial<BottEvent>[];
-  const result: BottEvent[] = [];
-
-  // Attempt to strip markdown ```json ... ``` if present
-  const markdownJsonRegex = /^```json\s*([\s\S]*?)\s*```$/;
-  const match = jsonString.match(markdownJsonRegex);
-  if (match && match[1]) {
-    jsonString = match[1].trim();
-  }
-
-  // Annoyingly, Gemini may send just the plain text.
-  const alphanumericRegex = /^[a-zA-Z0-9]+/;
-  if (alphanumericRegex.test(jsonString)) {
-    jsonString = JSON.stringify([{
-      type: "message",
-      details: { content: jsonString },
-    }]);
-  }
 
   try {
     parsedOutput = JSON.parse(jsonString);
@@ -124,7 +157,7 @@ function transformContentToBottEvents(content: Content, context: {
       "\nJSON string was:",
       jsonString,
     );
-    return result;
+    return [];
   }
 
   if (!Array.isArray(parsedOutput)) {
@@ -132,16 +165,17 @@ function transformContentToBottEvents(content: Content, context: {
       "[ERROR] Gemini response is not a JSON array as expected:",
       jsonString,
     );
-    return result;
+    return [];
   }
 
   if (!parsedOutput.length) {
     console.log(
       "[DEBUG] Gemini opted not to respond.",
     );
-
     return [];
   }
+
+  const result: BottEvent[] = [];
 
   for (const partialEvent of parsedOutput) {
     if (!partialEvent.details?.content) {

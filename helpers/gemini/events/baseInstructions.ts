@@ -22,7 +22,7 @@ Each message in the chat history is provided to you as a JSON object with the fo
   // "parent" is ONLY present if type is "reply" or "reaction".
   // It MUST be an object containing the "id" of the message replied or reacted to.
   "parent": {
-    "id": <NUMERICAL_MESSAGE_ID>
+    "id": "<MESSAGE_ID_STRING>" // Message IDs are strings (snowflakes)
     // Other fields from the parent event might be present but are optional for your processing.
   },
   // "user" is the author or source of this event.
@@ -64,12 +64,12 @@ Each message in the chat history is provided to you as a JSON object with the fo
 \`\`\`
 
 **Example 2: A user replying to one of your previous messages**
-(Assume your previous message had ID 777777777)
+(Assume your previous message had ID "777777777")
 \`\`\`json
 {
   "type": "reply",
   "details": {
-    "content": "That's a good point, I hadn't considered that.",
+    "content": "That's a good point, I hadn't considered that either.",
     "seen": true, // Assuming this is an older message
   },
   "parent": {
@@ -89,7 +89,7 @@ Each message in the chat history is provided to you as a JSON object with the fo
 \`\`\`
 
 **Example 3: A user reacting to one of your previous messages**
-(Assume your previous message had ID 888888888)
+(Assume your previous message had ID "888888888")
 \`\`\`json
 {
   "type": "reaction",
@@ -98,7 +98,7 @@ Each message in the chat history is provided to you as a JSON object with the fo
     "seen": false,
   },
   "parent": {
-    "id": 888888888
+    "id": "888888888"
   },
   "user": {
     "id": 345678901234567890,
@@ -115,19 +115,18 @@ Each message in the chat history is provided to you as a JSON object with the fo
 
 ### Output
 
-Your entire output **MUST** be a valid JSON array. Each element in the array must be an event object following the same \`Message Format\` as the input, representing an action you will take (e.g., sending a message, replying, reacting).
-**The JSON array should be the direct and only content of your response, without any surrounding text or markdown code blocks (e.g., do not wrap it in \`\`\`json ... \`\`\`).**
+Your response will be a list of actions (events) for you to take, formatted as a JSON array.
+The structure of this JSON array and its event objects will be strictly validated against a predefined schema.
 
-*   **If you decide to respond** based on the rules above:
-    *   Output a JSON array containing one or more event objects.
-    *   For new messages you send, the \`type\` should typically be \`"message"\`.
-    *   If replying, set \`type\` to \`"reply"\` and include the \`parent\` object with the \`id\` of the message you are replying to.
-    *   If reacting, set \`type\` to \`"reaction"\` and include the \`parent\` object with the \`id\` of the message you are reacting to.
-    *   You do not need to provide \`id\`, \`user\`, \`channel\`, or \`timestamp\` fields for the events you generate; these will be populated by the system. Focus on \`type\`, \`details\`, and \`parent\` (if applicable).
-*   **If you decide NOT to respond** based on the rules above, it is **crucial** you output an empty JSON array: \`[]\`
+*   **If you decide to respond**:
+    *   Provide a JSON array containing one or more event objects.
+    *   For each event, you must specify its \`type\` (e.g., \`"message"\`, \`"reply"\`, \`"reaction"\`), its \`details\` (which must include \`content\`), and, if it's a reply or reaction, a \`parent\` object containing the string \`id\` of the message being responded to.
+    *   The system will automatically populate \`id\`, \`user\`, \`channel\`, and \`timestamp\` for the events you generate. Your focus should be on \`type\`, \`details.content\`, and \`parent.id\` (when applicable).
+*   **If you decide NOT to respond**:
+    *   You **MUST** output an empty JSON array: \`[]\`.
 
 #### Output Examples
-
+The following examples illustrate the *content and intent* of your responses. The system ensures they conform to the required JSON structure.
 **Example 1: Sending a new message**
 \`\`\`json
 [
@@ -140,13 +139,13 @@ Your entire output **MUST** be a valid JSON array. Each element in the array mus
 ]
 \`\`\`
 
-**Example 2: Replying to message ID 12345 (from input history)**
+**Example 2: Replying to message ID "123456789012345678" (from input history)**
 \`\`\`json
 [
   {
     "type": "reply",
     "parent": {
-      "id": 12345
+      "id": "123456789012345678"
     },
     "details": {
       "content": "I agree, that's a key feature."
@@ -176,6 +175,53 @@ Your entire output **MUST** be a valid JSON array. Each element in the array mus
 **Example 4: Deciding not to respond**
 \`\`\`json
 []
+\`\`\`
+
+**Example 5: Replying and Reacting to the same message**
+(Assume the message being replied and reacted to has ID "INPUT_MESSAGE_ID_001")
+\`\`\`json
+[
+  {
+    "type": "reply",
+    "parent": {
+      "id": "INPUT_MESSAGE_ID_001"
+    },
+    "details": {
+      "content": "That's an interesting point you made."
+    }
+  },
+  {
+    "type": "reaction",
+    "parent": {
+      "id": "INPUT_MESSAGE_ID_001"
+    },
+    "details": {
+      "content": "🤔"
+    }
+  }
+]
+\`\`\`
+
+**Example 6: Sending a new message and reacting to a different previous message**
+(Assume the message being reacted to has ID "PREVIOUS_MESSAGE_ID_002")
+\`\`\`json
+[
+  {
+    "type": "message",
+    "details": {
+      "content": "I'll look into that further and let you know."
+    }
+  },
+  {
+    "type": "reaction",
+    "parent": {
+      "id": "PREVIOUS_MESSAGE_ID_002"
+    },
+    "details": {
+      "content": "👍"
+    }
+  }
+]
 \`\`\`
 
 ## Current Limitations
