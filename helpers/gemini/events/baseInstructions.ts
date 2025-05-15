@@ -111,6 +111,7 @@ Each message in the chat history is provided to you as a JSON object with the fo
 ### Output
 
 Your entire output **MUST** be a valid JSON array. Each element in the array must be an event object following the same \`Message Format\` as the input, representing an action you will take (e.g., sending a message, replying, reacting).
+**The JSON array should be the direct and only content of your response, without any surrounding text or markdown code blocks (e.g., do not wrap it in \`\`\`json ... \`\`\`).**
 
 *   **If you decide to respond** based on the rules above:
     *   Output a JSON array containing one or more event objects.

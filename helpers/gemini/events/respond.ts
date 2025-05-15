@@ -51,6 +51,7 @@ export const respondEvents = async (
   }
 
   try {
+    console.log("[DEBUG] Content recieved. Parsing response.");
     return transformContentToBottEvents(content);
   } catch (error) {
     console.error("[ERROR] Problem processing Gemini content:", error);
@@ -75,9 +76,25 @@ function transformContentToBottEvents(content: Content): BottEvent[] {
     return [];
   }
 
-  const jsonString = content.parts[0].text;
+  let jsonString = content.parts[0].text;
   let parsedOutput: Partial<BottEvent>[];
   const result: BottEvent[] = [];
+
+  // Attempt to strip markdown ```json ... ``` if present
+  const markdownJsonRegex = /^```json\s*([\s\S]*?)\s*```$/;
+  const match = jsonString.match(markdownJsonRegex);
+  if (match && match[1]) {
+    jsonString = match[1].trim();
+  }
+
+  // Annoyingly, Gemini may send just the plain text.
+  const alphanumericRegex = /^[a-zA-Z0-9]+/;
+  if (alphanumericRegex.test(jsonString)) {
+    jsonString = JSON.stringify([{
+      type: "message",
+      details: { content: jsonString },
+    }]);
+  }
 
   try {
     parsedOutput = JSON.parse(jsonString);
@@ -112,7 +129,7 @@ function transformContentToBottEvents(content: Content): BottEvent[] {
 
     for (const messagePart of splitDetails) {
       result.push({
-        id: partialEvent.id ?? crypto.randomUUID(),
+        id: crypto.randomUUID(),
         type,
         details: { content: messagePart },
         timestamp: new Date(),

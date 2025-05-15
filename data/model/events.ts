@@ -150,6 +150,7 @@ export const getEvents = (...ids: string[]): BottEvent[] => {
         users u on e.user_id = u.id
       where
         e.id in (${ids})
+      order by e.timestamp asc
     `,
   );
 
@@ -224,5 +225,5 @@ export const getEventIdsForChannel = (channelId: string): string[] => {
     throw result.error;
   }
 
-  return result.reads.map(({ e_id: id }) => id);
+  return result.reads.map(({ id }) => id);
 };

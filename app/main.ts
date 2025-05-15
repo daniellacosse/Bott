@@ -32,6 +32,11 @@ startBot({
       return;
     }
 
+    if (event.user?.id === this.user.id) {
+      // Bott shouldn't respond to themselves,
+      return;
+    }
+
     const result = addEvents(event);
 
     if ("error" in result) {
@@ -85,7 +90,13 @@ startBot({
           event.id = result.id;
         }
 
-        addEvents(event);
+        const eventTransaction = addEvents(event);
+        if ("error" in eventTransaction) {
+          console.error(
+            "[ERROR] Failed to add event to database:",
+            eventTransaction,
+          );
+        }
       }
     });
   },
