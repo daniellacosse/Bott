@@ -1,36 +1,52 @@
 import type { Content } from "npm:@google/genai";
 
 import gemini from "../client.ts";
-import { type BottEvent, BottEventType } from "@bott/data";
+import {
+  type BottChannel,
+  type BottEvent,
+  BottEventType,
+  type BottUser,
+} from "@bott/data";
 
 import baseInstructions from "./baseInstructions.ts";
 
 type GeminiResponseContext = {
   abortSignal: AbortSignal;
-  identity: string;
+  context: {
+    identity: string;
+    user: BottUser;
+    channel: BottChannel;
+  };
   model?: string;
 };
 
 export const respondEvents = async (
   inputEvents: BottEvent[],
-  { model = "gemini-2.5-pro-preview-05-06", abortSignal, identity }:
+  { model = "gemini-2.5-pro-preview-05-06", abortSignal, context }:
     GeminiResponseContext,
 ): Promise<BottEvent[]> => {
-  // TODO: explicitly pass in model id?
-  const modelIdMatch = identity.match(/<@(\d+)>/);
-  const modelUserId = modelIdMatch ? modelIdMatch[1] : "-1";
+  const modelUserId = context.user.id;
 
-  if (modelUserId === "-1") {
-    console.error(
-      "[ERROR] Could not extract modelUserId from identity string. Bot messages might be misattributed in history sent to Gemini.",
+  const contents: Content[] = [];
+  let pointer = inputEvents.length;
+  let hasBeenSeen = false;
+
+  // We only want the model to respond to the most recent user messages,
+  // since the model's last response
+  while (pointer--) {
+    const event = inputEvents[pointer];
+
+    if (event.user?.id === modelUserId) {
+      hasBeenSeen = true;
+    }
+
+    contents.unshift(
+      transformBottEventToContent({
+        ...event,
+        details: { ...event.details, seen: hasBeenSeen },
+      }, modelUserId),
     );
-
-    return [];
   }
-
-  const contents: Content[] = inputEvents.map((event) =>
-    transformBottEventToContent(event, modelUserId)
-  );
 
   const response = await gemini.models.generateContent({
     model,
@@ -38,7 +54,7 @@ export const respondEvents = async (
     config: {
       abortSignal,
       candidateCount: 1,
-      systemInstruction: identity + baseInstructions,
+      systemInstruction: context.identity + baseInstructions,
       tools: [{ googleSearch: {} }],
     },
   });
@@ -52,7 +68,7 @@ export const respondEvents = async (
 
   try {
     console.log("[DEBUG] Gemini content recieved. Parsing response.");
-    return transformContentToBottEvents(content);
+    return transformContentToBottEvents(content, context);
   } catch (error) {
     console.error("[ERROR] Problem processing Gemini content:", error);
 
@@ -61,14 +77,17 @@ export const respondEvents = async (
 };
 
 const transformBottEventToContent = (
-  event: BottEvent,
+  event: BottEvent<{ content: string; seen: boolean }>,
   modelUserId: string,
 ): Content => ({
   role: (event.user && event.user.id === modelUserId) ? "model" : "user",
   parts: [{ text: JSON.stringify(event) }],
 });
 
-function transformContentToBottEvents(content: Content): BottEvent[] {
+function transformContentToBottEvents(content: Content, context: {
+  user: BottUser;
+  channel: BottChannel;
+}): BottEvent[] {
   if (!content.parts || content.parts.length === 0 || !content.parts[0].text) {
     console.warn(
       "[WARN] Gemini response content is empty or not in the expected format.",
@@ -116,6 +135,14 @@ function transformContentToBottEvents(content: Content): BottEvent[] {
     return result;
   }
 
+  if (!parsedOutput.length) {
+    console.log(
+      "[DEBUG] Gemini opted not to respond.",
+    );
+
+    return [];
+  }
+
   for (const partialEvent of parsedOutput) {
     if (!partialEvent.details?.content) {
       continue;
@@ -132,6 +159,8 @@ function transformContentToBottEvents(content: Content): BottEvent[] {
         id: crypto.randomUUID(),
         timestamp: new Date(),
         ...partialEvent,
+        user: context.user,
+        channel: context.channel,
         type,
         details: { content: messagePart },
       });

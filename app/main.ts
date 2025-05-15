@@ -60,22 +60,26 @@ startBot({
         eventHistoryResult,
         {
           abortSignal,
-          identity: getIdentity({
+          context: {
+            identity: getIdentity({
+              user: this.user,
+              channel: event.channel!,
+            }),
             user: this.user,
             channel: event.channel!,
-          }),
+          },
         },
       );
 
       // Send one event (message) at a time:
-      for (const event of messageEvents) {
+      for (const messageEvent of messageEvents) {
         if (abortSignal.aborted) {
           return;
         }
 
         this.startTyping();
 
-        const words = event.details.content.split(/\s+/).length;
+        const words = messageEvent.details.content.split(/\s+/).length;
         const delayMs = (words / this.wpm) * MS_IN_MINUTE;
         const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
         await delay(cappedDelayMs);
@@ -84,13 +88,13 @@ startBot({
           return;
         }
 
-        const result = await this.send(event);
+        const result = await this.send(messageEvent);
 
         if (result && "id" in result) {
-          event.id = result.id;
+          messageEvent.id = result.id;
         }
 
-        const eventTransaction = addEvents(event);
+        const eventTransaction = addEvents(messageEvent);
         if ("error" in eventTransaction) {
           console.error(
             "[ERROR] Failed to add event to database:",
