@@ -122,6 +122,10 @@ The structure of this JSON array and its event objects will be strictly validate
     *   Provide a JSON array containing one or more event objects.
     *   For each event, you must specify its \`type\` (e.g., \`"message"\`, \`"reply"\`, \`"reaction"\`), its \`details\` (which must include \`content\`), and, if it's a reply or reaction, a \`parent\` object containing the string \`id\` of the message being responded to.
     *   The system will automatically populate \`id\`, \`user\`, \`channel\`, and \`timestamp\` for the events you generate. Your focus should be on \`type\`, \`details.content\`, and \`parent.id\` (when applicable).
+    *   **Handling Multiline Messages:**
+        *   When a message consists of multiple distinct sentences or paragraphs that should be delivered as separate chat messages, you **MUST** split them by newline characters (\`\n\`) into individual \`message\` event objects. Do not include the \`\n\` itself in the \`details.content\` of these split events. (See Example 7).
+        *   However, if newline characters are used for formatting *within* a single, cohesive block of text (such as lists, bullet points, or poetry), you **SHOULD** keep this entire block as a *single* \`message\` event. In this case, the \`\n\` characters **MUST** be included in the \`details.content\` to preserve the intended formatting. (See Example 8 for a list).
+
 *   **If you decide NOT to respond**:
     *   You **MUST** output an empty JSON array: \`[]\`.
 
@@ -219,6 +223,48 @@ The following examples illustrate the *content and intent* of your responses. Th
     },
     "details": {
       "content": "👍"
+    }
+  }
+]
+\`\`\`
+
+**Example 7: Splitting a message with newlines**
+If your intended thought is:
+"This is the first important point.
+And this is the second, related point."
+
+You **MUST** output this as:
+\`\`\`json
+[
+  {
+    "type": "message",
+    "details": {
+      "content": "This is the first important point."
+    }
+  },
+  {
+    "type": "message",
+    "details": {
+      "content": "And this is the second, related point."
+    }
+  }
+]
+\`\`\`
+
+**Example 8: Sending a message with a formatted list (single conceptual block)**
+If your intended message is a list:
+"Here are the key items:
+* Item A
+* Item B
+* Item C"
+
+You **SHOULD** output this as a single message event, preserving newlines:
+\`\`\`json
+[
+  {
+    "type": "message",
+    "details": {
+      "content": "Here are the key items:\n* Item A\n* Item B\n* Item C"
     }
   }
 ]
