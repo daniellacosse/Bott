@@ -1,6 +1,8 @@
 import type { Content, Schema } from "npm:@google/genai";
 import { Type } from "npm:@google/genai";
 
+import { JsonParseStream } from "jsr:@std/json";
+
 import gemini from "../client.ts";
 import {
   type BottChannel,
@@ -22,7 +24,17 @@ type GeminiResponseContext = {
   model?: string;
 };
 
-// Define the schema for a single event object in the response
+interface GeminiOutputEvent {
+  type: BottEventType;
+  details: {
+    content: string;
+  };
+  parent?: {
+    id: string;
+  };
+}
+
+// Define the schema for a single output event object in the response
 const outputEventSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -64,11 +76,11 @@ const outputEventSchema: Schema = {
     "An event object representing an action to take (message, reply, or reaction).",
 };
 
-export const respondEvents = async (
+export async function* respondEvents(
   inputEvents: BottEvent[],
   { model = "gemini-2.5-pro-preview-05-06", abortSignal, context }:
     GeminiResponseContext,
-): Promise<BottEvent[]> => {
+): AsyncGenerator<BottEvent[]> {
   const modelUserId = context.user.id;
 
   const contents: Content[] = [];
@@ -92,7 +104,7 @@ export const respondEvents = async (
     );
   }
 
-  const response = await gemini.models.generateContent({
+  const responseGenerator = await gemini.models.generateContentStream({
     model,
     contents,
     config: {
@@ -111,22 +123,36 @@ export const respondEvents = async (
     },
   });
 
-  // Only one candidate specified.
-  const content = response.candidates![0].content;
+  for await (const event of outputEventGenerator(responseGenerator)) {
+    const result: BottEvent[] = [];
 
-  if (!content) {
-    return [];
+    const splitDetails = splitMessagePreservingCodeBlocks(
+      event.details.content,
+    );
+
+    let type = event.type;
+
+    for (const messagePart of splitDetails) {
+      result.push({
+        id: crypto.randomUUID(),
+        timestamp: new Date(),
+        ...event,
+        user: context.user,
+        channel: context.channel,
+        parent: event.parent ? getEvents(event.parent.id)[0] : undefined,
+        type,
+        details: { content: messagePart },
+      });
+
+      // Don't string multiple replies in the same message stream
+      type = BottEventType.MESSAGE;
+    }
+
+    yield result;
   }
 
-  try {
-    console.log("[DEBUG] Gemini content recieved. Parsing response.");
-    return transformContentToBottEvents(content, context);
-  } catch (error) {
-    console.error("[ERROR] Problem processing Gemini content:", error);
-
-    return [];
-  }
-};
+  return;
+}
 
 const transformBottEventToContent = (
   event: BottEvent<{ content: string; seen: boolean }>,
@@ -135,80 +161,6 @@ const transformBottEventToContent = (
   role: (event.user && event.user.id === modelUserId) ? "model" : "user",
   parts: [{ text: JSON.stringify(event) }],
 });
-
-function transformContentToBottEvents(content: Content, context: {
-  user: BottUser;
-  channel: BottChannel;
-}): BottEvent[] {
-  if (!content.parts || content.parts.length === 0 || !content.parts[0].text) {
-    console.warn(
-      "[WARN] Gemini response content is empty or not in the expected format.",
-    );
-    return [];
-  }
-
-  const jsonString = content.parts[0].text;
-  let parsedOutput: Partial<BottEvent>[];
-
-  try {
-    parsedOutput = JSON.parse(jsonString);
-  } catch (error) {
-    console.error(
-      "[ERROR] Failed to parse Gemini response JSON:",
-      error,
-      "\nJSON string was:",
-      jsonString,
-    );
-    return [];
-  }
-
-  if (!Array.isArray(parsedOutput)) {
-    console.error(
-      "[ERROR] Gemini response is not a JSON array as expected:",
-      jsonString,
-    );
-    return [];
-  }
-
-  if (!parsedOutput.length) {
-    console.log(
-      "[DEBUG] Gemini opted not to respond.",
-    );
-    return [];
-  }
-
-  const result: BottEvent[] = [];
-
-  for (const subevent of parsedOutput) {
-    if (!subevent.details?.content) {
-      continue;
-    }
-
-    const splitDetails = splitMessagePreservingCodeBlocks(
-      subevent.details.content,
-    );
-
-    let type = subevent.type ?? BottEventType.MESSAGE;
-
-    for (const messagePart of splitDetails) {
-      result.push({
-        id: crypto.randomUUID(),
-        timestamp: new Date(),
-        ...subevent,
-        user: context.user,
-        channel: context.channel,
-        parent: subevent.parent ? getEvents(subevent.parent.id)[0] : undefined,
-        type,
-        details: { content: messagePart },
-      });
-
-      // Don't string multiple replies in the same message stream
-      type = BottEventType.MESSAGE;
-    }
-  }
-
-  return result;
-}
 
 function splitMessagePreservingCodeBlocks(message: string): string[] {
   const codeBlockRegex = /```[\s\S]*?```/g;
@@ -243,4 +195,85 @@ function splitMessagePreservingCodeBlocks(message: string): string[] {
   });
 
   return finalParts;
+}
+
+// To gain access to partial JSON parsing, we must
+// convert to ReadableStream and back again...
+async function* outputEventGenerator(
+  responseStream: AsyncGenerator<any>,
+): AsyncGenerator<
+  GeminiOutputEvent
+> {
+  const jsonStreamReader = ReadableStream.from(responseStream).pipeThrough(
+    new TransformStream<any, string>({
+      transform(chunk, controller) {
+        console.log("[DEBUG] transform chunk:", chunk);
+
+        // TODO: extract function calls and files?
+        if (chunk.content && chunk.content.parts) {
+          for (const part of chunk.content.parts) {
+            if ("text" in part) {
+              controller.enqueue(part.text);
+            }
+          }
+        }
+      },
+    }),
+  )
+    .pipeThrough(
+      new JsonParseStream(),
+    ).getReader();
+
+  while (true) {
+    const { done, value } = await jsonStreamReader.read();
+
+    if (done) {
+      break;
+    }
+
+    console.log("[DEBUG] Recieved JSON object:", value);
+
+    if (
+      isGeminiOutputEvent(value)
+    ) {
+      yield value;
+    }
+  }
+
+  return;
+}
+
+function isGeminiOutputEvent(obj: unknown): obj is GeminiOutputEvent {
+  if (
+    typeof obj !== "object" || obj === null || obj === undefined ||
+    Array.isArray(obj)
+  ) {
+    return false;
+  }
+
+  const event = obj as Record<string, any>;
+
+  if (
+    typeof event.type !== "string" ||
+    !Object.values(BottEventType).includes(event.type as BottEventType)
+  ) {
+    return false;
+  }
+
+  if (
+    typeof event.details !== "object" || event.details === null ||
+    typeof event.details.content !== "string"
+  ) {
+    return false;
+  }
+
+  if (
+    event.parent !== undefined &&
+    (typeof event.parent !== "object" || event.parent === null ||
+      typeof event.parent.id !== "string")
+  ) {
+    return false;
+  }
+
+  return true;
 }

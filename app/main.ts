@@ -1,11 +1,6 @@
 import { delay } from "jsr:@std/async/delay";
 
-import {
-  addEvents,
-  type BottEvent,
-  getEventIdsForChannel,
-  setSchema,
-} from "@bott/data";
+import { addEvents, getEventIdsForChannel, setSchema } from "@bott/data";
 import { startBot } from "@bott/discord";
 
 import { respondEvents } from "@bott/gemini";
@@ -56,7 +51,7 @@ startBot({
       }
 
       // 1. Get list of bot events (responses) from Gemini:
-      const messageEvents: BottEvent[] = await respondEvents(
+      const messageEventGenerator = respondEvents(
         eventHistoryResult,
         {
           abortSignal,
@@ -72,36 +67,38 @@ startBot({
       );
 
       // Send one event (message) at a time:
-      for (const messageEvent of messageEvents) {
-        if (abortSignal.aborted) {
-          return;
-        }
+      for await (const messageBatch of messageEventGenerator) {
+        for (const messageEvent of messageBatch) {
+          if (abortSignal.aborted) {
+            return;
+          }
 
-        if (messageEvent.type !== "reaction") {
-          this.startTyping();
-        }
+          if (messageEvent.type !== "reaction") {
+            this.startTyping();
+          }
 
-        const words = messageEvent.details.content.split(/\s+/).length;
-        const delayMs = (words / this.wpm) * MS_IN_MINUTE;
-        const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
-        await delay(cappedDelayMs);
+          const words = messageEvent.details.content.split(/\s+/).length;
+          const delayMs = (words / this.wpm) * MS_IN_MINUTE;
+          const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
+          await delay(cappedDelayMs);
 
-        if (abortSignal.aborted) {
-          return;
-        }
+          if (abortSignal.aborted) {
+            return;
+          }
 
-        const result = await this.send(messageEvent);
+          const result = await this.send(messageEvent);
 
-        if (result && "id" in result) {
-          messageEvent.id = result.id;
-        }
+          if (result && "id" in result) {
+            messageEvent.id = result.id;
+          }
 
-        const eventTransaction = addEvents(messageEvent);
-        if ("error" in eventTransaction) {
-          console.error(
-            "[ERROR] Failed to add event to database:",
-            eventTransaction,
-          );
+          const eventTransaction = addEvents(messageEvent);
+          if ("error" in eventTransaction) {
+            console.error(
+              "[ERROR] Failed to add event to database:",
+              eventTransaction,
+            );
+          }
         }
       }
     });
