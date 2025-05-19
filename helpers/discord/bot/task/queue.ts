@@ -53,6 +53,7 @@ export class SwapTaskQueue {
     console.log("[DEBUG] Pushing job:", job.id);
 
     if (this.isSwapLocked(job.id)) {
+      console.log("[DEBUG] Blocking job:", job.id);
       return this.blockJob(job);
     }
 
@@ -96,7 +97,7 @@ export class SwapTaskQueue {
       await job.task(job.abortController.signal);
       console.log("[DEBUG] Job completed:", job.id);
     } catch (error) {
-      console.log("[DEBUG] Job failed:", job.id, error);
+      console.log("[DEBUG] Job failed/aborted:", job.id, error);
       // Job failed or was aborted: do nothing.
     } finally {
       // Cleanup step: promote blocked jobs and flush only if the job instance
@@ -139,6 +140,15 @@ export class SwapTaskQueue {
     }
 
     this.isFlushing = false;
+
+    if (this.blockedJobs.size > 0) {
+      for (const job of this.blockedJobs.values()) {
+        this.readyJob(job);
+        this.blockedJobs.delete(job.id);
+      }
+
+      this.flushQueue();
+    }
   }
 
   private readyJob(job: SwapJob) {
