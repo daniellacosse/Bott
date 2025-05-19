@@ -1,6 +1,7 @@
 {
   "tasks": {
-    "start": "docker build -t bott . && docker run -p 8080:8080 --env-file .env.production bott",
+    "start:app": "cd app && deno task start",
+    "start": "docker build -t bott . && docker run -p 8080:8080 --env-file=.env.production bott",
     "deploy": "sh ./deploy.sh"
   },
   "workspace": [

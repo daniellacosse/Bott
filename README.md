@@ -12,9 +12,8 @@ Then run:
 
 ```sh
 brew bundle
-cd app
 gcloud auth login
-deno task start
+deno task start:app
 ```
 
 ## Deploy
