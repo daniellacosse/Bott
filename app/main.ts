@@ -58,7 +58,6 @@ startBot({
           context: {
             identity: getIdentity({
               user: this.user,
-              channel: event.channel!,
             }),
             user: this.user,
             channel: event.channel!,
@@ -67,38 +66,36 @@ startBot({
       );
 
       // Send one event (message) at a time:
-      for await (const messageBatch of messageEventGenerator) {
-        for (const messageEvent of messageBatch) {
-          if (abortSignal.aborted) {
-            return;
-          }
+      for await (const messageEvent of messageEventGenerator) {
+        if (abortSignal.aborted) {
+          return;
+        }
 
-          if (messageEvent.type !== "reaction") {
-            this.startTyping();
-          }
+        if (messageEvent.type !== "reaction") {
+          this.startTyping();
+        }
 
-          const words = messageEvent.details.content.split(/\s+/).length;
-          const delayMs = (words / this.wpm) * MS_IN_MINUTE;
-          const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
-          await delay(cappedDelayMs);
+        const words = messageEvent.details.content.split(/\s+/).length;
+        const delayMs = (words / this.wpm) * MS_IN_MINUTE;
+        const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
+        await delay(cappedDelayMs);
 
-          if (abortSignal.aborted) {
-            return;
-          }
+        if (abortSignal.aborted) {
+          return;
+        }
 
-          const result = await this.send(messageEvent);
+        const result = await this.send(messageEvent);
 
-          if (result && "id" in result) {
-            messageEvent.id = result.id;
-          }
+        if (result && "id" in result) {
+          messageEvent.id = result.id;
+        }
 
-          const eventTransaction = addEvents(messageEvent);
-          if ("error" in eventTransaction) {
-            console.error(
-              "[ERROR] Failed to add event to database:",
-              eventTransaction,
-            );
-          }
+        const eventTransaction = addEvents(messageEvent);
+        if ("error" in eventTransaction) {
+          console.error(
+            "[ERROR] Failed to add event to database:",
+            eventTransaction,
+          );
         }
       }
     });
