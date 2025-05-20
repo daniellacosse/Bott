@@ -12,31 +12,31 @@ export class TaskThrottler {
   }
 
   /**
-   * Whether the task of the given id is permitted to run.
+   * Whether the task of the given type is permitted to run.
    */
-  canRun(taskId: string): boolean {
+  canRun(taskType: string): boolean {
     const nowMs = Date.now().valueOf();
-    const timestamps = this.taskRecord[taskId];
+    const timestamps = this.taskRecord[taskType];
 
     if (!timestamps) {
       return true;
     }
 
-    this.taskRecord[taskId] = timestamps.filter((timestamp) =>
+    this.taskRecord[taskType] = timestamps.filter((timestamp) =>
       (timestamp.valueOf() + this.throttleWindowMs) > nowMs
     );
 
-    return this.taskRecord[taskId].length < this.maxTaskCount;
+    return this.taskRecord[taskType].length < this.maxTaskCount;
   }
 
   /**
-   * Records a run of the taskId.
+   * Records a run of the task type.
    */
-  recordRun(taskId: string) {
-    if (!this.taskRecord[taskId]) {
-      this.taskRecord[taskId] = [new Date()];
+  recordRun(taskType: string) {
+    if (!this.taskRecord[taskType]) {
+      this.taskRecord[taskType] = [new Date()];
     } else {
-      this.taskRecord[taskId].push(new Date());
+      this.taskRecord[taskType].push(new Date());
     }
   }
 }

@@ -1,50 +1,44 @@
-import { TaskThrottler } from "./throttler.ts";
+import type { Task } from "./create.ts";
 
-type Task = (signal: AbortSignal) => Promise<void>;
+type TaskBucketName = string;
 
-type TaskChannelName = string;
-
-type TaskChannel = {
-  name: TaskChannelName;
-  current?: {
-    nonce?: number;
-    task: Task;
-    taskController: AbortController;
-    taskType: string;
-  };
-  next?: {
-    task: Task;
-    taskType: string;
-  };
+type TaskBucket = {
+  name: TaskBucketName;
+  current?: Task;
+  next?: Task;
   remainingSwaps: number;
   config: {
     maximumSequentialSwaps: number;
   };
 };
 
-type TaskChannelMap = Map<TaskChannelName, TaskChannel>;
+type TaskBucketMap = Map<TaskBucketName, TaskBucket>;
 
 export class TaskManager {
-  taskTypeThrottler: TaskThrottler;
-  map: TaskChannelMap = new Map();
+  // taskTypeThrottler: TaskThrottler;
+  buckets: TaskBucketMap = new Map();
   private isFlushing = false;
 
-  constructor(throttler: TaskThrottler) {
-    this.taskTypeThrottler = throttler;
-  }
+  // constructor(throttler: TaskThrottler) {
+  //   this.taskTypeThrottler = throttler;
+  // }
 
-  push(name: TaskChannelName, task: Task, taskType = "TODO") {
-    if (!this.map.has(name)) {
+  push(name: TaskBucketName, task: Task) {
+    if (!this.buckets.has(name)) {
       throw new Error("Channel not found");
     }
 
-    this.map.get(name)!.next = { task, taskType };
+    this.buckets.get(name)!.next = task;
 
     this.flushTasks();
   }
 
-  add(channel: TaskChannel) {
-    this.map.set(channel.name, channel);
+  has(name: TaskBucketName) {
+    return this.buckets.has(name);
+  }
+
+  add(channel: TaskBucket) {
+    this.buckets.set(channel.name, channel);
 
     this.flushTasks();
   }
@@ -56,56 +50,87 @@ export class TaskManager {
 
     this.isFlushing = true;
 
-    for (const channel of this.map.values()) {
-      if (!channel.next) {
+    for (const bucket of this.buckets.values()) {
+      if (!bucket.next) {
+        console.debug("[DEBUG] No next task:", bucket.name);
         continue;
       }
 
-      // populate/override the current task
-      if (!channel.current || channel.remainingSwaps > 0) {
-        const previous = channel.current;
+      if (!bucket.current || bucket.remainingSwaps > 0) {
+        console.debug(
+          "[DEBUG] Loading new task:",
+          bucket.name,
+          bucket.next.nonce,
+        );
+        const previous = bucket.current;
 
-        channel.current = {
-          nonce: this.getNonce(),
-          taskController: new AbortController(),
-          ...channel.next,
-        };
-        channel.next = undefined;
+        bucket.current = bucket.next;
+        bucket.next = undefined;
 
-        if (previous && channel.remainingSwaps > 0) {
-          previous.taskController?.abort();
-          channel.remainingSwaps--;
+        if (previous && bucket.remainingSwaps > 0) {
+          console.debug(
+            "[DEBUG] Aborting previous task:",
+            bucket.name,
+            previous.nonce,
+          );
+          previous.controller.abort();
+          bucket.remainingSwaps--;
         }
       }
 
-      // continue if we can't run this task
-      if (
-        !(channel.current &&
-            this.taskTypeThrottler.canRun(channel.current.taskType) ||
-          channel.remainingSwaps < 0)
-      ) {
+      // if (
+      //   !(channel.current &&
+      //     this.taskTypeThrottler.canRun(channel.current.type))
+      // ) {
+      //   console.debug(
+      //     "[DEBUG] Throttled task of type:",
+      //     channel.name,
+      //     channel.current.type,
+      //     channel.current.nonce,
+      //   );
+      //   continue;
+      // }
+
+      if (bucket.remainingSwaps < 0) {
+        console.debug(
+          "[DEBUG] Swap-blocked task:",
+          bucket.name,
+          bucket.current?.nonce,
+        );
         continue;
       }
 
-      // start the current task
-      try {
-        await channel.current!.task(channel.current!.taskController.signal);
-      } catch (error) {
-        // do nothing
-      } finally {
-        this.taskTypeThrottler?.recordRun(channel.current!.taskType);
+      console.debug(
+        "[DEBUG] Starting task:",
+        bucket.name,
+        bucket.current?.nonce,
+      );
 
-        channel.current = undefined;
-        channel.remainingSwaps = channel.config.maximumSequentialSwaps;
-
-        this.flushTasks();
-      }
+      // We have to wrap this in a function so we can handle errors
+      // without holding up the loop.
+      this.runCurrentTaskImmediately(bucket);
     }
 
     this.isFlushing = false;
   }
 
-  private getNonce() {
-    return Math.floor(Math.random() * 1000000000);
+  private async runCurrentTaskImmediately(bucket: TaskBucket) {
+    try {
+      await bucket.current!(bucket.current!.controller.signal);
+    } catch (error) {
+      console.warn(
+        "[WARN] Task failed or aborted:",
+        bucket.name,
+        bucket.current!.nonce,
+        (error as Error).message,
+      );
+    } finally {
+      // this.taskTypeThrottler?.recordRun(channel.current!.type);
+
+      bucket.current = undefined;
+      bucket.remainingSwaps = bucket.config.maximumSequentialSwaps;
+
+      this.flushTasks();
+    }
   }
 }
