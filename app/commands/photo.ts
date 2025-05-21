@@ -4,12 +4,12 @@ import { AttachmentBuilder } from "npm:discord.js";
 import {
   type CommandObject,
   CommandOptionType,
-  TaskLimiter,
+  TaskThrottler,
 } from "@bott/discord";
 import { generatePhoto } from "@bott/gemini";
 import { RATE_LIMIT_IMAGES, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
-const photoLimiter = new TaskLimiter(
+const photoLimiter = new TaskThrottler(
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_IMAGES,
 );

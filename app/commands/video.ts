@@ -4,12 +4,12 @@ import { AttachmentBuilder } from "npm:discord.js";
 import {
   type CommandObject,
   CommandOptionType,
-  TaskLimiter,
+  TaskThrottler,
 } from "@bott/discord";
 import { generateVideo } from "@bott/gemini";
 import { RATE_LIMIT_VIDEOS, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
-const videoLimiter = new TaskLimiter(
+const videoLimiter = new TaskThrottler(
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_VIDEOS,
 );

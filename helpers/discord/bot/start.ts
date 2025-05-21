@@ -12,8 +12,8 @@ import {
 } from "npm:discord.js";
 import { createErrorEmbed } from "../message/embed/error.ts";
 import { type CommandObject, CommandOptionType } from "./types.ts";
+import { TaskManager } from "./task/manager.ts";
 
-import { SwapTaskQueue } from "./task/queue.ts";
 import {
   addEvents,
   type BottEvent,
@@ -35,7 +35,7 @@ type BotContext = {
     event: BottEvent,
   ) => Promise<Message<true> | MessageReaction | undefined>;
   startTyping: () => Promise<void>;
-  tasks: SwapTaskQueue;
+  tasks: TaskManager;
   wpm: number;
 };
 
@@ -57,7 +57,7 @@ export async function startBot({
   const client = new Client({ intents });
 
   await client.login(token);
-  console.log("[DEBUG] Logged in.");
+  console.debug("[DEBUG] Logged in.");
 
   // this is the bot user object
   if (!client.user) {
@@ -69,7 +69,7 @@ export async function startBot({
       id: client.user.id,
       name: client.user.username,
     },
-    tasks: new SwapTaskQueue(),
+    tasks: new TaskManager(),
     wpm: 200,
   };
 
@@ -185,7 +185,7 @@ export async function startBot({
       );
     }
 
-    console.log("[DEBUG] Reaction event:", {
+    console.debug("[DEBUG] Reaction event:", {
       id: event.id,
       details: event.details,
     });

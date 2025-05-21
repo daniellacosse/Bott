@@ -1,7 +1,7 @@
 import { delay } from "jsr:@std/async/delay";
 
 import { addEvents, getEventIdsForChannel, setSchema } from "@bott/data";
-import { startBot } from "@bott/discord";
+import { createTask, startBot } from "@bott/discord";
 
 import { respondEvents } from "@bott/gemini";
 import { getIdentity } from "./identity.ts";
@@ -11,6 +11,7 @@ import { getEvents } from "../data/model/events.ts";
 
 const MS_IN_MINUTE = 60 * 1000;
 const MAX_TYPING_TIME_MS = 3000;
+const DEFAULT_RESPONSE_SWAPS = 6;
 
 setSchema();
 
@@ -39,66 +40,84 @@ startBot({
       return;
     }
 
-    this.tasks.push(event.channel.id, async (abortSignal: AbortSignal) => {
-      let eventHistoryResult;
-
-      try {
-        const eventHistoryIds = getEventIdsForChannel(event.channel!.id);
-        eventHistoryResult = getEvents(...eventHistoryIds);
-      } catch (error) {
-        console.log("[ERROR] Failed to get channel history:", error);
-        return;
-      }
-
-      // 1. Get list of bot events (responses) from Gemini:
-      const messageEventGenerator = respondEvents(
-        eventHistoryResult,
-        {
-          abortSignal,
-          context: {
-            identity: getIdentity({
-              user: this.user,
-            }),
-            user: this.user,
-            channel: event.channel!,
-          },
+    if (!this.tasks.has(event.channel.name)) {
+      this.tasks.add({
+        name: event.channel.name,
+        remainingSwaps: DEFAULT_RESPONSE_SWAPS,
+        config: {
+          maximumSequentialSwaps: DEFAULT_RESPONSE_SWAPS,
         },
-      );
+      });
+    }
 
-      // Send one event (message) at a time:
-      for await (const messageEvent of messageEventGenerator) {
+    this.tasks.push(
+      event.channel.name,
+      createTask(async (abortSignal: AbortSignal) => {
+        let eventHistoryResult;
+
+        try {
+          const eventHistoryIds = getEventIdsForChannel(event.channel!.id);
+          eventHistoryResult = getEvents(...eventHistoryIds);
+        } catch (error) {
+          throw new Error("Failed to get channel history.", {
+            cause: error,
+          });
+        }
+
         if (abortSignal.aborted) {
-          return;
+          throw new Error("Aborted task: before getting event generator");
         }
 
-        if (messageEvent.type !== "reaction") {
-          this.startTyping();
+        // 1. Get list of bot events (responses) from Gemini:
+        const messageEventGenerator = respondEvents(
+          eventHistoryResult,
+          {
+            abortSignal,
+            context: {
+              identity: getIdentity({
+                user: this.user,
+              }),
+              user: this.user,
+              channel: event.channel!,
+            },
+          },
+        );
+
+        // Send one event (message) at a time:
+        for await (const messageEvent of messageEventGenerator) {
+          if (abortSignal.aborted) {
+            throw new Error("Aborted task: before typing message");
+          }
+
+          if (messageEvent.type !== "reaction") {
+            this.startTyping();
+          }
+
+          const words = messageEvent.details.content.split(/\s+/).length;
+          const delayMs = (words / this.wpm) * MS_IN_MINUTE;
+          const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
+          await delay(cappedDelayMs, { signal: abortSignal });
+
+          if (abortSignal.aborted) {
+            throw new Error("Aborted task: after typing message");
+          }
+
+          const result = await this.send(messageEvent);
+
+          if (result && "id" in result) {
+            messageEvent.id = result.id;
+          }
+
+          const eventTransaction = addEvents(messageEvent);
+          if ("error" in eventTransaction) {
+            console.error(
+              "[ERROR] Failed to add event to database:",
+              eventTransaction.error,
+            );
+          }
         }
-
-        const words = messageEvent.details.content.split(/\s+/).length;
-        const delayMs = (words / this.wpm) * MS_IN_MINUTE;
-        const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
-        await delay(cappedDelayMs);
-
-        if (abortSignal.aborted) {
-          return;
-        }
-
-        const result = await this.send(messageEvent);
-
-        if (result && "id" in result) {
-          messageEvent.id = result.id;
-        }
-
-        const eventTransaction = addEvents(messageEvent);
-        if ("error" in eventTransaction) {
-          console.error(
-            "[ERROR] Failed to add event to database:",
-            eventTransaction,
-          );
-        }
-      }
-    });
+      }),
+    );
   },
 });
 

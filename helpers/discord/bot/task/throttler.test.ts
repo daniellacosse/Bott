@@ -1,14 +1,14 @@
-import { TaskLimiter } from "./limiter.ts";
+import { TaskThrottler } from "./throttler.ts";
 import { assertEquals } from "jsr:@std/assert";
 import { delay } from "jsr:@std/async/delay";
 
 Deno.test("TaskThrottler - canRun initially true", () => {
-  const throttler = new TaskLimiter(1000, 3);
+  const throttler = new TaskThrottler(1000, 3);
   assertEquals(throttler.canRun("task1"), true);
 });
 
 Deno.test("TaskThrottler - canRun after recording within limit", () => {
-  const throttler = new TaskLimiter(1000, 3);
+  const throttler = new TaskThrottler(1000, 3);
   throttler.recordRun("task1");
   throttler.recordRun("task1");
   assertEquals(throttler.canRun("task1"), true);
@@ -16,7 +16,7 @@ Deno.test("TaskThrottler - canRun after recording within limit", () => {
 });
 
 Deno.test("TaskThrottler - canRun false when limit reached", () => {
-  const throttler = new TaskLimiter(1000, 2);
+  const throttler = new TaskThrottler(1000, 2);
   throttler.recordRun("task1");
   throttler.recordRun("task1");
   assertEquals(throttler.canRun("task1"), false);
@@ -24,7 +24,7 @@ Deno.test("TaskThrottler - canRun false when limit reached", () => {
 });
 
 Deno.test("TaskThrottler - canRun false when attempting to exceed limit", () => {
-  const throttler = new TaskLimiter(1000, 1);
+  const throttler = new TaskThrottler(1000, 1);
   throttler.recordRun("task1");
   assertEquals(throttler.canRun("task1"), false);
 
@@ -36,7 +36,7 @@ Deno.test("TaskThrottler - canRun false when attempting to exceed limit", () => 
 Deno.test("TaskThrottler - canRun true after window expiration", async () => {
   const windowMs = 100;
   const maxTasks = 2;
-  const throttler = new TaskLimiter(windowMs, maxTasks);
+  const throttler = new TaskThrottler(windowMs, maxTasks);
 
   throttler.recordRun("task1");
   throttler.recordRun("task1");
@@ -64,7 +64,7 @@ Deno.test("TaskThrottler - canRun true after window expiration", async () => {
 Deno.test("TaskThrottler - partial window expiration", async () => {
   const windowMs = 200;
   const maxTasks = 3;
-  const throttler = new TaskLimiter(windowMs, maxTasks);
+  const throttler = new TaskThrottler(windowMs, maxTasks);
 
   // Record 2 tasks
   throttler.recordRun("task1"); // t0
@@ -101,7 +101,7 @@ Deno.test("TaskThrottler - partial window expiration", async () => {
 });
 
 Deno.test("TaskThrottler - independent task IDs", () => {
-  const throttler = new TaskLimiter(1000, 1);
+  const throttler = new TaskThrottler(1000, 1);
 
   throttler.recordRun("task1");
   assertEquals(throttler.canRun("task1"), false, "task1 should be throttled");
