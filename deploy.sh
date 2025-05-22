@@ -15,7 +15,7 @@ gcloud run deploy bott-service \
   --memory 1.5Gi \
   --min-instances 0 \
   --max-instances 1 \
-  --exec-environment gen2 \
+  --execution-environment gen2 \
   --add-volume=name=bott-data-volume,type=cloud-storage,bucket=bott-data \
   --add-volume-mount=volume=bott-data-volume,mount-path=$FILE_SYSTEM_ROOT \
   --set-env-vars FILE_SYSTEM_ROOT=$FILE_SYSTEM_ROOT \
