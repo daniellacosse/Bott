@@ -7,7 +7,12 @@ type TaskBucket = {
   current?: Task;
   next?: Task;
   remainingSwaps: number;
+  record: Date[];
   config: {
+    throttle?: {
+      windowMs: number;
+      limit: number;
+    };
     maximumSequentialSwaps: number;
   };
 };
@@ -22,6 +27,10 @@ export class TaskManager {
     if (!this.buckets.has(name)) {
       throw new Error("Channel not found");
     }
+
+    const bucket = this.buckets.get(name)!;
+
+    if (bucket.config.throttle) {}
 
     this.buckets.get(name)!.next = task;
 

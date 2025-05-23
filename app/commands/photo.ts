@@ -16,7 +16,7 @@ const photoLimiter = new TaskThrottler(
 
 export const photo: CommandObject = {
   description:
-    `Ask @Bott to generate a photo: you can generate ${RATE_LIMIT_IMAGES} photos a month. @Bott won't generate photos containing people or sensitive subjects.`,
+    `Ask @Bott to generate a photo: you can generate ${RATE_LIMIT_IMAGES} photos a month. @Bott won't generate photos containing sensitive subjects.`,
   options: [{
     name: "prompt",
     type: CommandOptionType.STRING,
@@ -36,7 +36,7 @@ export const photo: CommandObject = {
 
     console.info(`[INFO] Recieved photo prompt "${prompt}".`);
 
-    return interaction.editReply({
+    return interaction.followUp({
       content: `Here's my photo for your prompt: **"${prompt}"**`,
       files: [
         new AttachmentBuilder(await generatePhoto(prompt), {

@@ -1,4 +1,4 @@
-import { /* PersonGeneration, */ SafetyFilterLevel } from "npm:@google/genai";
+import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 import { Buffer } from "node:buffer";
 
@@ -6,7 +6,7 @@ import _gemini from "../client.ts";
 import type { PromptParameters } from "../types.ts";
 
 export async function generatePhoto(prompt: string, {
-  model = "imagen-3.0-fast-generate-001",
+  model = "imagen-3.0-generate-002",
   gemini = _gemini,
 }: PromptParameters = {}): Promise<Buffer> {
   const response = await gemini.models.generateImages({
@@ -17,8 +17,7 @@ export async function generatePhoto(prompt: string, {
       enhancePrompt: true,
       includeRaiReason: true,
       numberOfImages: 1,
-      // TODO: Get approved for adult photos.
-      // personGeneration: PersonGeneration.ALLOW_ADULT,
+      personGeneration: PersonGeneration.ALLOW_ADULT,
       safetyFilterLevel: SafetyFilterLevel.BLOCK_ONLY_HIGH,
     },
   });

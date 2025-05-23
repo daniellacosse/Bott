@@ -17,7 +17,7 @@ export const text: CommandObject = {
 
     console.info(`[INFO] Recieved text prompt "${prompt}".`);
 
-    return interaction.editReply({
+    return interaction.followUp({
       content: `Here's my text for your prompt: **"${prompt}"**`,
       files: [
         new AttachmentBuilder(await generateText(prompt), {

@@ -10,6 +10,10 @@ export const RATE_LIMIT_IMAGES = Number(
   Deno.env.get("CONFIG_RATE_LIMIT_IMAGES") ??
     100,
 );
+export const RATE_LIMIT_MUSIC = Number(
+  Deno.env.get("CONFIG_RATE_LIMIT_MUSIC") ??
+    25,
+);
 export const RATE_LIMIT_VIDEOS = Number(
   Deno.env.get("CONFIG_RATE_LIMIT_VIDEOS") ?? 10,
 );

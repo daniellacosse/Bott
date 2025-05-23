@@ -36,7 +36,7 @@ export const video: CommandObject = {
 
     console.info(`[INFO] Recieved video prompt "${prompt}".`);
 
-    return interaction.editReply({
+    return interaction.followUp({
       content: `Here's my video for your prompt: **"${prompt}"**`,
       files: [
         new AttachmentBuilder(await generateVideo(prompt), {

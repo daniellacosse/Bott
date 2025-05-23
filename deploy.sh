@@ -20,8 +20,10 @@ gcloud run deploy bott-service \
   --add-volume-mount=volume=bott-data-volume,mount-path=$FILE_SYSTEM_ROOT \
   --set-env-vars FILE_SYSTEM_ROOT=$FILE_SYSTEM_ROOT \
   --set-env-vars DISCORD_TOKEN=$DISCORD_TOKEN \
-  --set-env-vars GOOGLE_PROJECT_ID=$GOOGLE_PROJECT_ID \
   --set-env-vars GOOGLE_PROJECT_LOCATION=$GOOGLE_PROJECT_LOCATION \
+  --set-env-vars GOOGLE_PROJECT_ID=$GOOGLE_PROJECT_ID \
+  --set-env-vars GOOGLE_ACCESS_TOKEN=$GOOGLE_ACCESS_TOKEN \
   --set-env-vars CONFIG_RATE_LIMIT_VIDEOS=$CONFIG_RATE_LIMIT_VIDEOS \
+  --set-env-vars CONFIG_RATE_LIMIT_MUSIC=$CONFIG_RATE_LIMIT_MUSIC \
   --set-env-vars CONFIG_RATE_LIMIT_IMAGES=$CONFIG_RATE_LIMIT_IMAGES \
   --allow-unauthenticated

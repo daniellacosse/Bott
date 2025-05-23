@@ -1,5 +1,6 @@
 import { type CommandObject, createInfoEmbed } from "@bott/discord";
 
+import { music } from "./music.ts";
 import { photo } from "./photo.ts";
 import { text } from "./text.ts";
 import { video } from "./video.ts";
@@ -22,6 +23,7 @@ const help: CommandObject = {
           },
           { name: "/text", value: text.description! },
           { name: "/photo", value: photo.description! },
+          { name: "/music", value: music.description! },
           { name: "/video", value: video.description! },
           { name: "/help", value: "Display this Help Menu." },
         ],
@@ -33,6 +35,7 @@ const help: CommandObject = {
 
 export default {
   help,
+  music,
   photo,
   text,
   video,

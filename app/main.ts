@@ -85,6 +85,7 @@ startBot({
       this.tasks.add({
         name: event.channel.name,
         remainingSwaps: DEFAULT_RESPONSE_SWAPS,
+        record: [],
         config: {
           maximumSequentialSwaps: DEFAULT_RESPONSE_SWAPS,
         },
