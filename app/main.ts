@@ -55,7 +55,7 @@ startBot({
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {
     console.info(
-      `[INFO] Running bot ${this.user.name} at user id <@${this.user.id}>`,
+      `[INFO] Running bot "${this.user.name}" at user id "<@${this.user.id}>"`,
     );
   },
   event(event) {
@@ -81,8 +81,8 @@ startBot({
       return;
     }
 
-    if (!this.tasks.has(event.channel.name)) {
-      this.tasks.add({
+    if (!this.taskManager.has(event.channel.name)) {
+      this.taskManager.add({
         name: event.channel.name,
         remainingSwaps: DEFAULT_RESPONSE_SWAPS,
         record: [],
@@ -92,7 +92,7 @@ startBot({
       });
     }
 
-    this.tasks.push(
+    this.taskManager.push(
       event.channel.name,
       createTask(async (abortSignal: AbortSignal) => {
         let eventHistoryResult;

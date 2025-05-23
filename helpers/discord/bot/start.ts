@@ -5,21 +5,19 @@ import {
   GatewayIntentBits,
   type GuildTextBasedChannel,
   type Message,
-  type MessageReaction,
   REST,
   Routes,
   SlashCommandBuilder,
 } from "npm:discord.js";
 import { createErrorEmbed } from "../message/embed/error.ts";
-import { type CommandObject, CommandOptionType } from "./types.ts";
+import {
+  type BotContext,
+  type CommandObject,
+  CommandOptionType,
+} from "./types.ts";
 import { TaskManager } from "./task/manager.ts";
 
-import {
-  addEvents,
-  type BottEvent,
-  BottEventType,
-  type BottUser,
-} from "@bott/data";
+import { addEvents, type BottEvent, BottEventType } from "@bott/data";
 
 const defaultIntents = [
   GatewayIntentBits.GuildMembers,
@@ -28,16 +26,6 @@ const defaultIntents = [
   GatewayIntentBits.Guilds,
   GatewayIntentBits.MessageContent,
 ];
-
-type BotContext = {
-  user: BottUser;
-  send: (
-    event: BottEvent,
-  ) => Promise<Message<true> | MessageReaction | undefined>;
-  startTyping: () => Promise<void>;
-  tasks: TaskManager;
-  wpm: number;
-};
 
 type BotOptions = {
   commands?: Record<string, CommandObject>;
@@ -69,7 +57,7 @@ export async function startBot({
       id: client.user.id,
       name: client.user.username,
     },
-    tasks: new TaskManager(),
+    taskManager: new TaskManager(),
     wpm: 200,
   };
 
@@ -206,7 +194,10 @@ export async function startBot({
     await interaction.deferReply();
 
     try {
-      await commands[interaction.commandName]?.command(interaction);
+      await commands[interaction.commandName]?.command.call(
+        makeSelf(interaction.channel! as GuildTextBasedChannel),
+        interaction,
+      );
     } catch (error) {
       await interaction.editReply({
         embeds: [createErrorEmbed(error as Error)],

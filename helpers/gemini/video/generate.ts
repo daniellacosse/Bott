@@ -31,12 +31,14 @@ function doVideoJob(
 
 export async function generateVideo(
   prompt: string,
-  { model = "veo-2.0-generate-001", gemini = _gemini }: PromptParameters = {},
+  { model = "veo-2.0-generate-001", gemini = _gemini, abortSignal }:
+    PromptParameters = {},
 ) {
   let operation = await gemini.models.generateVideos({
     model,
     prompt,
     config: {
+      abortSignal,
       aspectRatio: "16:9",
       enhancePrompt: true,
       fps: 24,

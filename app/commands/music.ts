@@ -4,15 +4,10 @@ import { AttachmentBuilder } from "npm:discord.js";
 import {
   type CommandObject,
   CommandOptionType,
-  TaskThrottler,
+  createTask,
 } from "@bott/discord";
 import { generateMusic } from "@bott/gemini";
 import { RATE_LIMIT_MUSIC, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
-
-const musicLimiter = new TaskThrottler(
-  RATE_LIMIT_WINDOW_MS,
-  RATE_LIMIT_MUSIC,
-);
 
 export const music: CommandObject = {
   description:
@@ -23,26 +18,45 @@ export const music: CommandObject = {
     description: "A description of the music you want to generate.",
     required: true,
   }],
-  async command(interaction) {
-    if (!musicLimiter.canRun(interaction.user.id)) {
-      throw new Error(
-        `You have generated the maximum number of songs this month (${RATE_LIMIT_MUSIC}).`,
-      );
+  command(interaction) {
+    const taskBucketId = `music-${interaction.user.id}`;
+
+    if (!this.taskManager.has(taskBucketId)) {
+      this.taskManager.add({
+        name: taskBucketId,
+        record: [],
+        remainingSwaps: 1,
+        config: {
+          throttle: {
+            limit: RATE_LIMIT_MUSIC,
+            windowMs: RATE_LIMIT_WINDOW_MS,
+          },
+          maximumSequentialSwaps: 1,
+        },
+      });
     }
 
-    musicLimiter.recordRun(interaction.user.id);
+    this.taskManager.push(
+      taskBucketId,
+      createTask(async (abortSignal) => {
+        const prompt = interaction.options.get("prompt")!.value as string;
 
-    const prompt = interaction.options.get("prompt")!.value as string;
+        console.info(`[INFO] Recieved video prompt "${prompt}".`);
 
-    console.info(`[INFO] Recieved music prompt "${prompt}".`);
-
-    return interaction.followUp({
-      content: `Here's my music for your prompt: **"${prompt}"**`,
-      files: [
-        new AttachmentBuilder(await generateMusic(prompt), {
-          name: "generated.wav",
-        }),
-      ],
-    });
+        await interaction.followUp({
+          content: `Here's my video for your prompt: **"${prompt}"**`,
+          files: [
+            new AttachmentBuilder(
+              await generateMusic(prompt, {
+                abortSignal,
+              }),
+              {
+                name: "generated.mp4",
+              },
+            ),
+          ],
+        });
+      }),
+    );
   },
 };

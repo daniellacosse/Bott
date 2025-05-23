@@ -4,15 +4,10 @@ import { AttachmentBuilder } from "npm:discord.js";
 import {
   type CommandObject,
   CommandOptionType,
-  TaskThrottler,
+  createTask,
 } from "@bott/discord";
 import { generatePhoto } from "@bott/gemini";
 import { RATE_LIMIT_IMAGES, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
-
-const photoLimiter = new TaskThrottler(
-  RATE_LIMIT_WINDOW_MS,
-  RATE_LIMIT_IMAGES,
-);
 
 export const photo: CommandObject = {
   description:
@@ -23,26 +18,45 @@ export const photo: CommandObject = {
     description: "A description of the photo you want to generate.",
     required: true,
   }],
-  async command(interaction) {
-    if (!photoLimiter.canRun(interaction.user.id)) {
-      throw new Error(
-        `You have generated the maximum number of photos this month (${RATE_LIMIT_IMAGES}).`,
-      );
+  command(interaction) {
+    const taskBucketId = `video-${interaction.user.id}`;
+
+    if (!this.taskManager.has(taskBucketId)) {
+      this.taskManager.add({
+        name: taskBucketId,
+        record: [],
+        remainingSwaps: 1,
+        config: {
+          throttle: {
+            limit: RATE_LIMIT_IMAGES,
+            windowMs: RATE_LIMIT_WINDOW_MS,
+          },
+          maximumSequentialSwaps: 1,
+        },
+      });
     }
 
-    photoLimiter.recordRun(interaction.user.id);
+    this.taskManager.push(
+      taskBucketId,
+      createTask(async (abortSignal) => {
+        const prompt = interaction.options.get("prompt")!.value as string;
 
-    const prompt = interaction.options.get("prompt")!.value as string;
+        console.info(`[INFO] Recieved video prompt "${prompt}".`);
 
-    console.info(`[INFO] Recieved photo prompt "${prompt}".`);
-
-    return interaction.followUp({
-      content: `Here's my photo for your prompt: **"${prompt}"**`,
-      files: [
-        new AttachmentBuilder(await generatePhoto(prompt), {
-          name: "generated.png",
-        }),
-      ],
-    });
+        await interaction.followUp({
+          content: `Here's my video for your prompt: **"${prompt}"**`,
+          files: [
+            new AttachmentBuilder(
+              await generatePhoto(prompt, {
+                abortSignal,
+              }),
+              {
+                name: "generated.mp4",
+              },
+            ),
+          ],
+        });
+      }),
+    );
   },
 };

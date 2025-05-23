@@ -7,12 +7,14 @@ import type { PromptParameters } from "../types.ts";
 
 export async function generatePhoto(prompt: string, {
   model = "imagen-3.0-generate-002",
+  abortSignal,
   gemini = _gemini,
 }: PromptParameters = {}): Promise<Buffer> {
   const response = await gemini.models.generateImages({
     model,
     prompt,
     config: {
+      abortSignal,
       addWatermark: true,
       enhancePrompt: true,
       includeRaiReason: true,
