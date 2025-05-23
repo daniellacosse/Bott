@@ -1,6 +1,7 @@
 import { commit } from "../client/commit.ts";
-import { sql } from "../client/sql.ts";
+import { sql } from "../database/sql.ts";
 
+import { type BottFile, getAddFilesSql } from "./files.ts";
 import { type BottChannel, getAddChannelsSql } from "./channels.ts";
 import { type BottSpace, getAddSpacesSql } from "./spaces.ts";
 import { type BottUser, getAddUsersSql } from "./users.ts";
@@ -9,16 +10,22 @@ export enum BottEventType {
   MESSAGE = "message",
   REPLY = "reply",
   REACTION = "reaction",
+  REQUEST = "request",
+  RESPONSE = "response",
 }
 
-export interface BottEvent<D extends object = { content: string }> {
+export interface BottEvent<
+  D extends object = { content: string },
+  T extends BottEventType = BottEventType,
+> {
   id: string;
-  type: BottEventType;
+  type: T;
   details: D;
   timestamp: Date;
   channel?: BottChannel;
   parent?: BottEvent;
   user?: BottUser;
+  files?: BottFile[];
 }
 
 export const eventsTableSql = sql`
@@ -78,6 +85,7 @@ export const addEvents = (...inputEvents: BottEvent[]) => {
   const spaces = new Map<string, BottSpace>();
   const channels = new Map<string, BottChannel>();
   const users = new Map<string, BottUser>();
+  const files = new Map<string, BottFile>();
 
   for (const event of events.values()) {
     if (event.channel) {
@@ -88,6 +96,12 @@ export const addEvents = (...inputEvents: BottEvent[]) => {
     if (event.user) {
       users.set(event.user.id, event.user);
     }
+
+    if (event.files) {
+      for (const file of event.files) {
+        files.set(file.id, { ...file, parent: event });
+      }
+    }
   }
 
   return commit(
@@ -97,6 +111,7 @@ export const addEvents = (...inputEvents: BottEvent[]) => {
     getAddEventsSql(
       ...topologicallySortEvents(...events.values()),
     ),
+    getAddFilesSql(...files.values()),
   );
 };
 
@@ -141,7 +156,8 @@ export const getEvents = (...ids: string[]): BottEvent[] => {
         c.id as c_id, c.name as c_name, c.description as c_description, c.config as c_config, -- channel
         s.id as s_id, s.name as s_name, s.description as s_description, -- space
         u.id as u_id, u.name as u_name, -- user
-        p.id as p_id -- parent event
+        p.id as p_id, -- parent event
+        f.id as f_id, f.name as f_name, f.description as f_description, f.mimetype as f_mimetype, f.data as f_data, f.url as f_url -- file
       from
         events e
       left join
@@ -152,63 +168,91 @@ export const getEvents = (...ids: string[]): BottEvent[] => {
         spaces s on c.space_id = s.id
       left join
         users u on e.user_id = u.id
+      left join
+        files f on f.parent_id = e.id and f.parent_type = 'event'
       where
         e.id in (${ids})
-      order by e.timestamp asc
-    `,
+      order by e.timestamp asc`,
   );
 
   if ("error" in result) {
     throw result.error;
   }
 
-  return result.reads.map(
-    (
-      {
-        e_id: id,
-        e_type: type,
-        e_details: details,
-        e_timestamp: timestamp,
-        ...context
-      },
-    ) => {
-      const event: BottEvent = {
-        id,
-        type,
-        details: JSON.parse(details),
-        timestamp: new Date(timestamp),
+  console.log(result);
+
+  const events = new Map<string, BottEvent>();
+
+  const _makeFile = (context: any) => ({
+    id: context.f_id,
+    name: context.f_name,
+    description: context.f_description,
+    mimetype: context.f_mimetype,
+    data: context.f_data ? new Uint8Array(context.f_data) : undefined,
+    url: new URL(context.f_url),
+  });
+
+  for (
+    const {
+      e_id: id,
+      e_type: type,
+      e_details: details,
+      e_timestamp: timestamp,
+      ...context
+    } of result.reads
+  ) {
+    // add file to existing event
+    if (events.has(id) && context.f_id) {
+      const event = events.get(id)!;
+
+      event.files ??= [];
+      event.files.push(_makeFile(context));
+
+      continue;
+    }
+
+    const event: BottEvent = {
+      id,
+      type,
+      details: JSON.parse(details),
+      timestamp: new Date(timestamp),
+    };
+
+    if (context.c_id) {
+      event.channel = {
+        id: context.c_id,
+        name: context.c_name,
+        description: context.c_description,
+        space: { // Populate space for the channel
+          id: context.s_id,
+          name: context.s_name,
+          description: context.s_description,
+        },
       };
-
-      if (context.c_id) {
-        event.channel = {
-          id: context.c_id,
-          name: context.c_name,
-          description: context.c_description,
-          space: { // Populate space for the channel
-            id: context.s_id,
-            name: context.s_name,
-            description: context.s_description,
-          },
-        };
-        if (context.c_config) {
-          event.channel.config = JSON.parse(context.c_config);
-        }
+      if (context.c_config) {
+        event.channel.config = JSON.parse(context.c_config);
       }
+    }
 
-      if (context.u_id) {
-        event.user = {
-          id: context.u_id,
-          name: context.u_name,
-        };
-      }
+    if (context.u_id) {
+      event.user = {
+        id: context.u_id,
+        name: context.u_name,
+      };
+    }
 
-      if (context.p_id) {
-        event.parent = getEvents(context.p_id)[0];
-      }
+    if (context.p_id) {
+      event.parent = getEvents(context.p_id)[0];
+    }
 
-      return event;
-    },
-  );
+    if (context.f_id) {
+      event.files = [_makeFile(context)];
+    }
+
+    events.set(id, event);
+  }
+
+  return [...events.values()];
 };
 
 // TODO: get channel history in a single query

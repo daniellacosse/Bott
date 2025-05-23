@@ -1,15 +1,14 @@
 import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
-import { Buffer } from "node:buffer";
 
 import _gemini from "../client.ts";
-import type { PromptParameters } from "../types.ts";
+import type { FileGenerator } from "./types.ts";
 
-export async function generatePhoto(prompt: string, {
+export const generatePhotoFile: FileGenerator = async (prompt: string, {
   model = "imagen-3.0-generate-002",
   abortSignal,
   gemini = _gemini,
-}: PromptParameters = {}): Promise<Buffer> {
+} = {}) => {
   const response = await gemini.models.generateImages({
     model,
     prompt,
@@ -42,5 +41,8 @@ export async function generatePhoto(prompt: string, {
     throw new Error("No image bytes");
   }
 
-  return Buffer.from(decodeBase64(imageData.image.imageBytes));
-}
+  return {
+    id: crypto.randomUUID(),
+    data: decodeBase64(imageData.image.imageBytes),
+  };
+};

@@ -1,6 +1,7 @@
 import { EmbedBuilder } from "npm:discord.js";
 import { EmbedColor } from "./colors.ts";
-import { DESCRIPTION_LENGTH_LIMIT } from "../constants.ts";
+
+const DESCRIPTION_LENGTH_LIMIT = 4096;
 
 export const createErrorEmbed = (error: Error) => {
   const title = error.name === "Error" ? "Error" : `Error: ${error.name}`;

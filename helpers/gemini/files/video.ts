@@ -3,10 +3,9 @@ import {
   PersonGeneration,
 } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
-import { Buffer } from "node:buffer";
 
 import _gemini from "../client.ts";
-import type { PromptParameters } from "../types.ts";
+import type { FileGenerator } from "./types.ts";
 
 function doVideoJob(
   job: GenerateVideosOperation,
@@ -29,11 +28,10 @@ function doVideoJob(
   });
 }
 
-export async function generateVideo(
+export const generateVideoFile: FileGenerator = async (
   prompt: string,
-  { model = "veo-2.0-generate-001", gemini = _gemini, abortSignal }:
-    PromptParameters = {},
-) {
+  { model = "veo-2.0-generate-001", gemini = _gemini, abortSignal } = {},
+) => {
   let operation = await gemini.models.generateVideos({
     model,
     prompt,
@@ -78,5 +76,8 @@ export async function generateVideo(
     throw new Error("No video bytes");
   }
 
-  return Buffer.from(decodeBase64(videoData.video.videoBytes));
-}
+  return {
+    id: crypto.randomUUID(),
+    data: decodeBase64(videoData.video.videoBytes),
+  };
+};

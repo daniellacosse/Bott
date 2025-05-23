@@ -37,6 +37,14 @@ Deno.test("database smoke test", async () => {
     channel: channelMain,
     parent: nancyGreeting,
     details: { content: "Hi" },
+    files: [
+      {
+        id: "4",
+        name: "wave.png",
+        mimetype: "image/png",
+        url: new URL("https://example.com"),
+      },
+    ],
     timestamp: new Date(),
   };
   const nancyReaction = {
@@ -49,12 +57,15 @@ Deno.test("database smoke test", async () => {
     timestamp: new Date(),
   };
 
+  console.debug("[DEBUG] Adding events.");
+
   addEvents(nancyGreeting, bobReply, nancyReaction);
 
-  // test
+  console.debug("[DEBUG] Getting events.");
+
   const [dbResult] = getEvents(nancyReaction.id);
 
-  console.log("final result:", dbResult);
+  console.debug("[DEBUG] Final result:", dbResult);
 
   assertExists(dbResult.id);
   assertExists(dbResult.type);

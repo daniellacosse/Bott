@@ -1,12 +1,9 @@
-// TODO(#16): encapsulate these concepts in infra
-import { AttachmentBuilder } from "npm:discord.js";
-
 import {
   type CommandObject,
   CommandOptionType,
   createTask,
 } from "@bott/discord";
-import { generatePhoto } from "@bott/gemini";
+import { generatePhotoFile } from "@bott/gemini";
 import { RATE_LIMIT_IMAGES, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
 export const photo: CommandObject = {
@@ -18,8 +15,11 @@ export const photo: CommandObject = {
     description: "A description of the photo you want to generate.",
     required: true,
   }],
-  command(interaction) {
-    const taskBucketId = `video-${interaction.user.id}`;
+  command(commandEvent) {
+    const taskBucketId = `photo-${commandEvent.user?.id}`;
+    const prompt = commandEvent.details.prompt;
+
+    console.info(`[INFO] Recieved photo prompt "${prompt}".`);
 
     if (!this.taskManager.has(taskBucketId)) {
       this.taskManager.add({
@@ -36,27 +36,24 @@ export const photo: CommandObject = {
       });
     }
 
-    this.taskManager.push(
-      taskBucketId,
-      createTask(async (abortSignal) => {
-        const prompt = interaction.options.get("prompt")!.value as string;
-
-        console.info(`[INFO] Recieved video prompt "${prompt}".`);
-
-        await interaction.followUp({
-          content: `Here's my video for your prompt: **"${prompt}"**`,
-          files: [
-            new AttachmentBuilder(
-              await generatePhoto(prompt, {
+    return new Promise((resolve) => {
+      this.taskManager.push(
+        taskBucketId,
+        createTask(async (abortSignal) => {
+          resolve({
+            ...commandEvent,
+            user: this.user,
+            details: {
+              content: `Here's my photo for your prompt: **"${prompt}"**`,
+            },
+            files: [
+              await generatePhotoFile(prompt, {
                 abortSignal,
               }),
-              {
-                name: "generated.mp4",
-              },
-            ),
-          ],
-        });
-      }),
-    );
+            ],
+          });
+        }),
+      );
+    });
   },
 };
