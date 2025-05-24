@@ -1,12 +1,11 @@
-import {
-  type CommandObject,
-  CommandOptionType,
-  createTask,
-} from "@bott/discord";
+import { CommandOptionType, createCommand, createTask } from "@bott/discord";
 import { generateVideoFile } from "@bott/gemini";
 import { RATE_LIMIT_VIDEOS, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
-export const video: CommandObject = {
+export const video = createCommand<{
+  prompt: string;
+}>({
+  name: "video",
   description:
     `Ask @Bott to generate a short 6-second video: you can generate up to ${RATE_LIMIT_VIDEOS} videos a month.`,
   options: [{
@@ -15,45 +14,44 @@ export const video: CommandObject = {
     description: "A description of the video you want to generate.",
     required: true,
   }],
-  command(commandEvent) {
-    const taskBucketId = `video-${commandEvent.user?.id}`;
-    const prompt = commandEvent.details.prompt;
+}, function (commandEvent) {
+  const taskBucketId = `video-${commandEvent.user?.id}`;
+  const prompt = commandEvent.details.options.prompt;
 
-    console.info(`[INFO] Recieved video prompt "${prompt}".`);
+  console.info(`[INFO] Recieved video prompt "${prompt}".`);
 
-    if (!this.taskManager.has(taskBucketId)) {
-      this.taskManager.add({
-        name: taskBucketId,
-        record: [],
-        remainingSwaps: 1,
-        config: {
-          throttle: {
-            windowMs: RATE_LIMIT_WINDOW_MS,
-            limit: RATE_LIMIT_VIDEOS,
-          },
-          maximumSequentialSwaps: 1,
+  if (!this.taskManager.has(taskBucketId)) {
+    this.taskManager.add({
+      name: taskBucketId,
+      record: [],
+      remainingSwaps: 1,
+      config: {
+        throttle: {
+          windowMs: RATE_LIMIT_WINDOW_MS,
+          limit: RATE_LIMIT_VIDEOS,
         },
-      });
-    }
-
-    return new Promise((resolve) => {
-      this.taskManager.push(
-        taskBucketId,
-        createTask(async (abortSignal) => {
-          resolve({
-            ...commandEvent,
-            user: this.user,
-            details: {
-              content: `Here's my video for your prompt: **"${prompt}"**`,
-            },
-            files: [
-              await generateVideoFile(prompt, {
-                abortSignal,
-              }),
-            ],
-          });
-        }),
-      );
+        maximumSequentialSwaps: 1,
+      },
     });
-  },
-};
+  }
+
+  return new Promise((resolve) => {
+    this.taskManager.push(
+      taskBucketId,
+      createTask(async (abortSignal) => {
+        resolve({
+          ...commandEvent,
+          user: this.user,
+          details: {
+            content: `Here's my video for your prompt: **"${prompt}"**`,
+          },
+          files: [
+            await generateVideoFile(prompt, {
+              abortSignal,
+            }),
+          ],
+        });
+      }),
+    );
+  });
+});

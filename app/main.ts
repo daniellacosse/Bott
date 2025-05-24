@@ -4,7 +4,7 @@ import {
   addEvents,
   getEventIdsForChannel,
   getEvents,
-  initClient,
+  initDatabase,
   setSchema,
 } from "@bott/data";
 import { createTask, startBot } from "@bott/discord";
@@ -28,7 +28,7 @@ Deno.mkdirSync(FILE_SYSTEM_ROOT, {
 });
 
 // set up db
-initClient(FILE_SYSTEM_DB_PATH);
+initDatabase(FILE_SYSTEM_DB_PATH);
 
 setSchema();
 
@@ -99,7 +99,7 @@ startBot({
 
         try {
           const eventHistoryIds = getEventIdsForChannel(event.channel!.id);
-          eventHistoryResult = getEvents(...eventHistoryIds);
+          eventHistoryResult = await getEvents(...eventHistoryIds);
         } catch (error) {
           throw new Error("Failed to get channel history.", {
             cause: error,

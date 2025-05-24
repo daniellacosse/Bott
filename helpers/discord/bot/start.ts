@@ -21,15 +21,15 @@ import { TaskManager } from "./task/manager.ts";
 import type { BotContext } from "./types.ts";
 import type { Command } from "./command/create.ts";
 
-type BotOptions = {
-  commands?: Command[];
+type BotOptions<O extends Record<string, unknown> = {}> = {
+  commands?: Command<O>[];
   event?: (this: BotContext, event: BottEvent) => void;
   identityToken: string;
   intents?: GatewayIntentBits[];
   mount?: (this: BotContext) => void;
 };
 
-export async function startBot({
+export async function startBot<O extends Record<string, unknown> = {}>({
   identityToken: token,
   commands,
   intents = [
@@ -41,7 +41,7 @@ export async function startBot({
   ],
   event: handleEvent,
   mount: handleMount,
-}: BotOptions) {
+}: BotOptions<O>) {
   const client = new Client({ intents });
 
   await client.login(token);
@@ -205,9 +205,13 @@ export async function startBot({
     let responseEvent;
 
     try {
+      const requestEvent = await getCommandBottEvent<O>(interaction);
+
+      addEvents(requestEvent);
+
       responseEvent = await command.call(
         _makeSelf(interaction.channel! as GuildTextBasedChannel),
-        await getCommandBottEvent(interaction),
+        requestEvent,
       );
     } catch (error) {
       return interaction.editReply({
@@ -233,12 +237,14 @@ export async function startBot({
       content: responseEvent.details.content,
       files,
     });
+
+    addEvents(responseEvent);
   });
 
   // Sync commands with discord origin via their custom http client 🙄
   const body = [];
   for (const command of commands) {
-    body.push(getCommandJson(command));
+    body.push(getCommandJson<O>(command));
   }
 
   await new REST({ version: "10" }).setToken(token).put(

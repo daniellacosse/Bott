@@ -1,6 +1,6 @@
 import { decodeBase64 } from "jsr:@std/encoding";
 
-import { BottFileMimetypes, writeFileSystem } from "@bott/data";
+import { BottFileMimetypes } from "@bott/data";
 
 import type { FileGenerator } from "./types.ts";
 import { getPromptSlug } from "../prompt.ts";
@@ -42,7 +42,7 @@ export const generateMusicFile: FileGenerator = async (
     id: crypto.randomUUID(),
     data: fileData,
     name: fileName,
-    url: writeFileSystem(fileName, fileData),
+    url: new URL("file://"),
     mimetype: BottFileMimetypes.WAV,
   };
 };

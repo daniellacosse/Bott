@@ -1,4 +1,5 @@
 import type { Content } from "npm:@google/genai";
+import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import {
   type BottChannel,
@@ -42,7 +43,7 @@ export async function* respondEvents(
     }
 
     contents.unshift(
-      transformBottEventToContent({
+      await transformBottEventToContent({
         ...event,
         details: { ...event.details, seen: hasBeenSeen },
       }, modelUserId),
@@ -70,17 +71,47 @@ export async function* respondEvents(
       ...event,
       user: context.user,
       channel: context.channel,
-      parent: event.parent ? getEvents(event.parent.id)[0] : undefined,
+      parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
     };
   }
 
   return;
 }
 
-const transformBottEventToContent = (
+const transformBottEventToContent = async (
   event: BottEvent<{ content: string; seen: boolean }>,
   modelUserId: string,
-): Content => ({
-  role: (event.user && event.user.id === modelUserId) ? "model" : "user",
-  parts: [{ text: JSON.stringify(event) }],
-});
+): Promise<Content> => {
+  const content: Content = {
+    role: (event.user && event.user.id === modelUserId) ? "model" : "user",
+    parts: [{ text: JSON.stringify(event) }],
+  };
+
+  if (event.files) {
+    for (const file of event.files) {
+      let fileData;
+
+      if (file.data) {
+        fileData = file.data;
+      } else if (file.url) {
+        const fileResponse = await fetch(file.url);
+        const fileBuffer = await fileResponse.arrayBuffer();
+
+        fileData = new Uint8Array(fileBuffer);
+      }
+
+      if (fileData === undefined) {
+        continue;
+      }
+
+      content.parts!.push({
+        inlineData: {
+          mimeType: file.mimetype,
+          data: encodeBase64(fileData),
+        },
+      });
+    }
+  }
+
+  return content;
+};

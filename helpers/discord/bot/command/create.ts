@@ -1,8 +1,9 @@
-import type { BottEvent } from "@bott/data";
+import type { BottEvent, BottEventType } from "@bott/data";
 import type { BotContext } from "../types.ts";
 
 export type CommandEvent<O extends Record<string, unknown> = {}> = BottEvent<
-  { name: string; options: O }
+  { name: string; options: O },
+  BottEventType.REQUEST
 >;
 
 export type CommandResultEvent = BottEvent;

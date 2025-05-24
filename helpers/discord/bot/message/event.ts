@@ -1,12 +1,6 @@
 import type { Message } from "npm:discord.js";
 
-import {
-  type BottEvent,
-  BottEventType,
-  type BottFile,
-  BottFileMimetypes,
-  readFileSystem,
-} from "@bott/data";
+import { type BottEvent, BottEventType, BottFileMimetypes } from "@bott/data";
 
 export const getMessageBottEvent = async (
   message: Message<true>,
@@ -16,7 +10,7 @@ export const getMessageBottEvent = async (
     type: BottEventType.MESSAGE,
     details: {
       content: (message.content || message.embeds.at(0)?.description) ??
-        "[NO_CONTENT]",
+        "",
     },
     timestamp: new Date(message.createdTimestamp),
     channel: {
@@ -54,23 +48,27 @@ export const getMessageBottEvent = async (
     }
 
     if (message.attachments.size) {
-      const filePromises = message.attachments.map(
-        (attachment) => {
-          if (
-            // skip file types we don't currently support
-            !attachment.contentType ||
-            !(attachment.contentType in BottFileMimetypes)
-          ) {
-            return Promise.resolve(null);
-          }
+      event.files = [];
 
-          return readFileSystem(new URL(attachment.url));
-        },
-      );
+      for (const attachment of message.attachments.values()) {
+        if (
+          !attachment.contentType ||
+          !(attachment.contentType in BottFileMimetypes)
+        ) {
+          continue;
+        }
 
-      event.files = (await Promise.all(filePromises)).filter((file) =>
-        file !== null
-      ) as BottFile[];
+        const fileUrl = new URL(attachment.url);
+        const fileResponse = await fetch(fileUrl);
+
+        event.files.push({
+          id: attachment.id,
+          name: attachment.name,
+          url: new URL(attachment.url),
+          data: new Uint8Array(await fileResponse.arrayBuffer()),
+          mimetype: attachment.contentType as BottFileMimetypes,
+        });
+      }
     }
 
     event.parent = parentMessage;

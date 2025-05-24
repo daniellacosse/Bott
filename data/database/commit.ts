@@ -11,7 +11,7 @@ export type TransactionResults = {
 
 let client: DatabaseSync;
 
-export const initClient = (dbPath = "test.db") =>
+export const initDatabase = (dbPath = "test.db") =>
   client = new DatabaseSync(
     dbPath,
   );

@@ -4,11 +4,11 @@ import { type Command, CommandOptionType } from "./create.ts";
 
 const COMMAND_DESCRIPTION_LIMIT = 100;
 
-export function getCommandJson({
+export function getCommandJson<O extends Record<string, unknown> = {}>({
   name,
   description,
   options,
-}: Command) {
+}: Command<O>) {
   const builder = new SlashCommandBuilder().setName(name);
 
   if (description) {

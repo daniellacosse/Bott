@@ -23,9 +23,9 @@ export interface BottEvent<
   details: D;
   timestamp: Date;
   channel?: BottChannel;
-  parent?: BottEvent;
+  parent?: BottEvent<D, T>;
   user?: BottUser;
-  files?: BottFile[];
+  files?: BottFile<D, T>[];
 }
 
 export const eventsTableSql = sql`
@@ -43,7 +43,10 @@ export const eventsTableSql = sql`
   )
 `;
 
-const getAddEventsSql = (...events: BottEvent[]) => {
+const getAddEventsSql = <
+  D extends object = { content: string },
+  T extends BottEventType = BottEventType,
+>(...events: BottEvent<D, T>[]) => {
   if (!events.length) {
     return;
   }
@@ -61,10 +64,13 @@ const getAddEventsSql = (...events: BottEvent[]) => {
   `;
 };
 
-export const addEvents = (...inputEvents: BottEvent[]) => {
+export const addEvents = <
+  D extends object = { content: string },
+  T extends BottEventType = BottEventType,
+>(...inputEvents: BottEvent<D, T>[]) => {
   // Extract all unique entities (events, spaces, channels, users)
-  const events = new Map<string, BottEvent>();
-  const _queue: BottEvent[] = [...inputEvents];
+  const events = new Map<string, BottEvent<D, T>>();
+  const _queue: BottEvent<D, T>[] = [...inputEvents];
   const _seenEvents = new Set<string>();
 
   while (_queue.length > 0) {
@@ -77,7 +83,7 @@ export const addEvents = (...inputEvents: BottEvent[]) => {
       // We haven't seen this parent before, add it to the queue:
       currentEvent.parent && !_seenEvents.has(currentEvent.parent.id)
     ) {
-      _queue.push(currentEvent.parent);
+      _queue.push(currentEvent.parent as BottEvent<D, T>);
       _seenEvents.add(currentEvent.parent.id);
     }
   }
@@ -85,7 +91,7 @@ export const addEvents = (...inputEvents: BottEvent[]) => {
   const spaces = new Map<string, BottSpace>();
   const channels = new Map<string, BottChannel>();
   const users = new Map<string, BottUser>();
-  const files = new Map<string, BottFile>();
+  const files = new Map<string, BottFile<D, T>>();
 
   for (const event of events.values()) {
     if (event.channel) {
@@ -104,7 +110,7 @@ export const addEvents = (...inputEvents: BottEvent[]) => {
     }
   }
 
-  return commit(
+  const results = commit(
     getAddSpacesSql(...spaces.values()),
     getAddChannelsSql(...channels.values()),
     getAddUsersSql(...users.values()),
@@ -113,42 +119,18 @@ export const addEvents = (...inputEvents: BottEvent[]) => {
     ),
     getAddFilesSql(...files.values()),
   );
+
+  // Write new files to the file system.
+  for (const file of files.values()) {
+    if (file.url.protocol === "file:") {
+      Deno.writeFileSync(file.name, file.data);
+    }
+  }
+
+  return results;
 };
 
-function topologicallySortEvents(...events: BottEvent[]): BottEvent[] {
-  const result: BottEvent[] = [];
-
-  const visiting = new Set<string>();
-  const visited = new Set<string>();
-
-  function visit(event: BottEvent) {
-    if (visited.has(event.id) || visiting.has(event.id)) {
-      return; // Cycle detected, break it
-    }
-
-    visiting.add(event.id);
-    // If the event has a parent, visit it first
-    if (event.parent) {
-      visit(event.parent);
-    }
-    visiting.delete(event.id);
-
-    visited.add(event.id);
-    result.push(event);
-  }
-
-  for (const event of events) {
-    if (visited.has(event.id)) {
-      continue;
-    }
-
-    visit(event);
-  }
-
-  return result;
-}
-
-export const getEvents = (...ids: string[]): BottEvent[] => {
+export const getEvents = async (...ids: string[]): Promise<BottEvent[]> => {
   const result = commit(
     sql`
       select
@@ -179,18 +161,21 @@ export const getEvents = (...ids: string[]): BottEvent[] => {
     throw result.error;
   }
 
-  console.log(result);
-
   const events = new Map<string, BottEvent>();
 
-  const _makeFile = (context: any) => ({
-    id: context.f_id,
-    name: context.f_name,
-    description: context.f_description,
-    mimetype: context.f_mimetype,
-    data: context.f_data ? new Uint8Array(context.f_data) : undefined,
-    url: new URL(context.f_url),
-  });
+  const _makeFile = async (context: any) => {
+    const fileUrl = new URL(context.f_url);
+    const fileResponse = await fetch(fileUrl);
+
+    return {
+      id: context.f_id,
+      name: context.f_name,
+      description: context.f_description,
+      mimetype: context.f_mimetype,
+      data: new Uint8Array(await fileResponse.arrayBuffer()),
+      url: new URL(context.f_url),
+    };
+  };
 
   for (
     const {
@@ -206,7 +191,7 @@ export const getEvents = (...ids: string[]): BottEvent[] => {
       const event = events.get(id)!;
 
       event.files ??= [];
-      event.files.push(_makeFile(context));
+      event.files.push(await _makeFile(context));
 
       continue;
     }
@@ -242,11 +227,11 @@ export const getEvents = (...ids: string[]): BottEvent[] => {
     }
 
     if (context.p_id) {
-      event.parent = getEvents(context.p_id)[0];
+      event.parent = (await getEvents(context.p_id))[0];
     }
 
     if (context.f_id) {
-      event.files = [_makeFile(context)];
+      event.files = [await _makeFile(context)];
     }
 
     events.set(id, event);
@@ -270,3 +255,41 @@ export const getEventIdsForChannel = (channelId: string): string[] => {
 
   return result.reads.map(({ id }) => id);
 };
+
+function topologicallySortEvents<
+  D extends object = { content: string },
+  T extends BottEventType = BottEventType,
+>(
+  ...events: BottEvent<D, T>[]
+): BottEvent<D, T>[] {
+  const result: BottEvent<D, T>[] = [];
+
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+
+  function visit(event: BottEvent<D, T>) {
+    if (visited.has(event.id) || visiting.has(event.id)) {
+      return; // Cycle detected, break it
+    }
+
+    visiting.add(event.id);
+    // If the event has a parent, visit it first
+    if (event.parent) {
+      visit(event.parent);
+    }
+    visiting.delete(event.id);
+
+    visited.add(event.id);
+    result.push(event);
+  }
+
+  for (const event of events) {
+    if (visited.has(event.id)) {
+      continue;
+    }
+
+    visit(event);
+  }
+
+  return result;
+}

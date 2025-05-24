@@ -1,3 +1,4 @@
+export { initDatabase } from "./database/commit.ts";
 export { setSchema } from "./model/schema.ts";
 export { type BottSpace } from "./model/spaces.ts";
 export { type BottChannel } from "./model/channels.ts";
@@ -14,6 +15,3 @@ export {
   getEventIdsForChannel,
   getEvents,
 } from "./model/events.ts";
-export { initClient } from "./client/commit.ts";
-
-export { writeFileSystem } from "./filesystem/write.ts";

@@ -1,11 +1,8 @@
-import {
-  type CommandObject,
-  CommandOptionType,
-  createTask,
-} from "@bott/discord";
+import { CommandOptionType, createCommand, createTask } from "@bott/discord";
 import { generateTextFile } from "@bott/gemini";
 
-export const text: CommandObject = {
+export const text = createCommand<{ prompt: string }>({
+  name: "text",
   description: `Prompt @Bott for a text response as much as you like.`,
   options: [{
     name: "prompt",
@@ -13,41 +10,40 @@ export const text: CommandObject = {
     description: "Your prompt for @Bott.",
     required: true,
   }],
-  command(commandEvent) {
-    const taskBucketId = `text-${commandEvent.user?.id}`;
-    const prompt = commandEvent.details.prompt;
+}, function (commandEvent) {
+  const taskBucketId = `text-${commandEvent.user?.id}`;
+  const prompt = commandEvent.details.options.prompt;
 
-    console.info(`[INFO] Recieved text prompt "${prompt}".`);
+  console.info(`[INFO] Recieved text prompt "${prompt}".`);
 
-    if (!this.taskManager.has(taskBucketId)) {
-      this.taskManager.add({
-        name: taskBucketId,
-        record: [],
-        remainingSwaps: 1,
-        config: {
-          maximumSequentialSwaps: 1,
-        },
-      });
-    }
-
-    return new Promise((resolve) => {
-      this.taskManager.push(
-        taskBucketId,
-        createTask(async (abortSignal) => {
-          resolve({
-            ...commandEvent,
-            user: this.user,
-            details: {
-              content: `Here's my text for your prompt: **"${prompt}"**`,
-            },
-            files: [
-              await generateTextFile(prompt, {
-                abortSignal,
-              }),
-            ],
-          });
-        }),
-      );
+  if (!this.taskManager.has(taskBucketId)) {
+    this.taskManager.add({
+      name: taskBucketId,
+      record: [],
+      remainingSwaps: 1,
+      config: {
+        maximumSequentialSwaps: 1,
+      },
     });
-  },
-};
+  }
+
+  return new Promise((resolve) => {
+    this.taskManager.push(
+      taskBucketId,
+      createTask(async (abortSignal) => {
+        resolve({
+          ...commandEvent,
+          user: this.user,
+          details: {
+            content: `Here's my text for your prompt: **"${prompt}"**`,
+          },
+          files: [
+            await generateTextFile(prompt, {
+              abortSignal,
+            }),
+          ],
+        });
+      }),
+    );
+  });
+});

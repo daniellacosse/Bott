@@ -2,12 +2,13 @@ import { addEvents, BottEventType, getEvents } from "./model/events.ts";
 
 import { assertExists } from "jsr:@std/assert";
 import { setSchema } from "./model/schema.ts";
-import { initClient } from "./main.ts";
+import { initDatabase } from "./main.ts";
+import { BottFileMimetypes } from "./model/files.ts";
 
 Deno.test("database smoke test", async () => {
   const tempDbFile = await Deno.makeTempFile();
 
-  initClient(tempDbFile);
+  initDatabase(tempDbFile);
 
   setSchema();
 
@@ -41,7 +42,8 @@ Deno.test("database smoke test", async () => {
       {
         id: "4",
         name: "wave.png",
-        mimetype: "image/png",
+        mimetype: BottFileMimetypes.PNG,
+        data: new Uint8Array(),
         url: new URL("https://example.com"),
       },
     ],
@@ -63,7 +65,7 @@ Deno.test("database smoke test", async () => {
 
   console.debug("[DEBUG] Getting events.");
 
-  const [dbResult] = getEvents(nancyReaction.id);
+  const [dbResult] = await getEvents(nancyReaction.id);
 
   console.debug("[DEBUG] Final result:", dbResult);
 

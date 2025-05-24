@@ -1,4 +1,4 @@
-import { BottFileMimetypes, writeFileSystem } from "@bott/data";
+import { BottFileMimetypes } from "@bott/data";
 import _gemini from "../client.ts";
 import type { FileGenerator } from "./types.ts";
 import { getPromptSlug } from "../prompt.ts";
@@ -41,7 +41,7 @@ export const generateTextFile: FileGenerator = async (prompt: string, {
     id: crypto.randomUUID(),
     data: textData,
     name: fileName,
-    url: writeFileSystem(fileName, textData),
+    url: new URL("file://"),
     mimetype: BottFileMimetypes.TXT,
   };
 };

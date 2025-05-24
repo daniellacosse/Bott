@@ -1,5 +1,5 @@
 import { sql } from "../database/sql.ts";
-import type { BottEvent } from "../main.ts";
+import type { BottEvent, BottEventType } from "../main.ts";
 
 export enum BottFileMimetypes {
   WAV = "audio/wav",
@@ -8,15 +8,18 @@ export enum BottFileMimetypes {
   TXT = "text/plain",
 }
 
-export interface BottFile {
+export interface BottFile<
+  D extends object = { content: string },
+  T extends BottEventType = BottEventType,
+> {
   id: string;
   name: string;
   description?: string;
   mimetype: BottFileMimetypes;
-  data?: Uint8Array;
+  data: Uint8Array;
   url: URL;
   // Just BottEvents for now.
-  parent?: BottEvent;
+  parent?: BottEvent<D, T>;
 }
 
 export const BottFileExtensionMap = new Map([
@@ -32,15 +35,17 @@ export const filesTableSql = sql`
     name text not null,
     description text,
     mimetype text not null,
-    data blob,
     url text not null,
     parent_id varchar(36),
     parent_type text
   )
 `;
 
-export const getAddFilesSql = (
-  ...files: BottFile[]
+export const getAddFilesSql = <
+  D extends object = { content: string },
+  T extends BottEventType = BottEventType,
+>(
+  ...files: BottFile<D, T>[]
 ) => {
   if (!files.length) {
     return;
@@ -52,14 +57,13 @@ export const getAddFilesSql = (
     name,
     description,
     mimetype,
-    data,
     url,
     parent_id,
     parent_type
   ) values (
     ${
     files.map((f) =>
-      sql`(${f.id}, ${f.name}, ${f.description}, ${f.mimetype}, ${f.data}, ${f.url.toString()}, ${f.parent?.id}, "event")`
+      sql`(${f.id}, ${f.name}, ${f.description}, ${f.mimetype}, ${f.url.toString()}, ${f.parent?.id}, "event")`
     )
   }
   ) on conflict(id) do update set

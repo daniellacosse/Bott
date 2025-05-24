@@ -14,7 +14,7 @@ export const music = createCommand<{ prompt: string }>(
       required: true,
     }],
   },
-  (commandEvent) => {
+  function (commandEvent) {
     const taskBucketId = `music-${commandEvent.user?.id}`;
     const prompt = commandEvent.details.options.prompt;
 
