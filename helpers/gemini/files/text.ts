@@ -1,7 +1,7 @@
 import { BottFileMimetypes } from "@bott/data";
 import _gemini from "../client.ts";
 import type { FileGenerator } from "./types.ts";
-import { getPromptSlug } from "../prompt.ts";
+import { getFileNameFromDescription, getGeneratedFileUrl } from "./url.ts";
 
 export const generateTextFile: FileGenerator = async (prompt: string, {
   model = "gemini-2.5-pro-preview-05-06",
@@ -35,13 +35,14 @@ export const generateTextFile: FileGenerator = async (prompt: string, {
   }
 
   const textData = new TextEncoder().encode(sanitizedResponse.text);
-  const fileName = `${getPromptSlug(prompt)}.txt`;
+  const fileName = `${getFileNameFromDescription(prompt)}.txt`;
 
   return {
     id: crypto.randomUUID(),
     data: textData,
     name: fileName,
-    url: new URL("file://"),
+    description: prompt,
+    url: getGeneratedFileUrl(fileName),
     mimetype: BottFileMimetypes.TXT,
   };
 };

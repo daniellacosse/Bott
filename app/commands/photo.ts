@@ -1,5 +1,7 @@
+import { BottEventType } from "@bott/data";
 import { CommandOptionType, createCommand, createTask } from "@bott/discord";
 import { generatePhotoFile } from "@bott/gemini";
+
 import { RATE_LIMIT_IMAGES, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
 export const photo = createCommand<{ prompt: string }>({
@@ -12,9 +14,9 @@ export const photo = createCommand<{ prompt: string }>({
     description: "A description of the photo you want to generate.",
     required: true,
   }],
-}, function (commandEvent) {
-  const taskBucketId = `photo-${commandEvent.user?.id}`;
-  const prompt = commandEvent.details.options.prompt;
+}, function (functionRequestEvent) {
+  const taskBucketId = `photo-${functionRequestEvent.user?.id}`;
+  const prompt = functionRequestEvent.details.options.prompt;
 
   console.info(`[INFO] Recieved photo prompt "${prompt}".`);
 
@@ -38,7 +40,8 @@ export const photo = createCommand<{ prompt: string }>({
       taskBucketId,
       createTask(async (abortSignal) => {
         resolve({
-          ...commandEvent,
+          id: crypto.randomUUID(),
+          type: BottEventType.FUNCTION_RESPONSE,
           user: this.user,
           details: {
             content: `Here's my photo for your prompt: **"${prompt}"**`,
@@ -48,6 +51,7 @@ export const photo = createCommand<{ prompt: string }>({
               abortSignal,
             }),
           ],
+          timestamp: new Date(),
         });
       }),
     );

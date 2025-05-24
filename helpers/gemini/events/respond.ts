@@ -1,6 +1,8 @@
 import type { Content } from "npm:@google/genai";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 
+import type { BottEventType } from "@bott/data";
+
 import {
   type BottChannel,
   type BottEvent,
@@ -23,10 +25,16 @@ type GeminiResponseContext = {
 };
 
 export async function* respondEvents(
-  inputEvents: BottEvent[],
+  inputEvents: BottEvent<object>[],
   { model = "gemini-2.5-pro-preview-05-06", abortSignal, context }:
     GeminiResponseContext,
-): AsyncGenerator<BottEvent> {
+  // Output events have specific details and type
+): AsyncGenerator<
+  BottEvent<
+    { content: string },
+    BottEventType.MESSAGE | BottEventType.REPLY | BottEventType.REACTION
+  >
+> {
   const modelUserId = context.user.id;
 
   const contents: Content[] = [];
@@ -46,7 +54,7 @@ export async function* respondEvents(
       await transformBottEventToContent({
         ...event,
         details: { ...event.details, seen: hasBeenSeen },
-      }, modelUserId),
+      } as BottEvent<object & { seen: boolean }>, modelUserId),
     );
   }
 
@@ -72,14 +80,17 @@ export async function* respondEvents(
       user: context.user,
       channel: context.channel,
       parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
-    };
+    } as BottEvent<
+      { content: string },
+      BottEventType.MESSAGE | BottEventType.REPLY | BottEventType.REACTION
+    >;
   }
 
   return;
 }
 
 const transformBottEventToContent = async (
-  event: BottEvent<{ content: string; seen: boolean }>,
+  event: BottEvent<object & { seen: boolean }>,
   modelUserId: string,
 ): Promise<Content> => {
   const content: Content = {

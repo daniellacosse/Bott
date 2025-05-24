@@ -1,18 +1,28 @@
+import type { EmbedBuilder } from "npm:discord.js";
+
 import type { BottEvent, BottEventType } from "@bott/data";
+
 import type { BotContext } from "../types.ts";
 
-export type CommandEvent<O extends Record<string, unknown> = {}> = BottEvent<
-  { name: string; options: O },
-  BottEventType.REQUEST
->;
+export type CommandRequestEvent<O extends Record<string, unknown> = {}> =
+  BottEvent<
+    { name: string; options: O },
+    BottEventType.FUNCTION_REQUEST
+  >;
 
-export type CommandResultEvent = BottEvent;
+export type CommandResponseEvent = BottEvent<
+  {
+    content?: string;
+    embeds?: (EmbedBuilder | ReturnType<EmbedBuilder["toJSON"]>)[];
+  },
+  BottEventType.FUNCTION_RESPONSE
+>;
 
 export type Command<O extends Record<string, unknown> = {}> = {
   (
     this: BotContext,
-    event: CommandEvent<O>,
-  ): Promise<CommandResultEvent | void>;
+    event: CommandRequestEvent<O>,
+  ): Promise<CommandResponseEvent | void>;
   name: string;
   description?: string;
   options?: CommandOption[];
@@ -39,8 +49,8 @@ export const createCommand = <O extends Record<string, unknown> = {}>(
   },
   fn: (
     this: BotContext,
-    event: CommandEvent<O>,
-  ) => Promise<CommandResultEvent | void>,
+    event: CommandRequestEvent<O>,
+  ) => Promise<CommandResponseEvent | void>,
 ): Command<O> => {
   return Object.assign(fn, config);
 };

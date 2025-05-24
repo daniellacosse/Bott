@@ -15,6 +15,7 @@ import commands from "./commands/main.ts";
 import {
   FILE_SYSTEM_DB_PATH,
   FILE_SYSTEM_DEPLOY_NONCE_PATH,
+  FILE_SYSTEM_GENERATED_PATH,
   FILE_SYSTEM_ROOT,
 } from "./constants.ts";
 
@@ -24,6 +25,9 @@ const DEFAULT_RESPONSE_SWAPS = 6;
 
 // set up file system
 Deno.mkdirSync(FILE_SYSTEM_ROOT, {
+  recursive: true,
+});
+Deno.mkdirSync(FILE_SYSTEM_GENERATED_PATH, {
   recursive: true,
 });
 

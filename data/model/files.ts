@@ -1,5 +1,5 @@
 import { sql } from "../database/sql.ts";
-import type { BottEvent, BottEventType } from "../main.ts";
+import type { BottEvent } from "../main.ts";
 
 export enum BottFileMimetypes {
   WAV = "audio/wav",
@@ -8,10 +8,7 @@ export enum BottFileMimetypes {
   TXT = "text/plain",
 }
 
-export interface BottFile<
-  D extends object = { content: string },
-  T extends BottEventType = BottEventType,
-> {
+export interface BottFile {
   id: string;
   name: string;
   description?: string;
@@ -19,7 +16,7 @@ export interface BottFile<
   data: Uint8Array;
   url: URL;
   // Just BottEvents for now.
-  parent?: BottEvent<D, T>;
+  parent?: BottEvent<object>;
 }
 
 export const BottFileExtensionMap = new Map([
@@ -41,12 +38,7 @@ export const filesTableSql = sql`
   )
 `;
 
-export const getAddFilesSql = <
-  D extends object = { content: string },
-  T extends BottEventType = BottEventType,
->(
-  ...files: BottFile<D, T>[]
-) => {
+export const getAddFilesSql = (...files: BottFile[]) => {
   if (!files.length) {
     return;
   }

@@ -8,7 +8,7 @@ import { BottFileMimetypes } from "@bott/data";
 
 import _gemini from "../client.ts";
 import type { FileGenerator } from "./types.ts";
-import { getPromptSlug } from "../prompt.ts";
+import { getFileNameFromDescription, getGeneratedFileUrl } from "./url.ts";
 
 function doVideoJob(
   job: GenerateVideosOperation,
@@ -79,14 +79,15 @@ export const generateVideoFile: FileGenerator = async (
     throw new Error("No video bytes");
   }
 
-  const fileName = `${getPromptSlug(prompt)}.mp4`;
+  const fileName = `${getFileNameFromDescription(prompt)}.mp4`;
   const fileData = decodeBase64(videoData.video.videoBytes);
 
   return {
     id: crypto.randomUUID(),
     data: fileData,
     name: fileName,
-    url: new URL("file://"),
+    description: prompt,
+    url: getGeneratedFileUrl(fileName),
     mimetype: BottFileMimetypes.MP4,
   };
 };

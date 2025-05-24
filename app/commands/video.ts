@@ -1,5 +1,7 @@
+import { BottEventType } from "@bott/data";
 import { CommandOptionType, createCommand, createTask } from "@bott/discord";
 import { generateVideoFile } from "@bott/gemini";
+
 import { RATE_LIMIT_VIDEOS, RATE_LIMIT_WINDOW_MS } from "../constants.ts";
 
 export const video = createCommand<{
@@ -40,7 +42,8 @@ export const video = createCommand<{
       taskBucketId,
       createTask(async (abortSignal) => {
         resolve({
-          ...commandEvent,
+          id: crypto.randomUUID(),
+          type: BottEventType.FUNCTION_RESPONSE,
           user: this.user,
           details: {
             content: `Here's my video for your prompt: **"${prompt}"**`,
@@ -50,6 +53,7 @@ export const video = createCommand<{
               abortSignal,
             }),
           ],
+          timestamp: new Date(),
         });
       }),
     );

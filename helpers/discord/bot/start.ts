@@ -234,7 +234,8 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     }
 
     interaction.followUp({
-      content: responseEvent.details.content,
+      content: responseEvent.details.content || undefined, // Use content if present
+      embeds: responseEvent.details.embeds, // Pass embeds if present
       files,
     });
 
