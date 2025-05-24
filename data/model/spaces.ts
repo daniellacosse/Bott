@@ -1,4 +1,4 @@
-import { sql } from "../client/sql.ts";
+import { sql } from "../database/sql.ts";
 import type { BottChannel } from "./channels.ts";
 
 export interface BottSpace {

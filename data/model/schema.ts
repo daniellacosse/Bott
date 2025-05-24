@@ -1,4 +1,4 @@
-import { commit } from "../client/commit.ts";
+import { commit } from "../database/commit.ts";
 import { channelsTableSql } from "./channels.ts";
 import { eventsTableSql } from "./events.ts";
 import { filesTableSql } from "./files.ts";

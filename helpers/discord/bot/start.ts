@@ -57,7 +57,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       id: client.user.id,
       name: client.user.username,
     },
-    tasks: new TaskManager(),
+    taskManager: new TaskManager(),
     wpm: 200,
   };
 
@@ -230,7 +230,11 @@ export async function startBot<O extends Record<string, unknown> = {}>({
         continue;
       }
 
-      files.push(new AttachmentBuilder(Buffer.from(file.data), { name: file.name || "unknown_filename" }));
+      files.push(
+        new AttachmentBuilder(Buffer.from(file.data), {
+          name: file.name || "unknown_filename",
+        }),
+      );
     }
 
     interaction.followUp({

@@ -1,4 +1,4 @@
-import { commit } from "../client/commit.ts";
+import { commit } from "../database/commit.ts";
 import { sql } from "../database/sql.ts";
 import { dirname } from "jsr:@std/path/dirname";
 
@@ -256,7 +256,7 @@ export const getEventIdsForChannel = (channelId: string): string[] => {
     throw result.error;
   }
 
-  return result.reads.map(({ id }) => id);
+  return result.reads.map(({ id }: any) => id);
 };
 
 function topologicallySortEvents(
