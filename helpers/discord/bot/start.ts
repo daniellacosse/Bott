@@ -230,7 +230,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
         continue;
       }
 
-      files.push(new AttachmentBuilder(Buffer.from(file.data)));
+      files.push(new AttachmentBuilder(Buffer.from(file.data), { name: file.name || "unknown_filename" }));
     }
 
     interaction.followUp({
