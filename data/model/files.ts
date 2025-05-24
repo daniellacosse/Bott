@@ -55,7 +55,7 @@ export const getAddFilesSql = (...files: BottFile[]) => {
     name = excluded.name,
     description = excluded.description,
     type = excluded.type,
-    url = excluded.url
+    url = excluded.url,
     parent_id = excluded.parent_id,
     parent_type = excluded.parent_type`;
 };
