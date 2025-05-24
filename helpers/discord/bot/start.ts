@@ -57,7 +57,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       id: client.user.id,
       name: client.user.username,
     },
-    taskManager: new TaskManager(),
+    tasks: new TaskManager(),
     wpm: 200,
   };
 
