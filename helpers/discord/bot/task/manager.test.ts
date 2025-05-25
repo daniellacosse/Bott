@@ -14,12 +14,10 @@ const createTestTask = (
 ): Task => {
   return createTask(async (signal) => {
     onStart?.();
-    // console.log(`[TestTask ${taskName}] Started.`);
 
     // Promise that rejects when the task is aborted
     const abortPromise = new Promise<void>((_, reject) => {
       if (signal.aborted) {
-        // console.log(`[TestTask ${taskName}] Aborted before delay.`);
         onAbort?.();
         reject(
           new DOMException("Task was aborted before starting.", "AbortError"),
@@ -27,7 +25,6 @@ const createTestTask = (
         return;
       }
       signal.addEventListener("abort", () => {
-        // console.log(`[TestTask ${taskName}] Aborted during execution.`);
         onAbort?.();
         reject(
           new DOMException(
@@ -42,7 +39,6 @@ const createTestTask = (
     const workPromise = async () => {
       await delay(executionTimeMs); // Simulate work
       if (signal.aborted) { // Check again after delay
-        // console.log(`[TestTask ${taskName}] Aborted after delay but before completion/failure.`);
         onAbort?.();
         throw new DOMException(
           `Task ${taskName} aborted post-delay.`,
@@ -50,10 +46,8 @@ const createTestTask = (
         );
       }
       if (shouldFail) {
-        // console.log(`[TestTask ${taskName}] Failing intentionally.`);
         throw new Error(`Task ${taskName} failed intentionally.`);
       }
-      // console.log(`[TestTask ${taskName}] Completed successfully.`);
       onComplete?.();
     };
 
@@ -242,12 +236,11 @@ Deno.test("TaskManager - should respect swap limit (maximumSequentialSwaps)", as
   );
   assert(!t3Started, "T3 should not have started yet");
 
-  await delay(80); // Wait for T2 to complete
+  await delay(50); // T2 should be complete, T3 should have started.
   assert(t1Aborted, "T1 should be aborted");
   assert(t2Completed, "T2 should have completed");
 
   // After T2 completes, T3 should start
-  await delay(10); // Give T3 time to start
   assert(
     manager.buckets.get(bucketName)!.current === task3,
     "T3 should now be current",
@@ -335,8 +328,8 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
   let warnMessage = "";
   console.warn = (...args: any[]) => {
     warnCalled = true;
-    warnMessage = args.join(" ");
-    // originalConsoleWarn(...args); // Uncomment to see logs during test
+    warnMessage = args.map((obj) => JSON.stringify(obj)).join(" ");
+    originalConsoleWarn(...args);
   };
 
   manager.add({
@@ -381,7 +374,11 @@ Deno.test("TaskManager - push should throw if bucket does not exist", async () =
   const task = createTestTask("T-no-bucket", 10);
   await assertRejects(
     () => {
-      manager.push("non-existent-bucket", task);
+      try {
+        manager.push("non-existent-bucket", task);
+      } catch (e) {
+        return Promise.reject(e);
+      }
       return Promise.resolve(); // assertRejects expects a promise
     },
     Error,
