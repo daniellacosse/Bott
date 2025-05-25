@@ -27,3 +27,33 @@ deno task deploy
 ```
 
 You can also run the Dockerfile locally with `deno task start`.
+
+## Architecture
+```mermaid
+graph LR
+  subgraph "External Services"
+    DiscordPlatform["Discord Platform"]
+    GeminiPlatform["Google Gemini Platform"]
+  end
+
+  subgraph "Bott System"
+    DiscordHelpers["Discord Helpers<br>(@bott/discord)<br>Manages Discord interactions, event parsing, response formatting"]
+    GeminiHelpers["Gemini Helpers<br>(@bott/gemini)<br>Interfaces with Gemini API, handles AI requests, file generation"]
+    subgraph "Application Core"
+      AppLayer["App Layer<br>(app/main.ts, app/commands/*)<br>Handles command logic, orchestrates tasks"]
+      DataLayer["Data Layer<br>(data/model/*, data/database/*)<br>Manages data persistence (DB, file system)"]
+    end
+  end
+
+  %% Flow from Discord User to Bot and back
+  DiscordPlatform -- User Interaction (e.g., Slash Command) --> DiscordHelpers
+  DiscordHelpers -- Parsed Event/Command --> AppLayer
+  AppLayer -- Requests AI Processing / File Generation --> GeminiHelpers
+  GeminiHelpers -- Calls Gemini API --> GeminiPlatform
+  GeminiPlatform -- AI Model Response / Generated Data --> GeminiHelpers
+  GeminiHelpers -- AI Result / File --> AppLayer
+  AppLayer -- Data Storage / Retrieval --> DataLayer
+  DataLayer -- Data --> AppLayer
+  AppLayer -- Response Data (Text, Embeds, Files) --> DiscordHelpers
+  DiscordHelpers -- Formatted Bot Reply --> DiscordPlatform
+```
