@@ -40,20 +40,28 @@ export const music = createCommand<{ prompt: string }>(
       this.taskManager.push(
         taskBucketId,
         createTask(async (abortSignal) => {
-          resolve({
+          const file = await generateMusicFile(prompt, {
+            abortSignal,
+          });
+
+          if (abortSignal.aborted) {
+            return;
+          }
+
+          const event = {
             id: crypto.randomUUID(),
-            type: BottEventType.FUNCTION_RESPONSE,
+            type: BottEventType.FUNCTION_RESPONSE as const,
             user: this.user,
             details: {
               content: `Here's my music for your prompt: **"${prompt}"**`,
             },
-            files: [
-              await generateMusicFile(prompt, {
-                abortSignal,
-              }),
-            ],
+            files: [file],
             timestamp: new Date(),
-          });
+          };
+
+          file.parent = event;
+
+          resolve(event);
         }),
       );
     });

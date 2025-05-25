@@ -70,6 +70,7 @@ export const getMessageEvent = async (
           url: new URL(attachment.url),
           data: new Uint8Array(await fileResponse.arrayBuffer()),
           type: attachment.contentType as BottFileType,
+          parent: event,
         });
       }
     }
@@ -103,6 +104,7 @@ export const getMessageEvent = async (
           url,
           data: new Uint8Array(await urlResponse.arrayBuffer()),
           type: contentType as BottFileType,
+          parent: event,
         });
       }
     }
