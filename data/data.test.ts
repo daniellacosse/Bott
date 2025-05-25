@@ -1,6 +1,6 @@
-import { addEvents, BottEventType, getEvents } from "./model/events.ts";
-
 import { assertExists } from "jsr:@std/assert";
+
+import { addEvents, BottEventType, getEvents } from "./model/events.ts";
 import { setSchema } from "./model/schema.ts";
 import { initDatabase } from "./main.ts";
 import { BottFileType } from "./model/files.ts";

@@ -115,6 +115,10 @@ export const addEvents = (...inputEvents: BottEvent<object>[]) => {
     getAddFilesSql(...files.values()),
   );
 
+  if ("error" in results) {
+    throw results.error;
+  }
+
   // Write new files to the file system.
   for (const file of files.values()) {
     if (file.url.protocol === "file:" && file.data) {
@@ -142,7 +146,7 @@ export const getEvents = async (
         s.id as s_id, s.name as s_name, s.description as s_description, -- space
         u.id as u_id, u.name as u_name, -- user
         p.id as p_id, -- parent event
-        f.id as f_id, f.name as f_name, f.description as f_description, f.type as f_type, f.data as f_data, f.url as f_url -- file
+        f.id as f_id, f.name as f_name, f.description as f_description, f.type as f_type, f.url as f_url -- file
       from
         events e
       left join

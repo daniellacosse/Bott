@@ -29,6 +29,7 @@ deno task deploy
 You can also run the Dockerfile locally with `deno task start`.
 
 ## Architecture
+
 ```mermaid
 graph LR
   subgraph "External Services"

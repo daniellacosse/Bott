@@ -48,13 +48,11 @@ export const getAddFilesSql = (...files: BottFile[]) => {
     url,
     parent_id,
     parent_type
-  ) values (
-    ${
+  ) values ${
     files.map((f) =>
       sql`(${f.id}, ${f.name}, ${f.description}, ${f.type}, ${f.url.toString()}, ${f.parent?.id}, "event")`
     )
-  }
-  ) on conflict(id) do update set
+  } on conflict(id) do update set
     name = excluded.name,
     description = excluded.description,
     type = excluded.type,
