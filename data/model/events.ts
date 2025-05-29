@@ -2,7 +2,7 @@ import { commit } from "../database/commit.ts";
 import { sql } from "../database/sql.ts";
 import { dirname } from "jsr:@std/path/dirname";
 
-import { type BottFile, getAddFilesSql } from "./files.ts";
+import { type BottFile, getAddFilesSql, getFileFromUrl } from "./files.ts";
 import { type BottChannel, getAddChannelsSql } from "./channels.ts";
 import { type BottSpace, getAddSpacesSql } from "./spaces.ts";
 import { type BottUser, getAddUsersSql } from "./users.ts";
@@ -170,16 +170,19 @@ export const getEvents = async (
 
   const events = new Map<string, BottEvent<object>>();
 
-  const _makeFile = async (context: any) => {
-    const fileUrl = new URL(context.f_url);
-    const fileResponse = await fetch(fileUrl);
+  const _makeFile = async (context: any): Promise<BottFile> => {
+    const data = (await getFileFromUrl(context.f_url))?.data;
+
+    if (!data) {
+      throw new Error(`Failed to fetch file ${context.f_url}`);
+    }
 
     return {
       id: context.f_id,
       name: context.f_name,
       description: context.f_description,
       type: context.f_type,
-      data: new Uint8Array(await fileResponse.arrayBuffer()),
+      data,
       url: new URL(context.f_url),
     };
   };

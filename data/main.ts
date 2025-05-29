@@ -3,7 +3,7 @@ export { setSchema } from "./model/schema.ts";
 export { type BottSpace } from "./model/spaces.ts";
 export { type BottChannel } from "./model/channels.ts";
 export { type BottUser } from "./model/users.ts";
-export { type BottFile, BottFileType } from "./model/files.ts";
+export { type BottFile, BottFileType, getFileFromUrl } from "./model/files.ts";
 export {
   addEvents,
   type BottEvent,

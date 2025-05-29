@@ -39,28 +39,45 @@ export async function* respondEvents(
 
   const contents: Content[] = [];
   let pointer = inputEvents.length;
-  let hasBeenSeen = false;
+  let goingOverSeenEvents = false;
 
   // We only want the model to respond to the most recent user messages,
   // since the model's last response
   let totalTokens = 0;
   while (pointer--) {
-    const event = inputEvents[pointer];
+    const event = {
+      ...inputEvents[pointer],
+      details: { ...inputEvents[pointer].details },
+    };
 
     if (event.user?.id === modelUserId) {
-      hasBeenSeen = true;
+      goingOverSeenEvents = true;
+    }
+
+    if (goingOverSeenEvents) {
+      delete event.files;
     }
 
     const content = await transformBottEventToContent({
       ...event,
-      details: { ...event.details, seen: hasBeenSeen },
+      details: { ...event.details, seen: goingOverSeenEvents },
     } as BottEvent<object & { seen: boolean }>, modelUserId);
 
-    totalTokens += await countTokens(event.id, content, { model, abortSignal });
+    const contentTokens = await countTokens(event.id, content, {
+      model,
+      abortSignal,
+    });
 
-    if (totalTokens > 1_000_000) {
+    console.debug("[DEBUG] Event size:", contentTokens, "tokens");
+
+    if (totalTokens + contentTokens > 1_000_000) {
+      console.warn(
+        `[WARN] Token limit exceeded while constructing gemini input stream. Sending ${contents.length} events.`,
+      );
       break;
     }
+
+    totalTokens += contentTokens;
 
     contents.unshift(content);
   }

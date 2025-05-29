@@ -61,3 +61,79 @@ export const getAddFilesSql = (...files: BottFile[]) => {
     parent_id = excluded.parent_id,
     parent_type = excluded.parent_type`;
 };
+
+import { extractFromHtml } from "npm:@extractus/article-extractor";
+
+export const getFileFromUrl = async (
+  rawUrl: string,
+): Promise<BottFile | undefined> => {
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch (_) {
+    // Must be a valid URL.
+    return;
+  }
+
+  let response, type;
+  try {
+    response = await fetch(url);
+    type = response.headers.get("content-type")?.split(
+      /;\s*/,
+    ).find((part) =>
+      Object.values(BottFileType).includes(part as BottFileType)
+    );
+  } catch (error) {
+    // Can't fetch this, continue.
+    console.warn("[WARN] Failed to fetch URL:", error);
+    return;
+  }
+
+  if (!type) {
+    console.debug(
+      "[DEBUG] Fetched URL is not a supported file type.",
+      url.toString(),
+      response.headers.get("content-type"),
+    );
+    return;
+  }
+
+  let data;
+  if (type === BottFileType.HTML) {
+    const result =
+      (await extractFromHtml(await response.text(), url.toString()))
+        ?.content;
+
+    console.debug(
+      "[DEBUG] Extracting HTML content.",
+      "Characters:",
+      result?.length,
+      "Est. words:",
+      result?.split(/\s+/).length,
+    );
+
+    data = new TextEncoder().encode(result);
+  } else {
+    data = new Uint8Array(await response.arrayBuffer());
+  }
+
+  let name = url.pathname.split("/").pop() || "index";
+
+  // Try to add a file extension if there isn't one.
+  if (!/\.[^/.]+$/.test(name)) {
+    for (const [key, value] of Object.entries(BottFileType)) {
+      if (type === value) {
+        name += `.${key.toLowerCase()}`;
+        break;
+      }
+    }
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    type: type as BottFileType,
+    url,
+    name,
+    data,
+  };
+};
