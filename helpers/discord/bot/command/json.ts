@@ -5,7 +5,7 @@ import { type Command, CommandOptionType } from "./create.ts";
 const COMMAND_DESCRIPTION_LIMIT = 100;
 
 export function getCommandJson<O extends Record<string, unknown> = {}>({
-  name,
+  commandName: name,
   description,
   options,
 }: Command<O>) {

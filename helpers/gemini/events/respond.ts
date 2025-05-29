@@ -13,6 +13,7 @@ import {
 import taskInstructions from "./instructions.ts";
 import { outputGenerator, outputSchema } from "./output.ts";
 import gemini from "../client.ts";
+import { countTokens } from "./tokens.ts";
 
 type GeminiResponseContext = {
   abortSignal: AbortSignal;
@@ -42,6 +43,7 @@ export async function* respondEvents(
 
   // We only want the model to respond to the most recent user messages,
   // since the model's last response
+  let totalTokens = 0;
   while (pointer--) {
     const event = inputEvents[pointer];
 
@@ -49,12 +51,22 @@ export async function* respondEvents(
       hasBeenSeen = true;
     }
 
-    contents.unshift(
-      await transformBottEventToContent({
-        ...event,
-        details: { ...event.details, seen: hasBeenSeen },
-      } as BottEvent<object & { seen: boolean }>, modelUserId),
-    );
+    const content = await transformBottEventToContent({
+      ...event,
+      details: { ...event.details, seen: hasBeenSeen },
+    } as BottEvent<object & { seen: boolean }>, modelUserId);
+
+    totalTokens += await countTokens(event.id, content, { model, abortSignal });
+
+    if (totalTokens > 1_000_000) {
+      break;
+    }
+
+    contents.unshift(content);
+  }
+
+  if (contents.length === 0) {
+    return;
   }
 
   const responseGenerator = await gemini.models.generateContentStream({

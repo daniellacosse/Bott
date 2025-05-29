@@ -23,7 +23,7 @@ export type Command<O extends Record<string, unknown> = {}> = {
     this: BotContext,
     event: CommandRequestEvent<O>,
   ): Promise<CommandResponseEvent | void>;
-  name: string;
+  commandName: string;
   description?: string;
   options?: CommandOption[];
 };
@@ -42,7 +42,7 @@ export enum CommandOptionType {
 }
 
 export const createCommand = <O extends Record<string, unknown> = {}>(
-  config: {
+  { name, ...params }: {
     name: string;
     description?: string;
     options?: CommandOption[];
@@ -52,5 +52,5 @@ export const createCommand = <O extends Record<string, unknown> = {}>(
     event: CommandRequestEvent<O>,
   ) => Promise<CommandResponseEvent | void>,
 ): Command<O> => {
-  return Object.assign(fn, config);
+  return Object.assign(fn, { commandName: name, ...params });
 };

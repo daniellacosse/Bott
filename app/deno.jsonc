@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "reset": "rm test.db",
+    "reset": "rm -rf output",
     "start": "deno run --allow-all --env-file=.env.development ./main.ts"
   },
   "imports": {

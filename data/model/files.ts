@@ -18,6 +18,7 @@ export enum BottFileType {
   MP4 = "video/mp4",
   PDF = "application/pdf",
   PNG = "image/png",
+  JPEG = "image/jpeg",
   TXT = "text/plain",
   WAV = "audio/wav",
 }
