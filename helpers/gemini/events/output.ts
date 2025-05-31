@@ -1,4 +1,4 @@
-import { BottEventType } from "@bott/data";
+import { BottEventType } from "@bott/model";
 
 import { Type as GeminiStructuredResponseType } from "npm:@google/genai";
 import type {

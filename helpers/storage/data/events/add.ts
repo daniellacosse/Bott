@@ -1,0 +1,202 @@
+import type {
+  AnyBottEvent,
+  BottAsset,
+  BottChannel,
+  BottSpace,
+  BottUser,
+} from "@bott/model";
+
+import { sql } from "../sql.ts";
+import { commit } from "../commit.ts";
+
+const getAddChannelsSql = (
+  ...channels: BottChannel[]
+) => {
+  if (!channels.length) {
+    return;
+  }
+
+  const values = channels.map((channel) =>
+    sql`(${channel.id}, ${channel.space.id}, ${channel.name}, ${channel.description}, ${
+      JSON.stringify({})
+    })`
+  );
+
+  return sql`
+    insert into channels (id, space_id, name, description, config)
+    values ${values} 
+    on conflict(id) do update set
+      space_id = excluded.space_id,
+      name = excluded.name,
+      description = excluded.description,
+      config = excluded.config
+  `;
+};
+
+const getAddEventsSql = (...events: AnyBottEvent[]) => {
+  if (!events.length) {
+    return;
+  }
+
+  const values = events.map((event) =>
+    sql`(${event.id}, ${event.type}, ${
+      JSON.stringify(event.details)
+    }, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.timestamp.toISOString()})`
+  );
+
+  return sql`
+    insert into events (id, type, details, parent_id, channel_id, user_id, timestamp)
+    values ${values} 
+    on conflict(id) do nothing
+  `;
+};
+
+const getAddFilesSql = (...files: BottAsset[]) => {
+  if (!files.length) {
+    return;
+  }
+
+  return sql`
+  insert into files (
+    id,
+    type,
+    path,
+    parent_id,
+    parent_type
+  ) values ${
+    files.map((f) =>
+      sql`(${f.id}, ${f.type}, ${f.path}, ${f.parent?.id}, "event")`
+    )
+  } on conflict(id) do update set
+    type = excluded.type,
+    path = excluded.path,
+    parent_id = excluded.parent_id,
+    parent_type = excluded.parent_type`;
+};
+
+const getAddSpacesSql = (...spaces: BottSpace[]) => {
+  if (!spaces.length) {
+    return;
+  }
+
+  const values = spaces.map((space) =>
+    sql`(${space.id}, ${space.name}, ${space.description})`
+  );
+
+  return sql`
+    insert into spaces (id, name, description)
+    values ${values} on conflict(id) 
+    do update set
+      name = excluded.name,
+      description = excluded.description
+  `;
+};
+
+const getAddUsersSql = (...users: BottUser[]) => {
+  if (!users.length) {
+    return;
+  }
+
+  const values = users.map((user) => sql`(${user.id}, ${user.name})`);
+
+  return sql`
+    insert into users (id, name)
+    values ${values}
+    on conflict(id) do update set
+      name = excluded.name
+  `;
+};
+
+export const addEvents = (...inputEvents: AnyBottEvent[]) => {
+  // Extract all unique entities (events, spaces, channels, users)
+  const events = new Map<string, AnyBottEvent>();
+  const _queue: AnyBottEvent[] = [...inputEvents];
+  const _seenEvents = new Set<string>();
+
+  while (_queue.length > 0) {
+    const currentEvent = _queue.shift()!;
+
+    events.set(currentEvent.id, currentEvent);
+    _seenEvents.add(currentEvent.id);
+
+    if (
+      // We haven't seen this parent before, add it to the queue:
+      currentEvent.parent && !_seenEvents.has(currentEvent.parent.id)
+    ) {
+      _queue.push(currentEvent.parent);
+      _seenEvents.add(currentEvent.parent.id);
+    }
+  }
+
+  const spaces = new Map<string, BottSpace>();
+  const channels = new Map<string, BottChannel>();
+  const users = new Map<string, BottUser>();
+  const assets = new Map<string, BottAsset>();
+
+  for (const event of events.values()) {
+    if (event.channel) {
+      spaces.set(event.channel.space.id, event.channel.space);
+      channels.set(event.channel.id, event.channel);
+    }
+
+    if (event.user) {
+      users.set(event.user.id, event.user);
+    }
+
+    if (event.assets) {
+      for (const asset of event.assets) {
+        assets.set(asset.id, { ...asset, parent: event });
+      }
+    }
+  }
+
+  const results = commit(
+    getAddSpacesSql(...spaces.values()),
+    getAddChannelsSql(...channels.values()),
+    getAddUsersSql(...users.values()),
+    getAddEventsSql(
+      ...topologicallySortEvents(...events.values()),
+    ),
+    getAddFilesSql(...assets.values()),
+  );
+
+  if ("error" in results) {
+    throw results.error;
+  }
+
+  return results;
+};
+
+function topologicallySortEvents(
+  ...events: AnyBottEvent[]
+): AnyBottEvent[] {
+  const result: AnyBottEvent[] = [];
+
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  function visit(event: AnyBottEvent) {
+    if (visited.has(event.id) || visiting.has(event.id)) {
+      return; // Cycle detected, break it
+    }
+
+    visiting.add(event.id);
+    // If the event has a parent, visit it first
+    if (event.parent) {
+      visit(event.parent);
+    }
+    visiting.delete(event.id);
+
+    visited.add(event.id);
+    result.push(event);
+  }
+
+  for (const event of events) {
+    if (visited.has(event.id)) {
+      continue;
+    }
+
+    visit(event);
+  }
+
+  return result;
+}

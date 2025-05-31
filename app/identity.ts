@@ -1,4 +1,4 @@
-import type { BottUser } from "@bott/data";
+import type { BottUser } from "@bott/model";
 
 export const getIdentity = (
   { user }: { user: BottUser },

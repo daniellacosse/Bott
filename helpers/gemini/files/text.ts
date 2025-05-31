@@ -1,4 +1,4 @@
-import { BottFileType } from "@bott/data";
+import { BottAssetType } from "@bott/model";
 import _gemini from "../client.ts";
 import type { FileGenerator } from "./types.ts";
 import { getFileNameFromDescription, getGeneratedFileUrl } from "./url.ts";
@@ -43,6 +43,6 @@ export const generateTextFile: FileGenerator = async (prompt: string, {
     name: fileName,
     description: prompt,
     url: getGeneratedFileUrl(fileName),
-    type: BottFileType.TXT,
+    type: BottAssetType.TXT,
   };
 };

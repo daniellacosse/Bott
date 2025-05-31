@@ -6,7 +6,7 @@ import {
   getEvents,
   initDatabase,
   setSchema,
-} from "@bott/data";
+} from "@bott/model";
 import { createTask, startBot } from "@bott/discord";
 import { respondEvents } from "@bott/gemini";
 

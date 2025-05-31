@@ -1,4 +1,4 @@
-import type { BottFile } from "@bott/data";
+import type { BottAsset } from "@bott/model";
 import type { GoogleGenAI } from "npm:@google/genai";
 
 export type PromptParameters = {
@@ -13,4 +13,4 @@ export type PromptParameters = {
 export type FileGenerator = (
   prompt: string,
   params: PromptParameters,
-) => Promise<BottFile>;
+) => Promise<BottAsset>;

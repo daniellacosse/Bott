@@ -1,4 +1,4 @@
-import { BottEventType } from "@bott/data";
+import { BottEventType } from "@bott/model";
 import { createCommand, createInfoEmbed } from "@bott/discord";
 
 import { music } from "./music.ts";

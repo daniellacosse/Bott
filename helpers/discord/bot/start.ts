@@ -11,7 +11,7 @@ import {
   Routes,
 } from "npm:discord.js";
 
-import { addEvents, type BottEvent, BottEventType } from "@bott/data";
+import { addEvents, type BottEvent, BottEventType } from "@bott/model";
 
 import { createErrorEmbed } from "../embed/error.ts";
 import { getCommandRequestEvent } from "./command/request.ts";

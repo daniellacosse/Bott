@@ -1,4 +1,4 @@
-import { BottEventType } from "@bott/data";
+import { BottEventType } from "@bott/model";
 import { CommandOptionType, createCommand, createTask } from "@bott/discord";
 import { generateTextFile } from "@bott/gemini";
 

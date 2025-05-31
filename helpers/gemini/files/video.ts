@@ -4,7 +4,7 @@ import {
 } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
-import { BottFileType } from "@bott/data";
+import { BottAssetType } from "@bott/model";
 
 import _gemini from "../client.ts";
 import type { FileGenerator } from "./types.ts";
@@ -88,6 +88,6 @@ export const generateVideoFile: FileGenerator = async (
     name: fileName,
     description: prompt,
     url: getGeneratedFileUrl(fileName),
-    type: BottFileType.MP4,
+    type: BottAssetType.MP4,
   };
 };

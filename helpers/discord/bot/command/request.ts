@@ -1,4 +1,4 @@
-import { type BottChannel, BottEventType } from "@bott/data";
+import { type BottChannel, BottEventType } from "@bott/model";
 import {
   ApplicationCommandOptionType,
   ChannelType,

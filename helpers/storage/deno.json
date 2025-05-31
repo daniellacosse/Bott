@@ -1,0 +1,4 @@
+{
+  "name": "@bott/storage",
+  "exports": "./main.ts"
+}

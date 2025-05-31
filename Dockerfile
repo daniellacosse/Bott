@@ -13,7 +13,7 @@ USER deno
 COPY ./deno.json ./deno.lock* ./
 COPY ./app /app
 COPY ./helpers /helpers
-COPY ./data /data
+COPY ./model /model
 
 EXPOSE 8080
 

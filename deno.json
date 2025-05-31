@@ -6,7 +6,8 @@
     "deploy": "sh ./deploy.sh"
   },
   "workspace": [
-    "./data",
+    "./model",
+    "./helpers/storage",
     "./helpers/gemini",
     "./helpers/discord",
     "./app"

@@ -1,7 +1,7 @@
 import { assertEquals } from "jsr:@std/assert/equals";
 import { _extractTopLevelObjectsFromString } from "./output.ts";
 import type { GeminiOutputEvent } from "./output.ts";
-import { BottEventType } from "@bott/data";
+import { BottEventType } from "@bott/model";
 
 // Helper to create a valid GeminiOutputEvent for tests
 const createValidEvent = (

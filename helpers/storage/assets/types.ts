@@ -1,6 +1,6 @@
-import type { BottFileType } from "../types.ts";
+import type { BottAssetType } from "@bott/model";
 
-export enum BottFileSourceType {
+export enum SupportedRawFileType {
   // GIF = "image/gif",
   HTML = "text/html",
   // MP4 = "video/mp4",
@@ -12,6 +12,6 @@ export enum BottFileSourceType {
   // MP3 = "audio/mp3",
 }
 
-export type SourceFileDataSanitizer = (
+export type AssetDataPreparer = (
   data: Uint8Array,
-) => Promise<[data: Uint8Array, type: BottFileType]>;
+) => Promise<[data: Uint8Array, type: BottAssetType]>;

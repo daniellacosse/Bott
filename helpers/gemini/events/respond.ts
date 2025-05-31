@@ -1,14 +1,12 @@
 import type { Content } from "npm:@google/genai";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 
-import type { BottEventType } from "@bott/data";
-
-import {
-  type BottChannel,
-  type BottEvent,
-  type BottUser,
-  getEvents,
-} from "@bott/data";
+import type {
+  BottChannel,
+  BottEvent,
+  BottEventType,
+  BottUser,
+} from "@bott/model";
 
 import taskInstructions from "./instructions.ts";
 import { outputGenerator, outputSchema } from "./output.ts";

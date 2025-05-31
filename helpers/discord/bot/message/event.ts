@@ -1,8 +1,8 @@
 import type { Message } from "npm:discord.js";
 
-import { getFileFromUrl } from "@bott/data";
+import { getFileFromUrl } from "@bott/model";
 
-import { type BottEvent, BottEventType } from "@bott/data";
+import { type BottEvent, BottEventType } from "@bott/model";
 import { getMarkdownLinks } from "./markdown.ts";
 
 export const getMessageEvent = async (

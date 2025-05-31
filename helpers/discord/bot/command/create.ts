@@ -1,6 +1,6 @@
 import type { EmbedBuilder } from "npm:discord.js";
 
-import type { BottEvent, BottEventType } from "@bott/data";
+import type { BottEvent, BottEventType } from "@bott/model";
 
 import type { BotContext } from "../types.ts";
 

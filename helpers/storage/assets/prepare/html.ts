@@ -1,9 +1,10 @@
 import { extractFromHtml } from "npm:@extractus/article-extractor";
 import TurndownService from "npm:turndown";
 
-import { FILE_SYSTEM_SIZE_CAUTION } from "../../../filesystem/client.ts";
-import type { SourceFileDataSanitizer } from "./types.ts";
-import { BottFileType } from "../types.ts";
+import { BottAssetType } from "@bott/model";
+
+import { FS_ASSET_SIZE_CAUTION } from "../../start.ts";
+import type { AssetDataPreparer } from "../types.ts";
 
 const turndownService = new TurndownService({
   headingStyle: "atx", // Use # for headings.
@@ -15,7 +16,7 @@ const turndownService = new TurndownService({
   linkStyle: "inlined",
 });
 
-export const prepareHtml: SourceFileDataSanitizer = async (data) => {
+export const prepareHtml: AssetDataPreparer = async (data) => {
   const htmlText = new TextDecoder().decode(data);
 
   const extracted = await extractFromHtml(htmlText) ?? {};
@@ -29,10 +30,10 @@ export const prepareHtml: SourceFileDataSanitizer = async (data) => {
   // Consolidate multiple blank lines:
   result = result.replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
 
-  if (result.length > FILE_SYSTEM_SIZE_CAUTION) {
-    result = result.substring(0, FILE_SYSTEM_SIZE_CAUTION) +
+  if (result.length > FS_ASSET_SIZE_CAUTION) {
+    result = result.substring(0, FS_ASSET_SIZE_CAUTION) +
       "\n\n...(truncated)";
   }
 
-  return [new TextEncoder().encode(result), BottFileType.MD];
+  return [new TextEncoder().encode(result), BottAssetType.MD];
 };

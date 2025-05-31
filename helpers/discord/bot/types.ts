@@ -1,6 +1,6 @@
 import type { Message, MessageReaction } from "npm:discord.js";
 
-import type { BottEvent, BottUser } from "@bott/data";
+import type { BottEvent, BottUser } from "@bott/model";
 
 import type { TaskManager } from "./task/manager.ts";
 

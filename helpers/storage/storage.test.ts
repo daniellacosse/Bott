@@ -1,0 +1,142 @@
+import { assertEquals, assertExists } from "jsr:@std/assert";
+
+import { BottEventType } from "@bott/model";
+
+import { addEvents } from "./data/events/add.ts";
+import { getEvents } from "./data/events/get.ts";
+// import { addAsset } from "./assets/add.ts";
+import { prepareHtml } from "./assets/prepare/html.ts";
+import { startStorage } from "./start.ts";
+
+Deno.test("Storage - addEvents, getEvents", async () => {
+  const tempDir = Deno.makeTempDirSync();
+
+  startStorage(tempDir);
+
+  // spaces
+  const spaceChatWorld = {
+    id: "1",
+    name: "Chat World",
+  };
+
+  const channelMain = { id: "1", name: "main", space: spaceChatWorld };
+
+  const userNancy = { id: "1", name: "Nancy" };
+  const userBob = { id: "2", name: "Bob" };
+
+  const nancyGreeting = {
+    id: "1",
+    type: BottEventType.MESSAGE,
+    user: userNancy,
+    channel: channelMain,
+    details: { content: "Hello" },
+    timestamp: new Date(),
+  };
+  const bobReply = {
+    id: "2",
+    type: BottEventType.REPLY,
+    user: userBob,
+    channel: channelMain,
+    parent: nancyGreeting,
+    details: { content: "Hi" },
+    timestamp: new Date(),
+  };
+  const nancyReaction = {
+    id: "3",
+    type: BottEventType.REACTION,
+    user: userNancy,
+    channel: channelMain,
+    parent: bobReply,
+    details: { content: "👍" },
+    timestamp: new Date(),
+  };
+
+  console.debug("[DEBUG] Adding events.");
+
+  addEvents(nancyGreeting, bobReply, nancyReaction);
+
+  console.debug("[DEBUG] Getting events.");
+
+  const [dbResult] = await getEvents(nancyReaction.id);
+
+  console.debug("[DEBUG] Final result:", dbResult);
+
+  assertExists(dbResult.id);
+  assertExists(dbResult.type);
+  assertExists(dbResult.details);
+  assertExists(dbResult.timestamp);
+  assertExists(dbResult.channel);
+  assertExists(dbResult.channel.id);
+  assertExists(dbResult.channel.name);
+  assertExists(dbResult.channel.space);
+  assertExists(dbResult.channel.space.id);
+  assertExists(dbResult.channel.space.name);
+  assertExists(dbResult.user);
+  assertExists(dbResult.user.id);
+  assertExists(dbResult.user.name);
+  assertExists(dbResult.parent);
+  assertExists(dbResult.parent.id);
+  assertExists(dbResult.parent.type);
+  assertExists(dbResult.parent.details);
+  assertExists(dbResult.parent.timestamp);
+});
+
+Deno.test("Storage - prepareHtml", async () => {
+  startStorage();
+
+  const htmlInput = `
+      <html>
+        <head>
+          <title>Test Title</title>
+          <link rel="canonical" href="https://example.com/" />
+          <meta name="description" content="Test Description.">
+          <meta name="author" content="Test Author">
+        </head>
+        <body>
+          <article>
+            <h1>Main Heading</h1>
+            <p>This is a paragraph with <strong>bold text</strong> and <em>italic text</em>.</p>
+            <p>Another paragraph.</p>
+            <ul>
+              <li>Item 1</li>
+              <li>Item 2</li>
+            </ul>
+            <pre><code class="language-css">body { color: blue; }</code></pre>
+          </article>
+        </body>
+      </html>`;
+  const inputData = new TextEncoder().encode(htmlInput);
+
+  const [resultData] = await prepareHtml(inputData);
+  const resultMarkdown = new TextDecoder().decode(resultData);
+
+  assertEquals(
+    resultMarkdown,
+    `# Test Title
+
+_By: Test Author_
+
+## Main Heading
+
+This is a paragraph with **bold text** and *italic text*.
+
+Another paragraph.
+
+-   Item 1
+-   Item 2
+
+\`\`\`
+body { color: blue; }
+\`\`\``,
+  );
+});
+
+Deno.test("Storage - addAsset (TODO)", () => {
+  const tempDir = Deno.makeTempDirSync();
+
+  startStorage(tempDir);
+
+  // TODO
+
+  Deno.removeSync(tempDir, { recursive: true });
+});

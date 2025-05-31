@@ -1,6 +1,5 @@
+import { FS_DB_CLIENT as client } from "../start.ts";
 import type { SqlInstructions } from "./sql.ts";
-
-import { DatabaseSync } from "node:sqlite";
 
 export type TransactionResults = {
   reads: any[];
@@ -9,16 +8,17 @@ export type TransactionResults = {
   error: Error;
 };
 
-let client: DatabaseSync;
-
-export const initDatabase = (dbPath = "test.db") =>
-  client = new DatabaseSync(
-    dbPath,
-  );
-
 export const commit = (
   ...instructions: (SqlInstructions | undefined)[]
 ): TransactionResults => {
+  if (!client) {
+    return {
+      error: new Error(
+        "Storage has not been started: Database client is not defined",
+      ),
+    };
+  }
+
   let reads: any[] = [];
   let writes = 0;
 
