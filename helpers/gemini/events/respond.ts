@@ -2,11 +2,13 @@ import type { Content } from "npm:@google/genai";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import type {
+  AnyBottEvent,
   BottChannel,
   BottEvent,
-  BottEventType,
   BottUser,
 } from "@bott/model";
+
+import { getEvents } from "@bott/storage";
 
 import taskInstructions from "./instructions.ts";
 import { outputGenerator, outputSchema } from "./output.ts";
@@ -23,13 +25,12 @@ type GeminiResponseContext = {
 };
 
 export async function* respondEvents(
-  inputEvents: BottEvent<object>[],
+  inputEvents: AnyBottEvent[],
   { model = "gemini-2.5-pro-preview-05-06", abortSignal, context }:
     GeminiResponseContext,
 ): AsyncGenerator<
   BottEvent<
-    { content: string },
-    BottEventType.MESSAGE | BottEventType.REPLY | BottEventType.REACTION
+    { content: string }
   >
 > {
   const modelUserId = context.user.id;
@@ -51,10 +52,10 @@ export async function* respondEvents(
     }
 
     if (goingOverSeenEvents) {
-      delete event.files;
+      delete event.assets;
     }
 
-    const content = await transformBottEventToContent({
+    const content = transformBottEventToContent({
       ...event,
       details: { ...event.details, seen: goingOverSeenEvents },
     } as BottEvent<object & { seen: boolean }>, modelUserId);
@@ -89,44 +90,28 @@ export async function* respondEvents(
       channel: context.channel,
       parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
     } as BottEvent<
-      { content: string },
-      BottEventType.MESSAGE | BottEventType.REPLY | BottEventType.REACTION
+      { content: string }
     >;
   }
 
   return;
 }
 
-const transformBottEventToContent = async (
+const transformBottEventToContent = (
   event: BottEvent<object & { seen: boolean }>,
   modelUserId: string,
-): Promise<Content> => {
+): Content => {
   const content: Content = {
     role: (event.user && event.user.id === modelUserId) ? "model" : "user",
     parts: [{ text: JSON.stringify(event) }],
   };
 
-  if (event.files) {
-    for (const file of event.files) {
-      let fileData;
-
-      if (file.data) {
-        fileData = file.data;
-      } else if (file.url) {
-        const fileResponse = await fetch(file.url);
-        const fileBuffer = await fileResponse.arrayBuffer();
-
-        fileData = new Uint8Array(fileBuffer);
-      }
-
-      if (fileData === undefined) {
-        continue;
-      }
-
+  if (event.assets) {
+    for (const asset of event.assets) {
       content.parts!.push({
         inlineData: {
-          mimeType: file.type,
-          data: encodeBase64(fileData),
+          mimeType: asset.type,
+          data: encodeBase64(asset.data),
         },
       });
     }

@@ -6,16 +6,14 @@ import type { BotContext } from "../types.ts";
 
 export type CommandRequestEvent<O extends Record<string, unknown> = {}> =
   BottEvent<
-    { name: string; options: O },
-    BottEventType.FUNCTION_REQUEST
+    { name: string; options: O }
   >;
 
 export type CommandResponseEvent = BottEvent<
   {
     content?: string;
     embeds?: (EmbedBuilder | ReturnType<EmbedBuilder["toJSON"]>)[];
-  },
-  BottEventType.FUNCTION_RESPONSE
+  }
 >;
 
 export type Command<O extends Record<string, unknown> = {}> = {

@@ -1,13 +1,10 @@
 import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
-import { BottAssetType } from "@bott/model";
-
 import _gemini from "../client.ts";
-import type { FileGenerator } from "./types.ts";
-import { getFileNameFromDescription, getGeneratedFileUrl } from "./url.ts";
+import type { ContentGenerator } from "./types.ts";
 
-export const generatePhotoFile: FileGenerator = async (prompt: string, {
+export const generatePhotoContents: ContentGenerator = async (prompt: string, {
   model = "imagen-3.0-generate-002",
   abortSignal,
   gemini = _gemini,
@@ -44,15 +41,5 @@ export const generatePhotoFile: FileGenerator = async (prompt: string, {
     throw new Error("No image bytes");
   }
 
-  const fileName = `${getFileNameFromDescription(prompt)}.png`;
-  const fileData = decodeBase64(imageData.image.imageBytes);
-
-  return {
-    id: crypto.randomUUID(),
-    data: fileData,
-    name: fileName,
-    description: prompt,
-    url: getGeneratedFileUrl(fileName),
-    type: BottAssetType.PNG,
-  };
+  return decodeBase64(imageData.image.imageBytes);
 };

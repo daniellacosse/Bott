@@ -11,7 +11,9 @@ import {
   Routes,
 } from "npm:discord.js";
 
-import { addEvents, type BottEvent, BottEventType } from "@bott/model";
+import { type BottEvent, BottEventType } from "@bott/model";
+
+import { addEvents } from "@bott/storage";
 
 import { createErrorEmbed } from "../embed/error.ts";
 import { getCommandRequestEvent } from "./command/request.ts";
@@ -131,7 +133,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       message as Message<true>,
     );
 
-    console.log(
+    console.debug(
       "[DEBUG] Message event:",
       { id: event.id, preview: event.details?.content.slice(0, 100) },
     );
@@ -223,16 +225,16 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       return;
     }
 
-    const files = [];
+    const assets = [];
 
-    for (const file of responseEvent.files || []) {
-      if (!file.data) {
+    for (const asset of responseEvent.assets || []) {
+      if (!asset.data) {
         continue;
       }
 
-      files.push(
-        new AttachmentBuilder(Buffer.from(file.data), {
-          name: file.name || "unknown_filename",
+      assets.push(
+        new AttachmentBuilder(Buffer.from(asset.data), {
+          name: "unknown_filename",
         }),
       );
     }
@@ -240,7 +242,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     interaction.followUp({
       content: responseEvent.details.content || undefined,
       embeds: responseEvent.details.embeds,
-      files,
+      files: assets,
     });
 
     addEvents(responseEvent);

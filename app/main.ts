@@ -4,18 +4,16 @@ import {
   addEvents,
   getEventIdsForChannel,
   getEvents,
-  initDatabase,
-  setSchema,
-} from "@bott/model";
+  startStorage,
+} from "@bott/storage";
 import { createTask, startBot } from "@bott/discord";
 import { respondEvents } from "@bott/gemini";
 
 import { getIdentity } from "./identity.ts";
-import commands from "./commands/main.ts";
+// TODO: add back commands
+// import commands from "./commands/main.ts";
 import {
-  FILE_SYSTEM_DB_PATH,
   FILE_SYSTEM_DEPLOY_NONCE_PATH,
-  FILE_SYSTEM_GENERATED_PATH,
   FILE_SYSTEM_ROOT,
 } from "./constants.ts";
 
@@ -23,18 +21,8 @@ const MS_IN_MINUTE = 60 * 1000;
 const MAX_TYPING_TIME_MS = 3000;
 const DEFAULT_RESPONSE_SWAPS = 6;
 
-// set up file system
-Deno.mkdirSync(FILE_SYSTEM_ROOT, {
-  recursive: true,
-});
-Deno.mkdirSync(FILE_SYSTEM_GENERATED_PATH, {
-  recursive: true,
-});
-
 // set up db
-initDatabase(FILE_SYSTEM_DB_PATH);
-
-setSchema();
+startStorage(FILE_SYSTEM_ROOT);
 
 // set up deploy check
 const deployNonce = crypto.randomUUID();
@@ -55,7 +43,8 @@ const getCurrentDeployNonce = () => {
 
 // start bot
 startBot({
-  commands,
+  // TODO: add back commands
+  // commands,
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {
     console.info(

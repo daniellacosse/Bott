@@ -4,7 +4,8 @@
     "start": "deno run --allow-all --env-file=.env.development ./main.ts"
   },
   "imports": {
-    "@bott/model": "../data/main.ts",
+    "@bott/model": "../model/types.ts",
+    "@bott/storage": "../helpers/storage/main.ts",
     "@bott/gemini": "../helpers/gemini/main.ts",
     "@bott/discord": "../helpers/discord/main.ts"
   }

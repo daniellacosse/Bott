@@ -1,9 +1,7 @@
-import { BottAssetType } from "@bott/model";
 import _gemini from "../client.ts";
-import type { FileGenerator } from "./types.ts";
-import { getFileNameFromDescription, getGeneratedFileUrl } from "./url.ts";
+import type { ContentGenerator } from "./types.ts";
 
-export const generateTextFile: FileGenerator = async (prompt: string, {
+export const generateTextContents: ContentGenerator = async (prompt: string, {
   model = "gemini-2.5-pro-preview-05-06",
   gemini = _gemini,
 } = {}) => {
@@ -34,15 +32,5 @@ export const generateTextFile: FileGenerator = async (prompt: string, {
     throw new Error("No text in sanitized response");
   }
 
-  const textData = new TextEncoder().encode(sanitizedResponse.text);
-  const fileName = `${getFileNameFromDescription(prompt)}.txt`;
-
-  return {
-    id: crypto.randomUUID(),
-    data: textData,
-    name: fileName,
-    description: prompt,
-    url: getGeneratedFileUrl(fileName),
-    type: BottAssetType.TXT,
-  };
+  return new TextEncoder().encode(sanitizedResponse.text);
 };

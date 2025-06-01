@@ -1,6 +1,6 @@
 import type { Message } from "npm:discord.js";
 
-import { getFileFromUrl } from "@bott/model";
+import { cacheAsset } from "@bott/storage";
 
 import { type BottEvent, BottEventType } from "@bott/model";
 import { getMarkdownLinks } from "./markdown.ts";
@@ -59,18 +59,18 @@ export const getMessageEvent = async (
   ];
 
   if (urls.length) {
-    event.files = [];
+    event.assets = [];
 
     for (const url of urls) {
-      const file = await getFileFromUrl(url);
+      const asset = await cacheAsset(new URL(url));
 
-      if (!file) {
+      if (!asset) {
         continue;
       }
 
-      file.parent = event;
+      asset.parent = event;
 
-      event.files.push(file);
+      event.assets.push(asset);
     }
   }
 

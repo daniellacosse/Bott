@@ -1,4 +1,3 @@
-import type { BottAsset } from "@bott/model";
 import type { GoogleGenAI } from "npm:@google/genai";
 
 export type PromptParameters = {
@@ -10,7 +9,7 @@ export type PromptParameters = {
   characterLimit?: number;
 };
 
-export type FileGenerator = (
+export type ContentGenerator = (
   prompt: string,
   params: PromptParameters,
-) => Promise<BottAsset>;
+) => Promise<Uint8Array>;

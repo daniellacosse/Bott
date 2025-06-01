@@ -11,7 +11,7 @@ export let FS_ASSET_SIZE_CAUTION: number;
 export let FS_DB_CLIENT: DatabaseSync;
 
 export const startStorage = (
-  root = join(Deno.cwd(), "output"),
+  root: string,
   { assetSizeCautionBytes = 100_000 } = {},
 ) => {
   // Create assets folder:

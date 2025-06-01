@@ -4,7 +4,7 @@ import { type BottAsset, BottAssetType, BottEventType } from "@bott/model";
 
 import { addEvents } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
-import { addAsset } from "./assets/add.ts";
+import { cacheAsset } from "./assets/cache.ts";
 import { prepareHtml } from "./assets/prepare/html.ts";
 import { startStorage } from "./start.ts";
 
@@ -121,7 +121,8 @@ body { color: blue; }
 \`\`\``;
 
 Deno.test("Storage - prepareHtml", async () => {
-  startStorage();
+  const tempDir = Deno.makeTempDirSync();
+  startStorage(tempDir);
 
   const inputData = new TextEncoder().encode(htmlInput);
 
@@ -134,7 +135,7 @@ Deno.test("Storage - prepareHtml", async () => {
   );
 });
 
-Deno.test("Storage - addAsset", async () => {
+Deno.test("Storage - cacheAsset", async () => {
   const tempDir = Deno.makeTempDirSync();
   startStorage(tempDir);
 
@@ -150,7 +151,7 @@ Deno.test("Storage - addAsset", async () => {
           );
 
           try {
-            resolve(await addAsset(sourceUrl));
+            resolve(await cacheAsset(sourceUrl));
           } finally {
             controller.abort();
           }
@@ -165,9 +166,8 @@ Deno.test("Storage - addAsset", async () => {
 
   assertExists(asset.id);
   assertEquals(asset.type, BottAssetType.MD);
-  assertEquals(
+  assertExists(
     asset.path,
-    `${BottAssetType.MD}/test-asset.html.md`,
   );
   assertEquals(
     new TextDecoder().decode(asset.data),

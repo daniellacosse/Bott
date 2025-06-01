@@ -13,7 +13,7 @@ export const _getResponseContentType = (response: Response): string => {
   return contentTypeHeader.split(";")[0].trim();
 };
 
-export const addAsset = async (source: URL): Promise<BottAsset> => {
+export const cacheAsset = async (source: URL): Promise<BottAsset> => {
   if (!FS_ASSET_ROOT) {
     throw new Error(
       "Storage has not been started: FS_ASSET_ROOT is not defined",
@@ -24,8 +24,6 @@ export const addAsset = async (source: URL): Promise<BottAsset> => {
   const response = await fetch(source);
   const sourceData = new Uint8Array(await response.arrayBuffer());
   const sourceType = _getResponseContentType(response);
-
-  console.log(new TextDecoder().decode(sourceData), sourceType);
 
   // 2. prepare file of type
   let resultData, resultType;
@@ -43,7 +41,9 @@ export const addAsset = async (source: URL): Promise<BottAsset> => {
 
   for (const [key, value] of Object.entries(BottAssetType)) {
     if (resultType === value) {
-      name += `.${key.toLowerCase()}`;
+      name += `.${
+        Math.random().toString(36).substring(7)
+      }.${key.toLowerCase()}`;
       break;
     }
   }
