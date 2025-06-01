@@ -1,4 +1,4 @@
-import type { Content } from "npm:@google/genai";
+import type { Content, Part } from "npm:@google/genai";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import type {
@@ -73,7 +73,9 @@ export async function* respondEvents(
     config: {
       abortSignal,
       candidateCount: 1,
-      systemInstruction: context.identity + taskInstructions,
+      systemInstruction: {
+        parts: [{ text: context.identity + taskInstructions }],
+      },
       responseMimeType: "application/json",
       responseSchema: outputSchema,
     },
@@ -99,14 +101,18 @@ const transformBottEventToContent = (
   event: BottEvent<object & { seen: boolean }>,
   modelUserId: string,
 ): Content => {
+  const { assets, ...eventForStringify } = event;
+
+  const parts: Part[] = [{ text: JSON.stringify(eventForStringify) }];
+
   const content: Content = {
     role: (event.user && event.user.id === modelUserId) ? "model" : "user",
-    parts: [{ text: JSON.stringify(event) }],
+    parts,
   };
 
-  if (event.assets) {
-    for (const asset of event.assets) {
-      content.parts!.push({
+  if (assets) {
+    for (const asset of assets) {
+      parts.push({
         inlineData: {
           mimeType: asset.type,
           data: encodeBase64(asset.data),
@@ -114,6 +120,5 @@ const transformBottEventToContent = (
       });
     }
   }
-
   return content;
 };

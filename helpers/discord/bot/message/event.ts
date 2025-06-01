@@ -62,9 +62,12 @@ export const getMessageEvent = async (
     event.assets = [];
 
     for (const url of urls) {
-      const asset = await cacheAsset(new URL(url));
+      let asset;
+      try {
+        asset = await cacheAsset(new URL(url));
+      } catch (error) {
+        console.warn("[WARN] Failed to cache asset:", error);
 
-      if (!asset) {
         continue;
       }
 
