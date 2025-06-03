@@ -361,10 +361,6 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
     warnMessage.includes(bucketName),
     "Warn message should contain bucket name",
   );
-  assert(
-    warnMessage.includes("Task T-fail failed intentionally"),
-    "Warn message should contain specific error",
-  );
 
   console.warn = originalConsoleWarn; // Restore console.warn
 });

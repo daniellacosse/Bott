@@ -5,8 +5,8 @@ import { FS_FILE_INPUT_ROOT } from "../../start.ts";
 import { type BottInputFile, BottInputFileType } from "@bott/model";
 
 import { SupportedRawFileType } from "../types.ts";
-import { prepareHtml } from "../prepare/html.ts";
-import { prepareStaticImageAsJpeg } from "../prepare/ffmpeg.ts";
+import { prepareHtml } from "./prepare/html.ts";
+import { prepareStaticImageAsJpeg } from "./prepare/ffmpeg.ts";
 import { commit } from "../../data/commit.ts";
 import { sql } from "../../data/sql.ts";
 

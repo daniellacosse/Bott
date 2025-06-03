@@ -4,9 +4,7 @@ import type {
   AnyBottEvent,
   BottEventType,
   BottInputFile,
-  BottInputFileType,
   BottOutputFile,
-  BottOutputFileType,
 } from "@bott/model";
 
 import { FS_FILE_INPUT_ROOT, FS_FILE_OUTPUT_ROOT } from "../../start.ts";
@@ -16,22 +14,30 @@ import { sql } from "../sql.ts";
 const _getFileFromRow = (
   row: any,
 ): BottInputFile | BottOutputFile | undefined => {
-  if (row.i_url && Deno.statSync(join(FS_FILE_INPUT_ROOT, row.i_path)).isFile) {
-    return {
-      url: new URL(row.i_url),
-      path: row.i_path,
-      type: row.i_type,
-      data: Deno.readFileSync(join(FS_FILE_INPUT_ROOT, row.i_path)),
-    };
-  }
+  try {
+    if (
+      row.i_url && Deno.statSync(join(FS_FILE_INPUT_ROOT, row.i_path)).isFile
+    ) {
+      return {
+        url: new URL(row.i_url),
+        path: row.i_path,
+        type: row.i_type,
+        data: Deno.readFileSync(join(FS_FILE_INPUT_ROOT, row.i_path)),
+      };
+    }
 
-  if (row.o_id && Deno.statSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)).isFile) {
-    return {
-      id: row.o_id,
-      path: row.o_path,
-      type: row.o_type,
-      data: Deno.readFileSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)),
-    };
+    if (
+      row.o_id && Deno.statSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)).isFile
+    ) {
+      return {
+        id: row.o_id,
+        path: row.o_path,
+        type: row.o_type,
+        data: Deno.readFileSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)),
+      };
+    }
+  } catch (_) {
+    return undefined;
   }
 
   return undefined;
@@ -61,9 +67,9 @@ export const getEvents = async (
       left join
         users u on e.user_id = u.id
       left join
-        inputs i on e.id = i.parent_id
+        input_files i on e.id = i.parent_id
       left join
-        outputs o on e.id = o.parent_id
+        output_files o on e.id = o.parent_id
       where
         e.id in (${ids})
       order by e.timestamp asc`,

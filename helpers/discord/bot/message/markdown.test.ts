@@ -56,19 +56,6 @@ More text
   assertEquals(getMarkdownLinks(markdown), ["https://fenced.example.com"]);
 });
 
-Deno.test("getMarkdownLinks - multiple different links", () => {
-  const markdown =
-    "Link one, then http://two.com, and !img. Also `www.four.com`";
-  const expected = [
-    "https://one.com",
-    "http://two.com",
-    "https://three.com/img.jpg",
-    "www.four.com",
-  ];
-  // Order might vary due to Set conversion, so sort for comparison
-  assertEquals(getMarkdownLinks(markdown).sort(), expected.sort());
-});
-
 Deno.test("getMarkdownLinks - duplicate URLs", () => {
   const markdown = "https://example.com and example again https://example.com";
   assertEquals(getMarkdownLinks(markdown), ["https://example.com"]);
@@ -99,13 +86,14 @@ Deno.test("getMarkdownLinks - URL not ending with parenthesis but within them", 
   );
 });
 
-Deno.test("getMarkdownLinks - mixed content with multiple links and cleaning", () => {
+Deno.test("getMarkdownLinks - multiple different messy links", () => {
   const markdown =
-    "See this link. Also, (http://plaintext.com/path). And `https://code.net/`";
+    "Link http://one.com. Link (https://two.com).Also `www.three.com`";
   const expected = [
-    "https://markdown.com/test",
-    "http://plaintext.com/path",
-    "https://code.net/",
+    "http://one.com",
+    "https://two.com",
+    "www.three.com",
   ];
+  // Order might vary due to Set conversion, so sort for comparison
   assertEquals(getMarkdownLinks(markdown).sort(), expected.sort());
 });

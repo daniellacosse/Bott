@@ -175,16 +175,20 @@ export const addEventsData = (...inputEvents: AnyBottEvent[]) => {
 
     if (event.files) {
       for (const file of event.files) {
-        if (
-          isBottInputFile(file) &&
-          Deno.statSync(join(FS_FILE_INPUT_ROOT, file.path)).isFile
-        ) {
-          inputFiles.set(file.url.toString(), { ...file, parent: event });
-        } else if (
-          isBottOutputFile(file) &&
-          Deno.statSync(join(FS_FILE_OUTPUT_ROOT, file.path)).isFile
-        ) {
-          outputFiles.set(file.id, { ...file, parent: event });
+        try {
+          if (
+            isBottInputFile(file) &&
+            Deno.statSync(join(FS_FILE_INPUT_ROOT, file.path)).isFile
+          ) {
+            inputFiles.set(file.url.toString(), { ...file, parent: event });
+          } else if (
+            isBottOutputFile(file) &&
+            Deno.statSync(join(FS_FILE_OUTPUT_ROOT, file.path)).isFile
+          ) {
+            outputFiles.set(file.id, { ...file, parent: event });
+          }
+        } catch (_) {
+          // Not a prepared file, ignore.
         }
       }
     }
