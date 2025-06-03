@@ -1,11 +1,12 @@
 import type { Content, Part } from "npm:@google/genai";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 
-import type {
-  AnyBottEvent,
-  BottChannel,
-  BottEvent,
-  BottUser,
+import {
+  type AnyBottEvent,
+  type BottChannel,
+  type BottEvent,
+  BottEventType,
+  type BottUser,
 } from "@bott/model";
 
 import { getEvents } from "@bott/storage";
@@ -48,6 +49,14 @@ export async function* respondEvents(
       ...inputEvents[pointer],
       details: { ...inputEvents[pointer].details },
     };
+
+    if (
+      event.type === BottEventType.FUNCTION_REQUEST ||
+      event.type === BottEventType.FUNCTION_RESPONSE
+    ) {
+      // Skip these events for now.
+      continue;
+    }
 
     // Determine if this event was from the model itself:
     if (event.user?.id === modelUserId) goingOverSeenEvents = true;
