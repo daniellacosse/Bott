@@ -1,7 +1,7 @@
 import { delay } from "jsr:@std/async/delay";
 
 import {
-  addEvents,
+  addEventsData,
   getEventIdsForChannel,
   getEvents,
   startStorage,
@@ -10,8 +10,7 @@ import { createTask, startBot } from "@bott/discord";
 import { respondEvents } from "@bott/gemini";
 
 import { getIdentity } from "./identity.ts";
-// TODO: add back commands
-// import commands from "./commands/main.ts";
+import commands from "./commands/main.ts";
 import {
   FILE_SYSTEM_DEPLOY_NONCE_PATH,
   FILE_SYSTEM_ROOT,
@@ -43,8 +42,7 @@ const getCurrentDeployNonce = () => {
 
 // start bot
 startBot({
-  // TODO: add back commands
-  // commands,
+  commands,
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {
     console.info(
@@ -67,7 +65,7 @@ startBot({
       return;
     }
 
-    const result = addEvents(event);
+    const result = addEventsData(event);
 
     if ("error" in result) {
       console.error("[ERROR] Failed to add event to database:", result);
@@ -143,7 +141,7 @@ startBot({
             messageEvent.id = result.id;
           }
 
-          const eventTransaction = addEvents(messageEvent);
+          const eventTransaction = addEventsData(messageEvent);
           if ("error" in eventTransaction) {
             console.error(
               "[ERROR] Failed to add event to database:",

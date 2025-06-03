@@ -1,22 +1,35 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/assert@*": "1.0.12",
     "jsr:@std/async@*": "1.0.12",
     "jsr:@std/encoding@*": "1.0.9",
+    "jsr:@std/internal@^1.0.6": "1.0.6",
     "jsr:@std/path@*": "1.0.8",
     "npm:@extractus/article-extractor@*": "8.0.19",
     "npm:@google/genai@*": "1.1.0_@modelcontextprotocol+sdk@1.12.1__express@5.1.0__zod@3.25.34_zod@3.25.34",
+    "npm:@types/mdast@*": "4.0.4",
+    "npm:@types/node@*": "22.15.15",
     "npm:discord.js@*": "14.19.3",
     "npm:mdast-util-from-markdown@*": "2.0.2",
     "npm:turndown@*": "7.2.0",
     "npm:unist-util-visit@*": "5.0.0"
   },
   "jsr": {
+    "@std/assert@1.0.12": {
+      "integrity": "08009f0926dda9cbd8bef3a35d3b6a4b964b0ab5c3e140a4e0351fbf34af5b9a",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
     "@std/async@1.0.12": {
       "integrity": "d1bfcec459e8012846fe4e38dfc4241ab23240ecda3d8d6dfcf6d81a632e803d"
     },
     "@std/encoding@1.0.9": {
       "integrity": "025b8f18eb1749bc30d1353bf48b77d1eb5e35610220fa226f5a046b9240c5d7"
+    },
+    "@std/internal@1.0.6": {
+      "integrity": "9533b128f230f73bd209408bb07a4b12f8d4255ab2a4d22a1fd6d87304aca9a4"
     },
     "@std/path@1.0.8": {
       "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"

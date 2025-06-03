@@ -1,10 +1,13 @@
 import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
+import { BottOutputFileType } from "@bott/model";
+import { storeOutputFile } from "@bott/storage";
+
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
 
-export const generatePhotoContents: OutputFileGenerator = async (
+export const generatePhotoFile: OutputFileGenerator = async (
   prompt: string,
   {
     model = "imagen-3.0-generate-002",
@@ -44,5 +47,10 @@ export const generatePhotoContents: OutputFileGenerator = async (
     throw new Error("No image bytes");
   }
 
-  return decodeBase64(imageData.image.imageBytes);
+  const outputFile = storeOutputFile(
+    decodeBase64(imageData.image.imageBytes),
+    BottOutputFileType.PNG,
+  );
+
+  return outputFile;
 };

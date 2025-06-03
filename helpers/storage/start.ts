@@ -6,7 +6,8 @@ const dbClientSchema = Deno.readTextFileSync(
 );
 
 export let FS_ROOT: string;
-export let FS_ASSET_ROOT: string;
+export let FS_FILE_INPUT_ROOT: string;
+export let FS_FILE_OUTPUT_ROOT: string;
 export let FS_ASSET_SIZE_CAUTION: number;
 export let FS_DB_CLIENT: DatabaseSync;
 
@@ -15,12 +16,15 @@ export const startStorage = (
   { assetSizeCautionBytes = 100_000 } = {},
 ) => {
   // Create asset cache folder:
-  const assetRoot = join(root, "cache");
+  const fileInputRoot = join(root, "files/input");
+  const fileOutputRoot = join(root, "files/output");
 
-  Deno.mkdirSync(assetRoot, { recursive: true });
+  Deno.mkdirSync(fileInputRoot, { recursive: true });
+  Deno.mkdirSync(fileOutputRoot, { recursive: true });
 
   FS_ROOT = root;
-  FS_ASSET_ROOT = assetRoot;
+  FS_FILE_INPUT_ROOT = fileInputRoot;
+  FS_FILE_OUTPUT_ROOT = fileOutputRoot;
   FS_ASSET_SIZE_CAUTION = assetSizeCautionBytes;
 
   // Create database file:

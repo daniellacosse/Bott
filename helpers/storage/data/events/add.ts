@@ -1,3 +1,5 @@
+import { join } from "jsr:@std/path";
+
 import {
   type AnyBottEvent,
   type BottChannel,
@@ -6,13 +8,12 @@ import {
   type BottSpace,
   type BottUser,
   isBottInputFile,
+  isBottOutputFile,
 } from "@bott/model";
-
-import { writeInputFile } from "../files/input/write.ts";
-import { writeOutputFile } from "../files/output/write.ts";
 
 import { sql } from "../sql.ts";
 import { commit } from "../commit.ts";
+import { FS_FILE_INPUT_ROOT, FS_FILE_OUTPUT_ROOT } from "../../start.ts";
 
 const getAddChannelsSql = (
   ...channels: BottChannel[]
@@ -135,7 +136,7 @@ const getAddUsersSql = (...users: BottUser[]) => {
   `;
 };
 
-export const addEvents = (...inputEvents: AnyBottEvent[]) => {
+export const addEventsData = (...inputEvents: AnyBottEvent[]) => {
   // Extract all unique entities (events, spaces, channels, users)
   const events = new Map<string, AnyBottEvent>();
   const _queue: AnyBottEvent[] = [...inputEvents];
@@ -174,9 +175,15 @@ export const addEvents = (...inputEvents: AnyBottEvent[]) => {
 
     if (event.files) {
       for (const file of event.files) {
-        if (isBottInputFile(file)) {
+        if (
+          isBottInputFile(file) &&
+          Deno.statSync(join(FS_FILE_INPUT_ROOT, file.path)).isFile
+        ) {
           inputFiles.set(file.url.toString(), { ...file, parent: event });
-        } else {
+        } else if (
+          isBottOutputFile(file) &&
+          Deno.statSync(join(FS_FILE_OUTPUT_ROOT, file.path)).isFile
+        ) {
           outputFiles.set(file.id, { ...file, parent: event });
         }
       }

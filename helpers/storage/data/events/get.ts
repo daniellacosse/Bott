@@ -1,7 +1,5 @@
 import { join } from "jsr:@std/path";
 
-import { FS_ASSET_ROOT } from "../../start.ts";
-
 import type {
   AnyBottEvent,
   BottEventType,
@@ -11,8 +9,33 @@ import type {
   BottOutputFileType,
 } from "@bott/model";
 
+import { FS_FILE_INPUT_ROOT, FS_FILE_OUTPUT_ROOT } from "../../start.ts";
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
+
+const _getFileFromRow = (
+  row: any,
+): BottInputFile | BottOutputFile | undefined => {
+  if (row.i_url && Deno.statSync(join(FS_FILE_INPUT_ROOT, row.i_path)).isFile) {
+    return {
+      url: new URL(row.i_url),
+      path: row.i_path,
+      type: row.i_type,
+      data: Deno.readFileSync(join(FS_FILE_INPUT_ROOT, row.i_path)),
+    };
+  }
+
+  if (row.o_id && Deno.statSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)).isFile) {
+    return {
+      id: row.o_id,
+      path: row.o_path,
+      type: row.o_type,
+      data: Deno.readFileSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)),
+    };
+  }
+
+  return undefined;
+};
 
 export const getEvents = async (
   ...ids: string[]
@@ -61,41 +84,32 @@ export const getEvents = async (
       ...context
     } of result.reads
   ) {
-    // add file to existing event
-    if (events.has(id) && context.i_url) {
-      const event = events.get(id)!;
-
-      event.files ??= [] as BottInputFile[];
-      event.files.push({
-        url: new URL(context.i_url),
-        path: context.i_path,
-        type: context.i_type as BottInputFileType,
-        data: Deno.readFileSync(join(FS_ASSET_ROOT, context.i_path)),
-      });
-
-      continue;
-    }
-
-    if (events.has(id) && context.o_id) {
-      const event = events.get(id)!;
-
-      event.files ??= [] as BottOutputFile[];
-      event.files.push({
-        id: context.o_id,
-        path: context.o_path,
-        type: context.o_type as BottInputFileType,
-        data: Deno.readFileSync(join(FS_ASSET_ROOT, context.o_path)),
-      });
-
-      continue;
-    }
-
-    const event: AnyBottEvent = {
+    let event: AnyBottEvent = {
       id,
       type: type as BottEventType,
       details: JSON.parse(details),
       timestamp: new Date(timestamp),
     };
+
+    const file = _getFileFromRow(context);
+
+    if (file && events.has(id)) {
+      event = events.get(id)!;
+      file.parent = event;
+
+      event.files ??= [];
+      file.parent = event;
+
+      // The type of array here shouldn't matter.
+      (event.files as any[]).push(file);
+
+      continue;
+    } else if (file) {
+      file.parent = event;
+
+      // The type of array here shouldn't matter.
+      event.files = [file] as any[];
+    }
 
     if (context.c_id) {
       event.channel = {
@@ -119,22 +133,6 @@ export const getEvents = async (
 
     if (context.p_id) {
       event.parent = (await getEvents(context.p_id))[0];
-    }
-
-    if (context.i_url) {
-      event.files = [{
-        url: new URL(context.i_url),
-        path: context.i_path,
-        type: context.i_type as BottInputFileType,
-        data: Deno.readFileSync(join(FS_ASSET_ROOT, context.i_path)),
-      }];
-    } else if (context.o_id) {
-      event.files = [{
-        id: context.o_id,
-        path: context.o_path,
-        type: context.o_type as BottOutputFileType,
-        data: Deno.readFileSync(join(FS_ASSET_ROOT, context.o_path)),
-      }];
     }
   }
 

@@ -1,10 +1,12 @@
 import type { Message } from "npm:discord.js";
 
-import { cacheAsset } from "@bott/storage";
+import { type BottEvent, BottEventType, type BottInputFile } from "@bott/model";
+import { storeNewInputFile } from "@bott/storage";
 
-import { type BottEvent, BottEventType } from "@bott/model";
 import { getMarkdownLinks } from "./markdown.ts";
 
+// NOTE: this stores input files to disk, even if they
+// are not in the database yet.
 export const getMessageEvent = async (
   message: Message<true>,
 ): Promise<BottEvent> => {
@@ -59,21 +61,24 @@ export const getMessageEvent = async (
   ];
 
   if (urls.length) {
-    event.files = [];
+    event.files = [] as BottInputFile[];
 
     for (const url of urls) {
-      let asset;
+      let file;
       try {
-        asset = await cacheAsset(new URL(url));
+        file = await storeNewInputFile(new URL(url));
       } catch (error) {
-        console.warn("[WARN] Failed to cache asset:", (error as Error).message);
+        console.warn(
+          "[WARN] Failed to store input file:",
+          (error as Error).message,
+        );
 
         continue;
       }
 
-      asset.parent = event;
+      file.parent = event;
 
-      event.files.push(asset);
+      event.files.push(file);
     }
   }
 

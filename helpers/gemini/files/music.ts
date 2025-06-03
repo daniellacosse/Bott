@@ -1,7 +1,7 @@
 import { decodeBase64 } from "jsr:@std/encoding";
 
 import { BottOutputFileType } from "@bott/model";
-import { createOutputFile } from "@bott/storage";
+import { storeOutputFile } from "@bott/storage";
 
 import type { OutputFileGenerator } from "./types.ts";
 
@@ -35,8 +35,10 @@ export const generateMusicFile: OutputFileGenerator = async (
 
   const { predictions } = await response.json();
 
-  return createOutputFile(
+  const outputFile = storeOutputFile(
     decodeBase64(predictions[0].bytesBase64Encoded),
     BottOutputFileType.WAV,
   );
+
+  return outputFile;
 };

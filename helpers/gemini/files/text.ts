@@ -1,7 +1,10 @@
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
 
-export const generateTextContents: OutputFileGenerator = async (
+import { BottOutputFileType } from "@bott/model";
+import { storeOutputFile } from "@bott/storage";
+
+export const generateTextFile: OutputFileGenerator = async (
   prompt: string,
   {
     model = "gemini-2.5-pro-preview-05-06",
@@ -35,5 +38,10 @@ export const generateTextContents: OutputFileGenerator = async (
     throw new Error("No text in sanitized response");
   }
 
-  return new TextEncoder().encode(sanitizedResponse.text);
+  const outputFile = storeOutputFile(
+    new TextEncoder().encode(sanitizedResponse.text),
+    BottOutputFileType.TXT,
+  );
+
+  return outputFile;
 };

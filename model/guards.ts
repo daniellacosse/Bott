@@ -1,12 +1,23 @@
-import type { BottInputFile, BottOutputFile } from "./types.ts";
+import {
+  type BottInputFile,
+  BottInputFileType,
+  type BottOutputFile,
+  BottOutputFileType,
+} from "./types.ts";
 
-// TODO: make these more robust
 export const isBottInputFile = (obj: unknown): obj is BottInputFile => {
   if (typeof obj !== "object" || obj === null) {
     return false;
   }
 
-  if (!("url" in obj)) {
+  const inputFile = obj as BottInputFile;
+
+  if (
+    !(inputFile.url instanceof URL) ||
+    !(inputFile.data instanceof Uint8Array) ||
+    typeof inputFile.path !== "string" ||
+    !Object.values(BottInputFileType).includes(inputFile.type)
+  ) {
     return false;
   }
 
@@ -18,7 +29,14 @@ export const isBottOutputFile = (obj: unknown): obj is BottOutputFile => {
     return false;
   }
 
-  if (!("id" in obj)) {
+  const outputFile = obj as BottOutputFile;
+
+  if (
+    typeof outputFile.id !== "string" ||
+    !(outputFile.data instanceof Uint8Array) ||
+    typeof outputFile.path !== "string" ||
+    !Object.values(BottOutputFileType).includes(outputFile.type)
+  ) {
     return false;
   }
 

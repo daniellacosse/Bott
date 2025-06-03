@@ -1,8 +1,6 @@
-export const DISCORD_MESSAGE_LIMIT = 2000;
+import { join } from "jsr:@std/path";
 
-export const HISTORY_LENGTH = Number(
-  Deno.env.get("CONFIG_HISTORY_LENGTH") ?? 20,
-);
+export const DISCORD_MESSAGE_LIMIT = 2000;
 
 const FOUR_WEEKS_MS = 4 * 7 * 24 * 60 * 60 * 1000;
 export const RATE_LIMIT_WINDOW_MS = FOUR_WEEKS_MS;
@@ -19,5 +17,7 @@ export const RATE_LIMIT_VIDEOS = Number(
 );
 
 export const FILE_SYSTEM_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ?? "output";
-export const FILE_SYSTEM_DEPLOY_NONCE_PATH =
-  `${FILE_SYSTEM_ROOT}/.deploy-nonce`;
+export const FILE_SYSTEM_DEPLOY_NONCE_PATH = join(
+  FILE_SYSTEM_ROOT,
+  ".deploy-nonce",
+);

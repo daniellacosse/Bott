@@ -6,13 +6,13 @@ import {
   BottInputFileType,
 } from "@bott/model";
 
-import { addEvents } from "./data/events/add.ts";
+import { addEventsData } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
-import { cacheAsset } from "./assets/cache.ts";
-import { prepareHtml } from "./assets/prepare/html.ts";
+import { storeNewInputFile } from "./files/input/store.ts";
+import { prepareHtml } from "./files/input/prepare/html.ts";
 import { startStorage } from "./start.ts";
 
-Deno.test("Storage - addEvents, getEvents", async () => {
+Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();
 
   startStorage(tempDir);
@@ -57,7 +57,7 @@ Deno.test("Storage - addEvents, getEvents", async () => {
 
   console.debug("[DEBUG] Adding events.");
 
-  addEvents(nancyGreeting, bobReply, nancyReaction);
+  addEventsData(nancyGreeting, bobReply, nancyReaction);
 
   console.debug("[DEBUG] Getting events.");
 
@@ -139,7 +139,7 @@ Deno.test("Storage - prepareHtml", async () => {
   );
 });
 
-Deno.test("Storage - cacheAsset", async () => {
+Deno.test("Storage - storeNewInputFile", async () => {
   const tempDir = Deno.makeTempDirSync();
   startStorage(tempDir);
 
@@ -155,7 +155,7 @@ Deno.test("Storage - cacheAsset", async () => {
           );
 
           try {
-            resolve(await cacheAsset(sourceUrl));
+            resolve(await storeNewInputFile(sourceUrl));
           } finally {
             controller.abort();
           }
@@ -168,7 +168,7 @@ Deno.test("Storage - cacheAsset", async () => {
     )
   );
 
-  assertExists(asset.id);
+  assertExists(asset.url);
   assertEquals(asset.type, BottInputFileType.MD);
   assertExists(
     asset.path,

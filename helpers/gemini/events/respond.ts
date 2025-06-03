@@ -10,13 +10,10 @@ import type {
 
 import { getEvents } from "@bott/storage";
 
+import { INPUT_EVENT_LIMIT, INPUT_FILE_TOKEN_LIMIT } from "../constants.ts";
 import taskInstructions from "./instructions.ts";
 import { outputGenerator, outputSchema } from "./output.ts";
 import gemini from "../client.ts";
-
-// TODO: constants
-const CONTEXT_LIMIT__EVENT_ASSET_TOKENS = 500_000;
-const CONTEXT_LIMIT__EVENT_COUNT = 2000;
 
 type GeminiResponseContext = {
   abortSignal: AbortSignal;
@@ -57,7 +54,7 @@ export async function* respondEvents(
 
     // Prune old, stale assets that bloat the context window:
     if (
-      goingOverSeenEvents && estimatedTokens > CONTEXT_LIMIT__EVENT_ASSET_TOKENS
+      goingOverSeenEvents && estimatedTokens > INPUT_FILE_TOKEN_LIMIT
     ) {
       delete event.files;
     } else {
@@ -78,7 +75,7 @@ export async function* respondEvents(
 
     contents.unshift(content);
 
-    if (contents.length >= CONTEXT_LIMIT__EVENT_COUNT) {
+    if (contents.length >= INPUT_EVENT_LIMIT) {
       break;
     }
   }

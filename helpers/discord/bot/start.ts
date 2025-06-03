@@ -13,7 +13,7 @@ import {
 
 import { type BottEvent, BottEventType } from "@bott/model";
 
-import { addEvents } from "@bott/storage";
+import { addEventsData } from "@bott/storage";
 
 import { createErrorEmbed } from "../embed/error.ts";
 import { getCommandRequestEvent } from "./command/request.ts";
@@ -114,7 +114,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     }
   }
 
-  const result = addEvents(...events);
+  const result = addEventsData(...events);
 
   if ("error" in result) {
     console.error("[ERROR] Failed to hydrate database:", result.error);
@@ -209,7 +209,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     try {
       const requestEvent = await getCommandRequestEvent<O>(interaction);
 
-      addEvents(requestEvent);
+      addEventsData(requestEvent);
 
       responseEvent = await command.call(
         _makeSelf(interaction.channel! as GuildTextBasedChannel),
@@ -225,16 +225,16 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       return;
     }
 
-    const assets = [];
+    const outputFiles = [];
 
-    for (const asset of responseEvent.files || []) {
-      if (!asset.data) {
+    for (const outputFile of responseEvent.files || []) {
+      if (!outputFile.data) {
         continue;
       }
 
-      assets.push(
-        new AttachmentBuilder(Buffer.from(asset.data), {
-          name: "unknown_filename",
+      outputFiles.push(
+        new AttachmentBuilder(Buffer.from(outputFile.data), {
+          name: outputFile.path.split("/").at(-1),
         }),
       );
     }
@@ -242,10 +242,10 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     interaction.followUp({
       content: responseEvent.details.content || undefined,
       embeds: responseEvent.details.embeds,
-      files: assets,
+      files: outputFiles,
     });
 
-    addEvents(responseEvent);
+    addEventsData(responseEvent);
   });
 
   // Sync commands with discord origin via their custom http client 🙄

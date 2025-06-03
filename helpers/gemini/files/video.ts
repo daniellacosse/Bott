@@ -4,6 +4,9 @@ import {
 } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
+import { BottOutputFileType } from "@bott/model";
+import { storeOutputFile } from "@bott/storage";
+
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
 
@@ -28,7 +31,7 @@ function doVideoJob(
   });
 }
 
-export const generateVideoContents: OutputFileGenerator = async (
+export const generateVideoFile: OutputFileGenerator = async (
   prompt: string,
   { model = "veo-2.0-generate-001", gemini = _gemini, abortSignal } = {},
 ) => {
@@ -76,5 +79,10 @@ export const generateVideoContents: OutputFileGenerator = async (
     throw new Error("No video bytes");
   }
 
-  return decodeBase64(videoData.video.videoBytes);
+  const outputFile = storeOutputFile(
+    decodeBase64(videoData.video.videoBytes),
+    BottOutputFileType.MP4,
+  );
+
+  return outputFile;
 };
