@@ -140,6 +140,8 @@ export const getEvents = async (
     if (context.p_id) {
       event.parent = (await getEvents(context.p_id))[0];
     }
+
+    events.set(id, event);
   }
 
   return [...events.values()];

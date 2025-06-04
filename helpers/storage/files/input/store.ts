@@ -31,7 +31,7 @@ const _getInputFile = (url: URL): BottInputFile | undefined => {
     `,
   );
 
-  if (!("reads" in data)) return;
+  if (!("reads" in data) || data.reads.length === 0) return;
 
   const [file] = data.reads;
 

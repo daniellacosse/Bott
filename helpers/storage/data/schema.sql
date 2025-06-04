@@ -32,7 +32,7 @@ create table if not exists events (
 );
 
 create table if not exists input_files (
-  id varchar(36) primary key not null,
+  url text primary key not null,
   type text not null,
   path text unique not null,
   parent_id varchar(36),
@@ -40,7 +40,7 @@ create table if not exists input_files (
 );
 
 create table if not exists output_files (
-  url text primary key not null,
+  id varchar(36) primary key not null,
   type text not null,
   path text unique not null,
   parent_id varchar(36),
