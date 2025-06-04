@@ -99,10 +99,14 @@ export const storeNewInputFile = async (
   Deno.writeFileSync(join(FS_FILE_INPUT_ROOT, path), resultData);
 
   // Return BottInputFile:
-  return {
+  const file = {
     url,
     path,
     type: resultType,
     data: resultData,
   };
+
+  _inputFileCache.set(url.toString(), file);
+
+  return file;
 };

@@ -53,6 +53,7 @@ export const video = createCommand<{
           id: crypto.randomUUID(),
           type: BottEventType.FUNCTION_RESPONSE as const,
           user: this.user,
+          channel: commandEvent.channel,
           details: {
             content: `Here's my video for your prompt: **"${prompt}"**`,
           },

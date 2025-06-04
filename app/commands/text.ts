@@ -44,6 +44,7 @@ export const text = createCommand<{ prompt: string }>({
           id: crypto.randomUUID(),
           type: BottEventType.FUNCTION_RESPONSE as const,
           user: this.user,
+          channel: commandEvent.channel,
           details: {
             content: `Here's my text for your prompt: **"${prompt}"**`,
           },

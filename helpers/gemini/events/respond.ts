@@ -28,7 +28,7 @@ type GeminiResponseContext = {
 
 export async function* respondEvents(
   inputEvents: AnyBottEvent[],
-  { model = "gemini-2.5-pro-preview-05-06", abortSignal, context }:
+  { model = "gemini-2.5-flash-preview-05-20", abortSignal, context }:
     GeminiResponseContext,
 ): AsyncGenerator<
   BottEvent<

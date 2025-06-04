@@ -195,8 +195,8 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       return;
     }
 
-    const command = commands.find(({ name }) =>
-      interaction.commandName === name
+    const command = commands.find(({ commandName }) =>
+      interaction.commandName === commandName
     );
 
     if (!command) {

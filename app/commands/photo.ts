@@ -14,9 +14,9 @@ export const photo = createCommand<{ prompt: string }>({
     description: "A description of the photo you want to generate.",
     required: true,
   }],
-}, function (functionRequestEvent) {
-  const taskBucketId = `photo-${functionRequestEvent.user?.id}`;
-  const prompt = functionRequestEvent.details.options.prompt;
+}, function (commandEvent) {
+  const taskBucketId = `photo-${commandEvent.user?.id}`;
+  const prompt = commandEvent.details.options.prompt;
 
   console.info(`[INFO] Received photo prompt "${prompt}".`);
 
@@ -51,6 +51,7 @@ export const photo = createCommand<{ prompt: string }>({
           id: crypto.randomUUID(),
           type: BottEventType.FUNCTION_RESPONSE as const,
           user: this.user,
+          channel: commandEvent.channel,
           details: {
             content: `Here's my photo for your prompt: **"${prompt}"**`,
           },

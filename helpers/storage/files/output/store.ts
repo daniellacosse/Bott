@@ -18,6 +18,7 @@ export const storeOutputFile = (
     }
   }
 
+  Deno.mkdirSync(join(FS_FILE_OUTPUT_ROOT, type), { recursive: true });
   Deno.writeFileSync(join(FS_FILE_OUTPUT_ROOT, path), data);
 
   return {

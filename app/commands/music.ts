@@ -52,6 +52,7 @@ export const music = createCommand<{ prompt: string }>(
             id: crypto.randomUUID(),
             type: BottEventType.FUNCTION_RESPONSE as const,
             user: this.user,
+            channel: commandEvent.channel,
             details: {
               content: `Here's my music for your prompt: **"${prompt}"**`,
             },
