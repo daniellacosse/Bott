@@ -35,13 +35,20 @@ export const photo = createCommand<{ prompt: string }>({
     });
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     this.taskManager.push(
       taskBucketId,
       createTask(async (abortSignal) => {
-        const file = await generatePhotoFile(prompt, {
-          abortSignal,
-        });
+        let file;
+
+        try {
+          file = await generatePhotoFile(prompt, {
+            abortSignal,
+          });
+        } catch (error) {
+          reject(error);
+          return;
+        }
 
         if (abortSignal.aborted) {
           return;

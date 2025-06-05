@@ -36,13 +36,20 @@ export const music = createCommand<{ prompt: string }>(
       });
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this.taskManager.push(
         taskBucketId,
         createTask(async (abortSignal) => {
-          const file = await generateMusicFile(prompt, {
-            abortSignal,
-          });
+          let file;
+
+          try {
+            file = await generateMusicFile(prompt, {
+              abortSignal,
+            });
+          } catch (error) {
+            reject(error);
+            return;
+          }
 
           if (abortSignal.aborted) {
             return;

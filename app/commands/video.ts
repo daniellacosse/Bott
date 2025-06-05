@@ -37,13 +37,20 @@ export const video = createCommand<{
     });
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     this.taskManager.push(
       taskBucketId,
       createTask(async (abortSignal) => {
-        const file = await generateVideoFile(prompt, {
-          abortSignal,
-        });
+        let file;
+
+        try {
+          file = await generateVideoFile(prompt, {
+            abortSignal,
+          });
+        } catch (error) {
+          reject(error);
+          return;
+        }
 
         if (abortSignal.aborted) {
           return;
