@@ -11,8 +11,12 @@ import {
 
 import { getEvents } from "@bott/storage";
 
-import { INPUT_EVENT_LIMIT, INPUT_FILE_TOKEN_LIMIT } from "../constants.ts";
-import taskInstructions from "./instructions.ts";
+import {
+  CONFIG_ASSESSMENT_SCORE_THRESHOLD,
+  INPUT_EVENT_LIMIT,
+  INPUT_FILE_TOKEN_LIMIT,
+} from "../constants.ts";
+import { assessResponse, generateResponse } from "./instructions.ts";
 import { outputGenerator, outputSchema } from "./output.ts";
 import gemini from "../client.ts";
 
@@ -41,8 +45,11 @@ export async function* respondEvents(
   let pointer = inputEvents.length;
   let goingOverSeenEvents = false;
 
+  // Accumulates relevant history for assessing quality of messages later.
+  const assessmentHistory = [];
+
   // We only want the model to respond to the most recent user messages,
-  // since the model's last response
+  // since the model's last response:
   let estimatedTokens = 0;
   while (pointer--) {
     const event = {
@@ -82,6 +89,10 @@ export async function* respondEvents(
       details: { ...event.details, seen: goingOverSeenEvents },
     } as BottEvent<object & { seen: boolean }>, modelUserId);
 
+    if (!goingOverSeenEvents) {
+      assessmentHistory.push(content);
+    }
+
     contents.unshift(content);
 
     if (contents.length >= INPUT_EVENT_LIMIT) {
@@ -100,7 +111,7 @@ export async function* respondEvents(
       abortSignal,
       candidateCount: 1,
       systemInstruction: {
-        parts: [{ text: context.identity + taskInstructions }],
+        parts: [{ text: context.identity + generateResponse }],
       },
       responseMimeType: "application/json",
       responseSchema: outputSchema,
@@ -108,6 +119,45 @@ export async function* respondEvents(
   });
 
   for await (const event of outputGenerator(responseGenerator)) {
+    const eventAssessmentContent = {
+      role: "user",
+      parts: [{ text: event.details.content }],
+    };
+
+    if (
+      event.type !== BottEventType.REACTION
+    ) {
+      // Assess quality of the message:
+      const assessmentResult = await gemini.models.generateContent({
+        model: "gemini-2.0-flash-lite",
+        contents: [...assessmentHistory, eventAssessmentContent],
+        config: {
+          candidateCount: 1,
+          systemInstruction: {
+            parts: [{ text: assessResponse }],
+          },
+        },
+      });
+
+      const scoreText = assessmentResult.candidates?.[0]?.content?.parts?.[0]
+        ?.text;
+
+      if (scoreText) {
+        const score = Number(scoreText.trim());
+
+        if (!isNaN(score) && score < CONFIG_ASSESSMENT_SCORE_THRESHOLD) {
+          console.debug(
+            "[DEBUG] Message recieved poor assessment, skipping:",
+            { content: event.details.content, score },
+          );
+
+          continue;
+        }
+      }
+    }
+
+    assessmentHistory.push(eventAssessmentContent);
+
     yield {
       id: crypto.randomUUID(),
       timestamp: new Date(),
