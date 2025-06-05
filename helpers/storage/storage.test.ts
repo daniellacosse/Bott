@@ -9,7 +9,7 @@ import {
 import { addEventsData } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
 import { storeNewInputFile } from "./files/input/store.ts";
-import { prepareHtml } from "./files/input/prepare/html.ts";
+import { prepareHtmlAsMarkdown } from "./files/input/prepare/html.ts";
 import { startStorage } from "./start.ts";
 
 Deno.test("Storage - addEventsData, getEvents", async () => {
@@ -130,7 +130,7 @@ Deno.test("Storage - prepareHtml", async () => {
 
   const inputData = new TextEncoder().encode(htmlInput);
 
-  const [resultData] = await prepareHtml(inputData);
+  const [resultData] = await prepareHtmlAsMarkdown(inputData);
   const resultMarkdown = new TextDecoder().decode(resultData);
 
   assertEquals(

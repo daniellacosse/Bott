@@ -2,7 +2,7 @@ import { join } from "jsr:@std/path";
 
 import { type BottOutputFile, BottOutputFileType } from "@bott/model";
 
-import { FS_FILE_OUTPUT_ROOT } from "../../start.ts";
+import { STORAGE_FILE_OUTPUT_ROOT } from "../../start.ts";
 
 export const storeOutputFile = (
   data: Uint8Array,
@@ -18,8 +18,8 @@ export const storeOutputFile = (
     }
   }
 
-  Deno.mkdirSync(join(FS_FILE_OUTPUT_ROOT, type), { recursive: true });
-  Deno.writeFileSync(join(FS_FILE_OUTPUT_ROOT, path), data);
+  Deno.mkdirSync(join(STORAGE_FILE_OUTPUT_ROOT, type), { recursive: true });
+  Deno.writeFileSync(join(STORAGE_FILE_OUTPUT_ROOT, path), data);
 
   return {
     id,

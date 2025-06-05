@@ -13,7 +13,10 @@ import {
 
 import { sql } from "../sql.ts";
 import { commit } from "../commit.ts";
-import { FS_FILE_INPUT_ROOT, FS_FILE_OUTPUT_ROOT } from "../../start.ts";
+import {
+  STORAGE_FILE_INPUT_ROOT,
+  STORAGE_FILE_OUTPUT_ROOT,
+} from "../../start.ts";
 
 const getAddChannelsSql = (
   ...channels: BottChannel[]
@@ -178,12 +181,12 @@ export const addEventsData = (...inputEvents: AnyBottEvent[]) => {
         try {
           if (
             isBottInputFile(file) &&
-            Deno.statSync(join(FS_FILE_INPUT_ROOT, file.path)).isFile
+            Deno.statSync(join(STORAGE_FILE_INPUT_ROOT, file.path)).isFile
           ) {
             inputFiles.set(file.url.toString(), { ...file, parent: event });
           } else if (
             isBottOutputFile(file) &&
-            Deno.statSync(join(FS_FILE_OUTPUT_ROOT, file.path)).isFile
+            Deno.statSync(join(STORAGE_FILE_OUTPUT_ROOT, file.path)).isFile
           ) {
             outputFiles.set(file.id, { ...file, parent: event });
           }

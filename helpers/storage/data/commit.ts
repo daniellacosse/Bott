@@ -1,4 +1,4 @@
-import { FS_DB_CLIENT as client } from "../start.ts";
+import { STORAGE_DATA_CLIENT as client } from "../start.ts";
 import type { SqlInstructions } from "./sql.ts";
 
 export type TransactionResults = {

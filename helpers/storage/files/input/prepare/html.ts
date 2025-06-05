@@ -3,7 +3,7 @@ import TurndownService from "npm:turndown";
 
 import { BottInputFileType } from "@bott/model";
 
-import { FS_ASSET_SIZE_CAUTION } from "../../../start.ts";
+import { STORAGE_FILE_SIZE_CAUTION } from "../../../start.ts";
 import type { InputFileDataTransformer } from "../../types.ts";
 
 const turndownService = new TurndownService({
@@ -16,7 +16,7 @@ const turndownService = new TurndownService({
   linkStyle: "inlined",
 });
 
-export const prepareHtml: InputFileDataTransformer = async (data) => {
+export const prepareHtmlAsMarkdown: InputFileDataTransformer = async (data) => {
   const htmlText = new TextDecoder().decode(data);
 
   const extracted = await extractFromHtml(htmlText, undefined, {
@@ -36,8 +36,8 @@ export const prepareHtml: InputFileDataTransformer = async (data) => {
   // Consolidate multiple blank lines:
   result = result.replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
 
-  if (result.length > FS_ASSET_SIZE_CAUTION) {
-    result = result.substring(0, FS_ASSET_SIZE_CAUTION) +
+  if (result.length > STORAGE_FILE_SIZE_CAUTION) {
+    result = result.substring(0, STORAGE_FILE_SIZE_CAUTION) +
       "\n\n...(truncated)";
   }
 

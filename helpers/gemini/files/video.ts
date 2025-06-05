@@ -10,27 +10,8 @@ import { storeOutputFile } from "@bott/storage";
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
 
-function doVideoJob(
-  job: GenerateVideosOperation,
-  gemini = _gemini,
-): Promise<GenerateVideosOperation> {
-  return new Promise((resolve, reject) => {
-    const intervalId = setInterval(async () => {
-      if (job.done) {
-        resolve(job);
-        return clearInterval(intervalId);
-      }
-
-      try {
-        job = await gemini.operations.getVideosOperation({ operation: job });
-      } catch (error) {
-        reject(error);
-        return clearInterval(intervalId);
-      }
-    }, 10000);
-  });
-}
-
+// NOTE: This stores output files to disk, even if they
+// are not in the database yet.
 export const generateVideoFile: OutputFileGenerator = async (
   prompt: string,
   { model = "veo-2.0-generate-001", gemini = _gemini, abortSignal } = {},
@@ -86,3 +67,24 @@ export const generateVideoFile: OutputFileGenerator = async (
 
   return outputFile;
 };
+
+function doVideoJob(
+  job: GenerateVideosOperation,
+  gemini = _gemini,
+): Promise<GenerateVideosOperation> {
+  return new Promise((resolve, reject) => {
+    const intervalId = setInterval(async () => {
+      if (job.done) {
+        resolve(job);
+        return clearInterval(intervalId);
+      }
+
+      try {
+        job = await gemini.operations.getVideosOperation({ operation: job });
+      } catch (error) {
+        reject(error);
+        return clearInterval(intervalId);
+      }
+    }, 10000);
+  });
+}

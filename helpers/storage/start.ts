@@ -5,11 +5,11 @@ const dbClientSchema = Deno.readTextFileSync(
   new URL("./data/schema.sql", import.meta.url).pathname,
 );
 
-export let FS_ROOT: string;
-export let FS_FILE_INPUT_ROOT: string;
-export let FS_FILE_OUTPUT_ROOT: string;
-export let FS_ASSET_SIZE_CAUTION: number;
-export let FS_DB_CLIENT: DatabaseSync;
+export let STORAGE_ROOT: string;
+export let STORAGE_FILE_INPUT_ROOT: string;
+export let STORAGE_FILE_OUTPUT_ROOT: string;
+export let STORAGE_FILE_SIZE_CAUTION: number;
+export let STORAGE_DATA_CLIENT: DatabaseSync;
 
 export const startStorage = (
   root: string,
@@ -22,16 +22,16 @@ export const startStorage = (
   Deno.mkdirSync(fileInputRoot, { recursive: true });
   Deno.mkdirSync(fileOutputRoot, { recursive: true });
 
-  FS_ROOT = root;
-  FS_FILE_INPUT_ROOT = fileInputRoot;
-  FS_FILE_OUTPUT_ROOT = fileOutputRoot;
-  FS_ASSET_SIZE_CAUTION = assetSizeCautionBytes;
+  STORAGE_ROOT = root;
+  STORAGE_FILE_INPUT_ROOT = fileInputRoot;
+  STORAGE_FILE_OUTPUT_ROOT = fileOutputRoot;
+  STORAGE_FILE_SIZE_CAUTION = assetSizeCautionBytes;
 
   // Create database file:
-  FS_DB_CLIENT = new DatabaseSync(
+  STORAGE_DATA_CLIENT = new DatabaseSync(
     join(root, "data.db"),
   );
 
   // Initialize database tables:
-  FS_DB_CLIENT.exec(dbClientSchema);
+  STORAGE_DATA_CLIENT.exec(dbClientSchema);
 };

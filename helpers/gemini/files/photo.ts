@@ -7,6 +7,8 @@ import { storeOutputFile } from "@bott/storage";
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
 
+// NOTE: This stores output files to disk, even if they
+// are not in the database yet.
 export const generatePhotoFile: OutputFileGenerator = async (
   prompt: string,
   {

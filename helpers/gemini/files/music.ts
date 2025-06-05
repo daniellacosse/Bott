@@ -15,6 +15,8 @@ const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN") ??
 const VERTEX_API_URL =
   `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/lyria-002:predict`;
 
+// NOTE: This stores output files to disk, even if they
+// are not in the database yet.
 export const generateMusicFile: OutputFileGenerator = async (
   prompt,
   { abortSignal } = {},

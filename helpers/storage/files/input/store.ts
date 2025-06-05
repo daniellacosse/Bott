@@ -1,14 +1,13 @@
 import { join } from "jsr:@std/path";
 
-import { FS_FILE_INPUT_ROOT } from "../../start.ts";
-
 import { type BottInputFile, BottInputFileType } from "@bott/model";
 
-import { SupportedRawFileType } from "../types.ts";
-import { prepareHtml } from "./prepare/html.ts";
-import { prepareStaticImageAsJpeg } from "./prepare/ffmpeg.ts";
 import { commit } from "../../data/commit.ts";
+import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
+import { prepareStaticImageAsJpeg } from "./prepare/ffmpeg.ts";
 import { sql } from "../../data/sql.ts";
+import { STORAGE_FILE_INPUT_ROOT } from "../../start.ts";
+import { SupportedRawFileType } from "../types.ts";
 
 export const _getResponseContentType = (response: Response): string => {
   const contentTypeHeader = response.headers.get("content-type");
@@ -39,7 +38,7 @@ const _getInputFile = (url: URL): BottInputFile | undefined => {
     url: new URL(file.url),
     path: file.path,
     type: file.type as BottInputFileType,
-    data: Deno.readFileSync(join(FS_FILE_INPUT_ROOT, file.path)),
+    data: Deno.readFileSync(join(STORAGE_FILE_INPUT_ROOT, file.path)),
   };
 
   _inputFileCache.set(url.toString(), result);
@@ -50,7 +49,7 @@ const _getInputFile = (url: URL): BottInputFile | undefined => {
 export const storeNewInputFile = async (
   url: URL,
 ): Promise<BottInputFile> => {
-  if (!FS_FILE_INPUT_ROOT) {
+  if (!STORAGE_FILE_INPUT_ROOT) {
     throw new Error(
       "Storage has not been started: FS_FILE_INPUT_ROOT is not defined",
     );
@@ -70,7 +69,7 @@ export const storeNewInputFile = async (
   let resultData, resultType;
   switch (sourceType) {
     case SupportedRawFileType.HTML:
-      [resultData, resultType] = await prepareHtml(sourceData);
+      [resultData, resultType] = await prepareHtmlAsMarkdown(sourceData);
       break;
     case SupportedRawFileType.PNG:
     case SupportedRawFileType.JPEG:
@@ -95,8 +94,10 @@ export const storeNewInputFile = async (
 
   path += `/${name}`;
 
-  Deno.mkdirSync(join(FS_FILE_INPUT_ROOT, resultType), { recursive: true });
-  Deno.writeFileSync(join(FS_FILE_INPUT_ROOT, path), resultData);
+  Deno.mkdirSync(join(STORAGE_FILE_INPUT_ROOT, resultType), {
+    recursive: true,
+  });
+  Deno.writeFileSync(join(STORAGE_FILE_INPUT_ROOT, path), resultData);
 
   // Return BottInputFile:
   const file = {

@@ -4,6 +4,8 @@ import type { OutputFileGenerator } from "./types.ts";
 import { BottOutputFileType } from "@bott/model";
 import { storeOutputFile } from "@bott/storage";
 
+// NOTE: This stores output files to disk, even if they
+// are not in the database yet.
 export const generateTextFile: OutputFileGenerator = async (
   prompt: string,
   {

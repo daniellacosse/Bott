@@ -20,10 +20,9 @@ const MS_IN_MINUTE = 60 * 1000;
 const MAX_TYPING_TIME_MS = 3000;
 const DEFAULT_RESPONSE_SWAPS = 6;
 
-// set up db
 startStorage(FILE_SYSTEM_ROOT);
 
-// set up deploy check
+// Set up deploy check:
 const deployNonce = crypto.randomUUID();
 
 Deno.writeTextFileSync(FILE_SYSTEM_DEPLOY_NONCE_PATH, deployNonce);
@@ -40,7 +39,6 @@ const getCurrentDeployNonce = () => {
   }
 };
 
-// start bot
 startBot({
   commands,
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
@@ -116,7 +114,7 @@ startBot({
           },
         );
 
-        // Send one event (message) at a time:
+        // 2. Send one event (message) at a time:
         for await (const messageEvent of messageEventGenerator) {
           if (abortSignal.aborted) {
             throw new Error("Aborted task: before typing message");

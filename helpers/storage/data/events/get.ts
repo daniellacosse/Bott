@@ -7,7 +7,10 @@ import type {
   BottOutputFile,
 } from "@bott/model";
 
-import { FS_FILE_INPUT_ROOT, FS_FILE_OUTPUT_ROOT } from "../../start.ts";
+import {
+  STORAGE_FILE_INPUT_ROOT,
+  STORAGE_FILE_OUTPUT_ROOT,
+} from "../../start.ts";
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
 
@@ -16,24 +19,26 @@ const _getFileFromRow = (
 ): BottInputFile | BottOutputFile | undefined => {
   try {
     if (
-      row.i_url && Deno.statSync(join(FS_FILE_INPUT_ROOT, row.i_path)).isFile
+      row.i_url &&
+      Deno.statSync(join(STORAGE_FILE_INPUT_ROOT, row.i_path)).isFile
     ) {
       return {
         url: new URL(row.i_url),
         path: row.i_path,
         type: row.i_type,
-        data: Deno.readFileSync(join(FS_FILE_INPUT_ROOT, row.i_path)),
+        data: Deno.readFileSync(join(STORAGE_FILE_INPUT_ROOT, row.i_path)),
       };
     }
 
     if (
-      row.o_id && Deno.statSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)).isFile
+      row.o_id &&
+      Deno.statSync(join(STORAGE_FILE_OUTPUT_ROOT, row.o_path)).isFile
     ) {
       return {
         id: row.o_id,
         path: row.o_path,
         type: row.o_type,
-        data: Deno.readFileSync(join(FS_FILE_OUTPUT_ROOT, row.o_path)),
+        data: Deno.readFileSync(join(STORAGE_FILE_OUTPUT_ROOT, row.o_path)),
       };
     }
   } catch (_) {

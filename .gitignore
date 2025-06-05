@@ -1,5 +1,4 @@
 .env*
-gcp-key.json
+!.env.example
 
-output
-!helpers/storage/files/output
+fs_root
