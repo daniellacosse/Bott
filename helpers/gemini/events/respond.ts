@@ -153,6 +153,11 @@ export async function* respondEvents(
 
           continue;
         }
+
+        console.debug("[DEBUG] Message passed assessment:", {
+          content: event.details.content,
+          score,
+        });
       }
     }
 
