@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone repository
+      - name: Clone Repository
         uses: actions/checkout@v4
 
       - name: Set up Deno
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone repository
+      - name: Clone Repository
         uses: actions/checkout@v4
 
       - name: Set up Deno
@@ -37,3 +37,24 @@ jobs:
 
       - name: Run Tests
         run: deno test --allow-all
+
+  licensing:
+    name: License Headers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+
+      - name: Check Files
+        run: |
+          REQUIRED_HEADER_SNIPPET="This project is dual-licensed:"
+          MISSING_HEADERS_COUNT=$(grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.sql") | wc -l)
+
+          if [ "$MISSING_HEADERS_COUNT" -gt 0 ]; then
+            echo "Error: The following files are missing the required license header:"
+            grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.tsx")
+            exit 1
+          else
+            echo "All files have the required license header."
+          fi
