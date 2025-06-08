@@ -1,8 +1,10 @@
+<img width="465" alt="Screenshot 2025-04-26 at 12 19 21" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
+
 # `@Bott`
 
-A Discord Bot, powered by Gemini.
+![in progress](https://badgen.net/badge/status/wip/blue)
 
-<img width="465" alt="Screenshot 2025-04-26 at 12 19 21" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
+A Discord Bot, powered by Gemini.
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/daniellacosse-code/Bott.git)
 

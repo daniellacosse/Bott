@@ -1,0 +1,7 @@
+name: Bug Report
+type: Bug
+description: File a bug report.
+body: 
+ - type: markdown
+   attributes:
+     value: TODO
