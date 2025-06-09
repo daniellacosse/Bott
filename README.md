@@ -2,8 +2,9 @@
 
 # 🤖 `@Bott`
 
-![alpha](https://img.shields.io/badge/in%20progress-blue)
+![in progress](https://img.shields.io/badge/in%20progress-blue)
 ![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
+![discord](https://img.shields.io/discord/1294993662534483978)
 
 A Discord Bot, powered by Gemini.
 
