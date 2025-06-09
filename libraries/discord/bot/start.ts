@@ -14,6 +14,7 @@ import {
   AttachmentBuilder,
   ChannelType,
   Client,
+  type EmbedBuilder,
   Events,
   GatewayIntentBits,
   type GuildTextBasedChannel,
@@ -31,10 +32,10 @@ import {
 
 import type { addEventData, storeNewInputFile } from "@bott/storage";
 
-import { createErrorEmbed } from "../embed/error.ts";
+import { createErrorEmbed } from "../message/embed/error.ts";
+import { getMessageEvent } from "../message/event.ts";
 import { getCommandRequestEvent } from "./command/request.ts";
 import { getCommandJson } from "./command/json.ts";
-import { getMessageEvent } from "./message/event.ts";
 import type { DiscordBotContext } from "./types.ts";
 
 const REQUIRED_INTENTS = [
@@ -126,7 +127,7 @@ export async function startDiscordBot<
 
       try {
         for (const [_, message] of await channel.messages.fetch()) {
-          events.push(await getMessageEvent(message));
+          events.push(await getMessageEvent(message, storeNewInputFile));
         }
       } catch (_) {
         // Likely don't have access to this channel
@@ -217,8 +218,8 @@ export async function startDiscordBot<
       return;
     }
 
-    const command = commands.find(({ commandName }) =>
-      interaction.commandName === commandName
+    const command = commands.find(({ name }) =>
+      interaction.commandName === name
     );
 
     if (!command) {
@@ -262,8 +263,8 @@ export async function startDiscordBot<
     }
 
     interaction.followUp({
-      content: responseEvent.details.content || undefined,
-      embeds: responseEvent.details.embeds,
+      content: responseEvent.details.content as string || undefined,
+      embeds: responseEvent.details.embeds as EmbedBuilder[],
       files: outputFiles,
     });
 

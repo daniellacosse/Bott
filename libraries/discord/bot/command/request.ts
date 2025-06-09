@@ -9,7 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { type BottChannel, BottEventType } from "@bott/model";
+import {
+  type BottChannel,
+  BottEventType,
+  type BottRequestEvent,
+} from "@bott/model";
 import {
   ApplicationCommandOptionType,
   ChannelType,
@@ -17,13 +21,12 @@ import {
   type CommandInteractionOption,
   type GuildTextBasedChannel,
 } from "npm:discord.js";
-import type { DiscordCommandEvent } from "./create.ts";
 
 export function getCommandRequestEvent<
   O extends Record<string, unknown> = Record<string, unknown>,
 >(
   interaction: ChatInputCommandInteraction,
-): DiscordCommandEvent<O> {
+): BottRequestEvent<O> {
   let channel: BottChannel | undefined = undefined;
 
   if (
