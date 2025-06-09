@@ -17,10 +17,10 @@ please open an issue to discuss it!
 
 ### Submit Pull Requests
 
-In order to submit a pull request, you will need to sign the [**Contributor
-License Agreement (CLA)**](./CONTRIBUTOR_AGREEMENT.md). By signing a CLA, you (or your employer) grant us the
-rights necessary to use and distribute your contributions under our
-[dual-licensing model](./LICENSE). This helps protect both you as a contributor
-and the project.
+In order to submit a pull request, you will need to sign the
+[**Contributor License Agreement (CLA)**](./CONTRIBUTOR_AGREEMENT.md). By
+signing a CLA, you (or your employer) grant us the rights necessary to use and
+distribute your contributions under our [dual-licensing model](./LICENSE). This
+helps protect both you as a contributor and the project.
 
 _[TODO: Link the CLA gist or whatever.]_
