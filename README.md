@@ -22,6 +22,45 @@ deno task start:app
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/daniellacosse-code/Bott.git)
 
+## Architecture (WIP)
+
+Review the code data model annotated in [./model/types.ts](./model/types.ts).
+
+_(Diagram not yet entirely accurate: all modules code up to the @bott/model)_
+
+```mermaid
+graph LR
+  subgraph "External Services"
+    DiscordPlatform["Discord Platform"]
+    GeminiPlatform["Google Gemini Platform"]
+  end
+
+  subgraph "Bott System"
+    BottDiscord["Discord Libraries<br>(@bott/discord)<br>Adapts Discord events, sends replies"]
+    
+    subgraph "Application Core"
+      direction TB
+      BottAppLayer["App Layer<br>(Command Logic, Orchestration)<br>Handles core bot logic, uses services"]
+      BottDataLayer["Data Layer<br>(@bott/storage, @bott/model)<br>Manages data persistence and models"]
+      
+      BottAppLayer -- "Data Storage / Retrieval" --> BottDataLayer
+      BottDataLayer -- "Data" --> BottAppLayer
+    end
+    
+    BottGemini["Gemini Libraries<br>(@bott/gemini)<br>Interfaces with Gemini, processes AI tasks"]
+  end
+
+  %% Flow from Discord User to Bot and back
+  DiscordPlatform -- "User Interaction (e.g., Slash Command)" --> BottDiscord
+  BottDiscord -- "Parsed Event/Command" --> BottAppLayer
+  BottAppLayer -- "Requests AI Processing / File Generation" --> BottGemini
+  BottGemini -- "Calls Gemini API" --> GeminiPlatform
+  GeminiPlatform -- "AI Model Response / Generated Data" --> BottGemini
+  BottGemini -- "AI Result / File" --> BottAppLayer
+  BottAppLayer -- "Response Data (Text, Embeds, Files)" --> BottDiscord
+  BottDiscord -- "Formatted Bot Reply" --> DiscordPlatform
+```
+
 ---
 
 ## Licensing
