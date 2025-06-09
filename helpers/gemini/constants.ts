@@ -10,7 +10,7 @@
  */
 
 export const CONFIG_ASSESSMENT_SCORE_THRESHOLD = Number(
-  Deno.env.get("CONFIG_ASSESSMENT_SCORE_THRESHOLD") ?? 50,
+  Deno.env.get("CONFIG_ASSESSMENT_SCORE_THRESHOLD") ?? 70,
 );
 
 export const INPUT_FILE_TOKEN_LIMIT = Number(
