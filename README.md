@@ -8,7 +8,7 @@
 
 A Discord Bot, powered by Gemini.
 
-## Getting started
+## Getting started (WIP)
 
 Duplicate `.env.example` to `.env.development` and fill it out.
 
