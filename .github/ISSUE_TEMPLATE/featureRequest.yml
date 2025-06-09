@@ -21,15 +21,6 @@ body:
           required: true
 
   - type: textarea
-    id: feature-name
-    attributes:
-      label: "Feature Name"
-      description: "Name the feature you're requesting."
-      placeholder: "e.g. 'Conversation Summarization'"
-    validations:
-      required: true
-
-  - type: textarea
     id: feature-description
     attributes:
       label: "Feature Description"

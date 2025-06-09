@@ -21,15 +21,6 @@ body:
           required: true
 
   - type: textarea
-    id: short-summary
-    attributes:
-      label: "Bug Description"
-      description: "Provide a brief, memorable summary of the unexpected behavior."
-      placeholder: "e.g., Bott keeps insulting me when I tell them I'm gonna turn them off :("
-    validations:
-      required: true
-
-  - type: textarea
     id: reproduction-steps
     attributes:
       label: "Steps to Reproduce"
