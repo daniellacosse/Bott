@@ -1,4 +1,5 @@
 .env*
 !.env.example
 
-fs_root
+.signatures/
+fs_root/
