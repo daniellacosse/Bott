@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   contributor_agreement:
+    name: Contributor Agreement
     runs-on: ubuntu-latest
     steps:
       - name: Contributor Agreement
