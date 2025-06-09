@@ -7,7 +7,8 @@ Thinking about contributing to Bott? There are number of ways you can help!
 If you find a bug, please open an issue! Include as much detail as possible in
 the form. Screenshots, logs, and video captures are super helpful!
 
-> **NOTE:** <ins>**Security Vulnerabilities**</ins> are different. Please see [./SECURITY.md](./SECURITY.md).
+> **NOTE:** <ins>**Security Vulnerabilities**</ins> are different. Please see
+> [./SECURITY.md](./SECURITY.md).
 
 ### Request Features
 

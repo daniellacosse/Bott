@@ -35,6 +35,7 @@ This project is **dual-licensed** (pending legal review):
 - **For Commercial Use:** If you intend to use this software for commercial
   purposes (any use directly or indirectly intended for commercial advantage or
   monetary compensation), you are required to obtain a **Proprietary Commercial
-  License**. Contact me at [D@nielLaCos.se](mailto:d@niellacosse.se) for commercial licensing inquiries.
+  License**. Contact me at [D@nielLaCos.se](mailto:d@niellacosse.se) for
+  commercial licensing inquiries.
 
 **Copyright (C) 2025 DanielLaCos.se**
