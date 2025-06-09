@@ -22,5 +22,3 @@ In order to submit a pull request, you will need to sign the
 signing a CLA, you (or your employer) grant us the rights necessary to use and
 distribute your contributions under our [dual-licensing model](./LICENSE). This
 helps protect both you as a contributor and the project.
-
-_[TODO: Link the CLA gist or whatever.]_
