@@ -1,3 +1,14 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import { assertEquals } from "jsr:@std/assert/equals";
 import { _extractTopLevelObjectsFromString } from "./output.ts";
 import type { GeminiOutputEvent } from "./output.ts";
@@ -95,6 +106,7 @@ Deno.test("_extractTopLevelObjectsFromString - object with nested structures", (
     `{ "type": "message", "details": { "content": "hello", "nested": { "key": "value" } } }`;
   const expectedEvent: GeminiOutputEvent = {
     type: BottEventType.MESSAGE,
+    // deno-lint-ignore no-explicit-any
     details: { content: "hello", nested: { key: "value" } } as any,
   };
   const { extractedObjects, remainder } = _extractTopLevelObjectsFromString(
@@ -232,11 +244,11 @@ Deno.test("_extractTopLevelObjectsFromString - complex nested object that is val
     event.details.content,
     `This is a test with "escaped quotes" and a newline\ncharacter.`,
   );
-  // @ts-ignore
+  // @ts-ignore: test context
   assertEquals(event.details.metadata.source, "test-suite");
-  // @ts-ignore
+  // @ts-ignore: test context
   assertEquals(event.details.metadata.tags, ["json", "parser", "stream"]);
-  // @ts-ignore
+  // @ts-ignore: test context
   assertEquals(event.details.metadata.nestedAgain.value, true);
   assertEquals(event.parent?.id, "parent-123");
   assertEquals(remainder, "");

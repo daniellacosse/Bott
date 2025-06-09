@@ -1,3 +1,14 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import type { SupportedValueType } from "node:sqlite";
 
 export interface SqlInstructions {
@@ -5,6 +16,7 @@ export interface SqlInstructions {
   params: SupportedValueType[];
 }
 
+// deno-lint-ignore no-explicit-any
 function isSqlInstructions(value: any): value is SqlInstructions {
   return (
     typeof value === "object" &&

@@ -1,0 +1,60 @@
+name: Quality Checks
+
+on: [push]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Lint Code
+        run: deno fmt --check && deno lint
+
+  unit_tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run Tests
+        run: deno test --allow-all
+
+  licensing:
+    name: License Headers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+
+      - name: Check Files
+        run: |
+          REQUIRED_HEADER_SNIPPET="This project is dual-licensed:"
+          MISSING_HEADERS_COUNT=$(grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.sql") | wc -l)
+
+          if [ "$MISSING_HEADERS_COUNT" -gt 0 ]; then
+            echo "Error: The following files are missing the required license header:"
+            grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.sql")
+            exit 1
+          else
+            echo "All files have the required license header."
+          fi

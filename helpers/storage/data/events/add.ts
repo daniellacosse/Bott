@@ -1,3 +1,14 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import { join } from "jsr:@std/path";
 
 import {
@@ -12,7 +23,7 @@ import {
 } from "@bott/model";
 
 import { sql } from "../sql.ts";
-import { commit } from "../commit.ts";
+import { commit, type TransactionResults } from "../commit.ts";
 import {
   STORAGE_FILE_INPUT_ROOT,
   STORAGE_FILE_OUTPUT_ROOT,
@@ -139,7 +150,9 @@ const getAddUsersSql = (...users: BottUser[]) => {
   `;
 };
 
-export const addEventsData = (...inputEvents: AnyBottEvent[]) => {
+export const addEventsData = (
+  ...inputEvents: AnyBottEvent[]
+): TransactionResults => {
   // Extract all unique entities (events, spaces, channels, users)
   const events = new Map<string, AnyBottEvent>();
   const _queue: AnyBottEvent[] = [...inputEvents];

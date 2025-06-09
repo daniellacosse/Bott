@@ -1,3 +1,14 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import { BottEventType } from "@bott/model";
 
 import { Type as GeminiStructuredResponseType } from "npm:@google/genai";
@@ -73,6 +84,7 @@ function isGeminiOutputEvent(obj: unknown): obj is GeminiOutputEvent {
     return false;
   }
 
+  // deno-lint-ignore no-explicit-any
   const event = obj as Record<string, any>;
 
   if (
@@ -173,10 +185,12 @@ export async function* outputGenerator(
 export function _extractTopLevelObjectsFromString(
   input: string,
 ): {
+  // deno-lint-ignore no-explicit-any
   extractedObjects: Record<string, any>[];
   remainder: string;
 } {
   let current = input;
+  // deno-lint-ignore no-explicit-any
   const extractedObjects: Record<string, any>[] = [];
 
   // pointers

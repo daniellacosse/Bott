@@ -1,3 +1,14 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import { join } from "jsr:@std/path";
 
 import type {
@@ -15,6 +26,7 @@ import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
 
 const _getFileFromRow = (
+  // deno-lint-ignore no-explicit-any
   row: any,
 ): BottInputFile | BottOutputFile | undefined => {
   try {
@@ -112,6 +124,7 @@ export const getEvents = async (
       file.parent = event;
 
       // The type of array here shouldn't matter.
+      // deno-lint-ignore no-explicit-any
       (event.files as any[]).push(file);
 
       continue;
@@ -119,6 +132,7 @@ export const getEvents = async (
       file.parent = event;
 
       // The type of array here shouldn't matter.
+      // deno-lint-ignore no-explicit-any
       event.files = [file] as any[];
     }
 
@@ -165,5 +179,6 @@ export const getEventIdsForChannel = (channelId: string): string[] => {
     throw result.error;
   }
 
+  // deno-lint-ignore no-explicit-any
   return result.reads.map(({ id }: any) => id);
 };

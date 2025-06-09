@@ -1,3 +1,14 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import { assert, assertEquals, assertRejects } from "jsr:@std/assert";
 import { delay } from "jsr:@std/async/delay";
 import { TaskManager } from "./manager.ts";
@@ -326,6 +337,7 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
   const originalConsoleWarn = console.warn;
   let warnCalled = false;
   let warnMessage = "";
+  // deno-lint-ignore no-explicit-any
   console.warn = (...args: any[]) => {
     warnCalled = true;
     warnMessage = args.map((obj) => JSON.stringify(obj)).join(" ");
@@ -481,6 +493,7 @@ Deno.test("TaskManager - tasks in next should run if current is undefined and no
   // This simulates a scenario where a task was previously in 'next'
   // and 'current' became undefined without an immediate new push.
   manager.buckets.get(bucketName)!.next = task1;
+  // deno-lint-ignore no-explicit-any
   (manager as any).flushTasks(); // Access private method for testing this specific path
 
   await delay(60); // Wait for T1 to complete

@@ -1,3 +1,14 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import { type BottChannel, BottEventType } from "@bott/model";
 import {
   ApplicationCommandOptionType,
@@ -8,7 +19,9 @@ import {
 } from "npm:discord.js";
 import type { CommandRequestEvent } from "./create.ts";
 
-export function getCommandRequestEvent<O extends Record<string, unknown> = {}>(
+export function getCommandRequestEvent<
+  O extends Record<string, unknown> = Record<string, unknown>,
+>(
   interaction: ChatInputCommandInteraction,
 ): CommandRequestEvent<O> {
   let channel: BottChannel | undefined = undefined;

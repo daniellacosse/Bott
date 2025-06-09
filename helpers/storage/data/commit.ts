@@ -1,7 +1,19 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
 import { STORAGE_DATA_CLIENT as client } from "../start.ts";
 import type { SqlInstructions } from "./sql.ts";
 
 export type TransactionResults = {
+  // deno-lint-ignore no-explicit-any
   reads: any[];
   writes: number;
 } | {
@@ -19,6 +31,7 @@ export const commit = (
     };
   }
 
+  // deno-lint-ignore no-explicit-any
   let reads: any[] = [];
   let writes = 0;
 
