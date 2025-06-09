@@ -1,7 +1,7 @@
 import type { Message } from "npm:discord.js";
 
 import { type BottEvent, BottEventType, type BottInputFile } from "@bott/model";
-import { storeNewInputFile } from "@bott/storage";
+import type { storeNewInputFile } from "@bott/storage";
 
 import { getMarkdownLinks } from "./markdown.ts";
 
@@ -9,6 +9,7 @@ import { getMarkdownLinks } from "./markdown.ts";
 // are not in the database yet.
 export const getMessageEvent = async (
   message: Message<true>,
+  storeFile: typeof storeNewInputFile,
 ): Promise<BottEvent> => {
   const event: BottEvent = {
     id: message.id,
@@ -45,6 +46,7 @@ export const getMessageEvent = async (
         await message.channel.messages.fetch(
           message.reference.messageId,
         ),
+        storeFile,
       );
     } catch (_) {
       // If the parent message isn't available, we can't populate the parent event.
@@ -66,7 +68,7 @@ export const getMessageEvent = async (
     for (const url of urls) {
       let file;
       try {
-        file = await storeNewInputFile(new URL(url));
+        file = await storeFile(new URL(url));
       } catch (error) {
         console.warn(
           "[WARN] Failed to store input file:",

@@ -2,7 +2,6 @@ import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
 
 import { BottOutputFileType } from "@bott/model";
-import { storeOutputFile } from "@bott/storage";
 
 // NOTE: This stores output files to disk, even if they
 // are not in the database yet.
@@ -11,7 +10,8 @@ export const generateTextFile: OutputFileGenerator = async (
   {
     model = "gemini-2.5-pro-preview-05-06",
     gemini = _gemini,
-  } = {},
+    storeOutputFile,
+  },
 ) => {
   const response = await gemini.models.generateContent({
     model,

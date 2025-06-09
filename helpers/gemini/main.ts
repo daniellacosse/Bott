@@ -1,4 +1,4 @@
-export * from "./events/respond.ts";
+export * from "./events/generate.ts";
 export * from "./files/music.ts";
 export * from "./files/photo.ts";
 export * from "./files/text.ts";

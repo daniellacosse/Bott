@@ -1,7 +1,6 @@
 import { decodeBase64 } from "jsr:@std/encoding";
 
 import { BottOutputFileType } from "@bott/model";
-import { storeOutputFile } from "@bott/storage";
 
 import type { OutputFileGenerator } from "./types.ts";
 
@@ -21,7 +20,7 @@ const VERTEX_API_URL =
 // are not in the database yet.
 export const generateMusicFile: OutputFileGenerator = async (
   prompt,
-  { abortSignal } = {},
+  { abortSignal, storeOutputFile },
 ) => {
   const response = await fetch(VERTEX_API_URL, {
     signal: abortSignal,

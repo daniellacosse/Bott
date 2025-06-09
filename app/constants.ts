@@ -16,8 +16,8 @@ export const RATE_LIMIT_VIDEOS = Number(
   Deno.env.get("CONFIG_RATE_LIMIT_VIDEOS") ?? 10,
 );
 
-export const FILE_SYSTEM_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ?? "./fs_root";
-export const FILE_SYSTEM_DEPLOY_NONCE_PATH = join(
-  FILE_SYSTEM_ROOT,
+export const STORAGE_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ?? "./fs_root";
+export const STORAGE_DEPLOY_NONCE_PATH = join(
+  STORAGE_ROOT,
   ".deploy-nonce",
 );

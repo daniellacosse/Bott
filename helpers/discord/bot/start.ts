@@ -11,40 +11,47 @@ import {
   Routes,
 } from "npm:discord.js";
 
-import { type BottEvent, BottEventType } from "@bott/model";
+import {
+  type AnyShape,
+  type BottEvent,
+  BottEventType,
+  type BottRequestHandler,
+} from "@bott/model";
 
-import { addEventsData } from "@bott/storage";
+import type { addEventData, storeNewInputFile } from "@bott/storage";
 
 import { createErrorEmbed } from "../embed/error.ts";
 import { getCommandRequestEvent } from "./command/request.ts";
 import { getCommandJson } from "./command/json.ts";
 import { getMessageEvent } from "./message/event.ts";
-import { TaskManager } from "./task/manager.ts";
-import type { BotContext } from "./types.ts";
-import type { Command } from "./command/create.ts";
+import type { DiscordBotContext } from "./types.ts";
 
-type BotOptions<O extends Record<string, unknown> = {}> = {
-  commands?: Command<O>[];
-  event?: (this: BotContext, event: BottEvent) => void;
+const REQUIRED_INTENTS = [
+  GatewayIntentBits.GuildMembers,
+  GatewayIntentBits.GuildMessageReactions,
+  GatewayIntentBits.GuildMessages,
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.MessageContent,
+];
+
+type DiscordBotOptions<O extends Record<string, unknown> = {}> = {
+  requestHandlerCommands?: BottRequestHandler<O, AnyShape>[];
+  event?: (this: DiscordBotContext, event: BottEvent) => void;
   identityToken: string;
-  intents?: GatewayIntentBits[];
-  mount?: (this: BotContext) => void;
+  mount?: (this: DiscordBotContext) => void;
+  addEventData: typeof addEventData;
+  storeNewInputFile: typeof storeNewInputFile;
 };
 
-export async function startBot<O extends Record<string, unknown> = {}>({
+export async function startDiscordBot<O extends Record<string, unknown> = {}>({
   identityToken: token,
-  commands,
-  intents = [
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.MessageContent,
-  ],
+  requestHandlerCommands: commands,
+  addEventData,
+  storeNewInputFile,
   event: handleEvent,
   mount: handleMount,
-}: BotOptions<O>) {
-  const client = new Client({ intents });
+}: DiscordBotOptions<O>) {
+  const client = new Client({ intents: REQUIRED_INTENTS });
 
   await client.login(token);
   console.debug("[DEBUG] Logged in.");
@@ -59,8 +66,6 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       id: client.user.id,
       name: client.user.username,
     },
-    taskManager: new TaskManager(),
-    wpm: 200,
   };
 
   const _makeSelf = (currentChannel?: GuildTextBasedChannel) => ({
@@ -94,7 +99,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     },
   });
 
-  // Attempt to hydrate the DB.
+  // Attempt to hydrate the DB. (TODO: Skip if the DB has data in it.)
   const events: BottEvent[] = [];
 
   // Discord "guilds" are equivalent to Bott's "spaces":
@@ -114,7 +119,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     }
   }
 
-  const result = addEventsData(...events);
+  const result = addEventData(...events);
 
   if ("error" in result) {
     console.error("[ERROR] Failed to hydrate database:", result.error);
@@ -131,6 +136,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
 
     const event: BottEvent = await getMessageEvent(
       message as Message<true>,
+      storeNewInputFile,
     );
 
     console.debug(
@@ -174,6 +180,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     if (reaction.message.content) {
       event.parent = await getMessageEvent(
         reaction.message as Message<true>,
+        storeNewInputFile,
       );
     }
 
@@ -209,7 +216,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
     try {
       const requestEvent = await getCommandRequestEvent<O>(interaction);
 
-      addEventsData(requestEvent);
+      addEventData(requestEvent);
 
       responseEvent = await command.call(
         _makeSelf(interaction.channel! as GuildTextBasedChannel),
@@ -245,7 +252,7 @@ export async function startBot<O extends Record<string, unknown> = {}>({
       files: outputFiles,
     });
 
-    addEventsData(responseEvent);
+    addEventData(responseEvent);
   });
 
   // Sync commands with discord origin via their custom http client 🙄

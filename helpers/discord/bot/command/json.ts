@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "npm:discord.js";
 
-import { type Command, CommandOptionType } from "./create.ts";
+import { CommandOptionType, type DiscordCommand } from "./create.ts";
 
 const COMMAND_DESCRIPTION_LIMIT = 100;
 
@@ -8,7 +8,7 @@ export function getCommandJson<O extends Record<string, unknown> = {}>({
   commandName: name,
   description,
   options,
-}: Command<O>) {
+}: DiscordCommand<O>) {
   const builder = new SlashCommandBuilder().setName(name);
 
   if (description) {

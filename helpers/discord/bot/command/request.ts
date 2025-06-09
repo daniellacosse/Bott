@@ -6,11 +6,11 @@ import {
   type CommandInteractionOption,
   type GuildTextBasedChannel,
 } from "npm:discord.js";
-import type { CommandRequestEvent } from "./create.ts";
+import type { DiscordCommandEvent } from "./create.ts";
 
 export function getCommandRequestEvent<O extends Record<string, unknown> = {}>(
   interaction: ChatInputCommandInteraction,
-): CommandRequestEvent<O> {
+): DiscordCommandEvent<O> {
   let channel: BottChannel | undefined = undefined;
 
   if (
@@ -31,7 +31,7 @@ export function getCommandRequestEvent<O extends Record<string, unknown> = {}>(
 
   const event = {
     id: crypto.randomUUID(),
-    type: BottEventType.FUNCTION_REQUEST as const,
+    type: BottEventType.REQUEST as const,
     details: {
       name: interaction.commandName,
       options: extractResolvedOptions(

@@ -3,22 +3,28 @@ import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import {
   type AnyBottEvent,
+  type AnyShape,
   type BottChannel,
   type BottEvent,
   BottEventType,
+  type BottRequestHandler,
   type BottUser,
 } from "@bott/model";
+import type { getEvents } from "@bott/storage";
 
-import { getEvents } from "@bott/storage";
-
+import gemini from "../client.ts";
 import {
   CONFIG_ASSESSMENT_SCORE_THRESHOLD,
   INPUT_EVENT_LIMIT,
   INPUT_FILE_TOKEN_LIMIT,
 } from "../constants.ts";
+import { createGeminiFunctionDefinition } from "../functions.ts";
 import { assessResponse, generateResponse } from "./instructions.ts";
-import { outputGenerator, outputSchema } from "./output.ts";
-import gemini from "../client.ts";
+import {
+  type GeminiOutputEvent,
+  outputEventSchema,
+  outputEventStream,
+} from "./output.ts";
 
 type GeminiResponseContext = {
   abortSignal: AbortSignal;
@@ -27,17 +33,22 @@ type GeminiResponseContext = {
     user: BottUser;
     channel: BottChannel;
   };
+  getEvents: typeof getEvents;
   model?: string;
+  requestHandlers?: BottRequestHandler<AnyShape, AnyShape>[];
 };
 
-export async function* respondEvents(
+export async function* generateEvents<O extends AnyShape>(
   inputEvents: AnyBottEvent[],
-  { model = "gemini-2.5-flash-preview-05-20", abortSignal, context }:
-    GeminiResponseContext,
+  {
+    model = "gemini-2.5-flash-preview-05-20",
+    abortSignal,
+    context,
+    getEvents,
+    requestHandlers,
+  }: GeminiResponseContext,
 ): AsyncGenerator<
-  BottEvent<
-    { content: string }
-  >
+  GeminiOutputEvent<O>
 > {
   const modelUserId = context.user.id;
 
@@ -58,8 +69,8 @@ export async function* respondEvents(
     };
 
     if (
-      event.type === BottEventType.FUNCTION_REQUEST ||
-      event.type === BottEventType.FUNCTION_RESPONSE
+      event.type === BottEventType.REQUEST ||
+      event.type === BottEventType.RESPONSE
     ) {
       // Skip these events for now.
       continue;
@@ -114,49 +125,56 @@ export async function* respondEvents(
         parts: [{ text: context.identity + generateResponse }],
       },
       responseMimeType: "application/json",
-      responseSchema: outputSchema,
+      responseSchema: outputEventSchema,
+      tools: [{
+        functionDeclarations: requestHandlers?.map(
+          createGeminiFunctionDefinition,
+        ),
+      }],
     },
   });
 
-  for await (const event of outputGenerator(responseGenerator)) {
-    const eventAssessmentContent = {
-      role: "user",
-      parts: [{ text: event.details.content }],
-    };
-
+  for await (const event of outputEventStream(responseGenerator)) {
     if (
-      event.type !== BottEventType.REACTION
+      "content" in event.details
     ) {
-      // Assess quality of the message:
-      const assessmentResult = await gemini.models.generateContent({
-        model: "gemini-2.0-flash-lite",
-        contents: [...assessmentHistory, eventAssessmentContent],
-        config: {
-          candidateCount: 1,
-          systemInstruction: {
-            parts: [{ text: assessResponse }],
+      const eventAssessmentContent = {
+        role: "user",
+        parts: [{ text: event.details.content }],
+      };
+
+      if (event.type !== BottEventType.REACTION) {
+        // Assess quality of the message:
+        const assessmentResult = await gemini.models.generateContent({
+          model: "gemini-2.0-flash-lite",
+          contents: [...assessmentHistory, eventAssessmentContent],
+          config: {
+            candidateCount: 1,
+            systemInstruction: {
+              parts: [{ text: assessResponse }],
+            },
           },
-        },
-      });
+        });
 
-      const scoreText = assessmentResult.candidates?.[0]?.content?.parts?.[0]
-        ?.text;
+        const scoreText = assessmentResult.candidates?.[0]?.content?.parts?.[0]
+          ?.text;
 
-      if (scoreText) {
-        const score = Number(scoreText.trim());
+        if (scoreText) {
+          const score = Number(scoreText.trim());
 
-        if (!isNaN(score) && score < CONFIG_ASSESSMENT_SCORE_THRESHOLD) {
-          console.debug(
-            "[DEBUG] Message recieved poor assessment, skipping:",
-            { content: event.details.content, score },
-          );
+          if (!isNaN(score) && score < CONFIG_ASSESSMENT_SCORE_THRESHOLD) {
+            console.debug(
+              "[DEBUG] Message recieved poor assessment, skipping:",
+              { content: event.details.content, score },
+            );
 
-          continue;
+            continue;
+          }
         }
       }
-    }
 
-    assessmentHistory.push(eventAssessmentContent);
+      assessmentHistory.push(eventAssessmentContent);
+    }
 
     yield {
       id: crypto.randomUUID(),
@@ -165,9 +183,7 @@ export async function* respondEvents(
       user: context.user,
       channel: context.channel,
       parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
-    } as BottEvent<
-      { content: string }
-    >;
+    };
   }
 
   return;

@@ -5,7 +5,6 @@ import {
 import { decodeBase64 } from "jsr:@std/encoding";
 
 import { BottOutputFileType } from "@bott/model";
-import { storeOutputFile } from "@bott/storage";
 
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
@@ -14,7 +13,12 @@ import type { OutputFileGenerator } from "./types.ts";
 // are not in the database yet.
 export const generateVideoFile: OutputFileGenerator = async (
   prompt: string,
-  { model = "veo-2.0-generate-001", gemini = _gemini, abortSignal } = {},
+  {
+    model = "veo-2.0-generate-001",
+    gemini = _gemini,
+    abortSignal,
+    storeOutputFile,
+  },
 ) => {
   let operation = await gemini.models.generateVideos({
     model,

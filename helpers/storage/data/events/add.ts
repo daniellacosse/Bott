@@ -139,7 +139,7 @@ const getAddUsersSql = (...users: BottUser[]) => {
   `;
 };
 
-export const addEventsData = (...inputEvents: AnyBottEvent[]) => {
+export const addEventData = (...inputEvents: AnyBottEvent[]) => {
   // Extract all unique entities (events, spaces, channels, users)
   const events = new Map<string, AnyBottEvent>();
   const _queue: AnyBottEvent[] = [...inputEvents];

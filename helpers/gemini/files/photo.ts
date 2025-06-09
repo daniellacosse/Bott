@@ -2,7 +2,6 @@ import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
 import { BottOutputFileType } from "@bott/model";
-import { storeOutputFile } from "@bott/storage";
 
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
@@ -15,7 +14,8 @@ export const generatePhotoFile: OutputFileGenerator = async (
     model = "imagen-3.0-generate-002",
     abortSignal,
     gemini = _gemini,
-  } = {},
+    storeOutputFile,
+  },
 ) => {
   const response = await gemini.models.generateImages({
     model,

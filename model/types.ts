@@ -1,3 +1,5 @@
+export type AnyShape = Record<string, unknown>;
+
 export interface BottSpace {
   id: string;
   name: string;
@@ -20,8 +22,6 @@ export interface BottUser {
   name: string;
 }
 
-type AnyObject = Record<string, unknown>;
-
 export enum BottInputFileType {
   MP4 = "video/mp4",
   JPEG = "image/jpeg",
@@ -34,7 +34,7 @@ export interface BottInputFile {
   data: Uint8Array;
   type: BottInputFileType;
   path: string;
-  parent?: BottEvent<AnyObject>;
+  parent?: BottEvent<AnyShape>;
 }
 
 export enum BottOutputFileType {
@@ -49,28 +49,71 @@ export interface BottOutputFile {
   data: Uint8Array;
   type: BottOutputFileType;
   path: string;
-  parent?: BottEvent<AnyObject>;
+  parent?: BottEvent<AnyShape>;
 }
 
 export enum BottEventType {
   MESSAGE = "message",
   REPLY = "reply",
   REACTION = "reaction",
-  FUNCTION_REQUEST = "request",
-  FUNCTION_RESPONSE = "response",
+  REQUEST = "request",
+  RESPONSE = "response",
 }
 
 export interface BottEvent<
-  D extends AnyObject = { content: string },
+  D extends AnyShape = { content: string },
+  T extends BottEventType = BottEventType,
+  F extends BottInputFile[] | BottOutputFile[] =
+    | BottInputFile[]
+    | BottOutputFile[],
 > {
   id: string;
-  type: BottEventType;
+  type: T;
   details: D;
   timestamp: Date;
   channel?: BottChannel;
-  parent?: BottEvent<AnyObject>;
+  parent?: BottEvent<AnyShape>;
   user?: BottUser;
-  files?: BottInputFile[] | BottOutputFile[];
+  files?: F;
 }
 
-export type AnyBottEvent = BottEvent<AnyObject>;
+export type AnyBottEvent = BottEvent<AnyShape>;
+
+export type BottRequestEvent<O extends AnyShape> = BottEvent<
+  { name: string; options: O },
+  BottEventType.REQUEST,
+  BottInputFile[]
+>;
+
+export enum BottRequestOptionType {
+  STRING = "string",
+  INTEGER = "integer",
+  BOOLEAN = "boolean",
+}
+
+export type BottRequestOption = {
+  name: string;
+  type: BottRequestOptionType;
+  description?: string;
+  required?: boolean;
+};
+
+export type BottResponseEvent<D extends AnyShape = { content: string }> =
+  BottEvent<
+    D,
+    BottEventType.RESPONSE,
+    BottOutputFile[]
+  >;
+
+export type BottRequestHandler<
+  O extends AnyShape,
+  D extends AnyShape = { content: string },
+> = {
+  (
+    request: BottRequestEvent<O>,
+  ):
+    | BottResponseEvent<D>
+    | Promise<BottResponseEvent<D>>;
+  description?: string;
+  options?: BottRequestOption[];
+};

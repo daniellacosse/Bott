@@ -6,7 +6,7 @@ import {
   BottInputFileType,
 } from "@bott/model";
 
-import { addEventsData } from "./data/events/add.ts";
+import { addEventData } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
 import { storeNewInputFile } from "./files/input/store.ts";
 import { prepareHtmlAsMarkdown } from "./files/input/prepare/html.ts";
@@ -57,7 +57,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
 
   console.debug("[DEBUG] Adding events.");
 
-  addEventsData(nancyGreeting, bobReply, nancyReaction);
+  addEventData(nancyGreeting, bobReply, nancyReaction);
 
   console.debug("[DEBUG] Getting events.");
 
