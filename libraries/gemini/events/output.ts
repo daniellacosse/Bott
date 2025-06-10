@@ -17,7 +17,6 @@ import {
   type BottRequestHandler,
   BottRequestOptionType,
 } from "@bott/model";
-import { request } from "node:http";
 
 import { Type as GeminiStructuredResponseType } from "npm:@google/genai";
 import type {
@@ -92,7 +91,7 @@ export const getOutputEventSchema = <O extends AnyShape>(
                 acc[option.name] = {
                   type,
                   description:
-                    `${option.description} Required for a "request" of name "${request.name}"`,
+                    `${option.description} Required for a "request" of name "${handler.name}"`,
                 };
               }
 
@@ -295,13 +294,23 @@ function _isGeminiOutputEvent(
     return false;
   }
 
-  if (
-    typeof event.details !== "object" || event.details === null ||
-    typeof event.details.content !== "string"
-  ) {
+  if (typeof event.details !== "object" || event.details === null) {
     return false;
   }
 
+  if (event.type === BottEventType.REQUEST) {
+    if (
+      typeof event.details.name !== "string" ||
+      typeof event.details.options !== "object" ||
+      event.details.options === null
+    ) {
+      return false;
+    }
+  } else { // For MESSAGE, REPLY, REACTION.
+    if (typeof event.details.content !== "string") {
+      return false;
+    }
+  }
   if (
     event.parent !== undefined &&
     (typeof event.parent !== "object" || event.parent === null ||

@@ -152,9 +152,12 @@ export const generateMedia: BottRequestHandler<
   },
   {
     description:
-      "You can use this tool to create images or other media based on a user's request or the conversational context. When you decide to use this tool, the system will handle the actual media generation based on the parameters you provide.",
+      `You can use this request to create photos, songs, videos and essays based on a user's message or the conversational context.
+      When you decide to make this request, the system will handle the actual media generation based on the parameters you provide.
+      IMPORTANT NOTE: Generating an 'essay' is particularly helpful when the situation calls for factual accuracy or nuance.`,
     options: [{
       name: "type",
+      // TODO: support 'enum'
       type: BottRequestOptionType.STRING,
       description:
         `The type of media to generate. Supported values are: "${GeneratedMediaType.ESSAY}", "${GeneratedMediaType.PHOTO}", "${GeneratedMediaType.MOVIE}", "${GeneratedMediaType.SONG}".`,
