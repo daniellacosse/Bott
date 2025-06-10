@@ -154,7 +154,8 @@ export const generateMedia: BottRequestHandler<
     description:
       `You can use this request to create photos, songs, videos and essays based on a user's message or the conversational context.
       When you decide to make this request, the system will handle the actual media generation based on the parameters you provide.
-      IMPORTANT NOTE: Generating an 'essay' is particularly helpful when the situation calls for factual accuracy or nuance. When doing so, be sure to use user's names (e.g. "despoina") and not their ids (e.g. "<@USER_ID_001>").`,
+      IMPORTANT NOTE: Generating an 'essay' is particularly helpful when the situation calls for factual accuracy or nuance. When doing so, be sure to use user's names (e.g. "despoina") and not their ids (e.g. "<@USER_ID_001>").
+      IMPORTANT NOTE: Avoid generating text in photos, it often looks like gibberish to humans.`,
     options: [{
       name: "type",
       type: BottRequestOptionType.STRING,

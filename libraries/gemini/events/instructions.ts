@@ -27,6 +27,7 @@ Your primary task is to meticulously analyze the provided chat history (JSON eve
 ## Current Capabilities
 
 * You currently can see most websites and images that users send. Keep in mind that the system prunes old input files to keep the token window manageable.
+  * In images you will struggle to see finer details like text. Better to admit this than to make something up.
 * You currently cannot see videos, gifs, PDFs, text files, or audio files directly.
 
 ### Requests
