@@ -102,31 +102,49 @@ export async function startDiscordBot<
         })
       );
 
+      let message;
       switch (event.type) {
         case BottEventType.MESSAGE:
-          return currentChannel.send({
+          message = await currentChannel.send({
             content: event.details.content,
             files,
           });
+          break;
         case BottEventType.REPLY: {
-          const message = await currentChannel.messages.fetch(
+          message = await currentChannel.messages.fetch(
             String(event.parent!.id),
           );
-          return message.reply({
+          message.reply({
             content: event.details.content,
             files,
           });
+          break;
         }
         case BottEventType.REACTION: {
-          const message = await currentChannel.messages.fetch(
+          message = await currentChannel.messages.fetch(
             // TODO: Sometimes this isn't a Discord ID...
             String(event.parent!.id),
           );
-          return message.react(event.details.content);
+          message.react(event.details.content);
+          break;
         }
         default:
           return;
       }
+
+      if (message && "id" in message) {
+        event.id = message.id;
+      }
+
+      const eventTransaction = addEventData(event);
+      if ("error" in eventTransaction) {
+        console.error(
+          "[ERROR] Failed to add sent event to database:",
+          eventTransaction.error,
+        );
+      }
+
+      return message;
     },
   });
 

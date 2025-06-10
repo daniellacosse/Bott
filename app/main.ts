@@ -13,7 +13,6 @@ import { delay } from "jsr:@std/async";
 
 import {
   type AnyShape,
-  type BottEvent,
   BottEventType,
   BottRequestEvent,
   BottResponseEvent,
@@ -27,7 +26,7 @@ import {
 } from "@bott/storage";
 import { createTask } from "@bott/task";
 import { startDiscordBot } from "@bott/discord";
-import { generateErrorResponse, generateEvents } from "@bott/gemini";
+import { generateErrorMessage, generateEvents } from "@bott/gemini";
 
 import { taskManager } from "./tasks.ts";
 import { getIdentity } from "./identity.ts";
@@ -112,18 +111,20 @@ startDiscordBot({
           throw new Error("Aborted task: before getting event generator");
         }
 
+        const context = {
+          identity: getIdentity({
+            user: this.user,
+          }),
+          user: this.user,
+          channel: event.channel!,
+        };
+
         // 1. Get list of bot events (responses) from Gemini:
         const eventGenerator = generateEvents<GenerateMediaOptions>(
           eventHistoryResult,
           {
             abortSignal,
-            context: {
-              identity: getIdentity({
-                user: this.user,
-              }),
-              user: this.user,
-              channel: event.channel!,
-            },
+            context,
             getEvents,
             requestHandlers: [generateMedia],
           },
@@ -135,10 +136,7 @@ startDiscordBot({
             throw new Error("Aborted task: before typing message");
           }
 
-          if (
-            event.type !== BottEventType.REACTION &&
-            event.type !== BottEventType.REQUEST
-          ) {
+          if (event.type !== BottEventType.REACTION) {
             this.startTyping();
           }
 
@@ -159,11 +157,11 @@ startDiscordBot({
               // We don't want to await here, it will hold up the process.
               if ("then" in responsePromise) {
                 responsePromise.then(
-                  async (responseEvent: BottResponseEvent) => {
+                  (responseEvent: BottResponseEvent) => {
                     responseEvent.parent = event;
 
                     // Request/response events are system-only.
-                    const messageEvent: BottEvent = {
+                    this.send({
                       id: crypto.randomUUID(),
                       type: event.parent
                         ? BottEventType.REPLY
@@ -176,55 +174,19 @@ startDiscordBot({
                       user: this.user,
                       channel: event.channel,
                       parent: event.parent,
-                    };
+                    });
 
-                    const result = await this.send(messageEvent);
-
-                    if (result && "id" in result) {
-                      responseEvent.id = result.id;
-                    }
-
-                    const eventTransaction = addEventData(
-                      responseEvent,
-                      messageEvent,
-                    );
-                    if ("error" in eventTransaction) {
-                      console.error(
-                        "[ERROR] Failed to add events to database:",
-                        eventTransaction.error,
-                      );
-                    }
+                    addEventData(responseEvent);
                   },
                 ).catch(async (error) => {
                   console.warn("[WARN] Failed to generate media:", error);
-
-                  const errorMessage = await generateErrorResponse(
-                    error,
-                    event as BottRequestEvent<AnyShape>,
-                    {
-                      user: this.user,
-                      channel: event.channel!,
-                      identity: getIdentity({
-                        user: this.user,
-                      }),
-                    },
+                  this.send(
+                    await generateErrorMessage(
+                      error,
+                      event as BottRequestEvent<AnyShape>,
+                      context,
+                    ),
                   );
-
-                  const result = await this.send(errorMessage);
-
-                  if (result && "id" in result) {
-                    errorMessage.id = result.id;
-                  }
-
-                  const transaction = addEventData(
-                    errorMessage,
-                  );
-                  if ("error" in transaction) {
-                    console.error(
-                      "[ERROR] Failed to add events to database:",
-                      transaction.error,
-                    );
-                  }
                 });
               }
               break;
@@ -241,24 +203,11 @@ startDiscordBot({
               }
             } /* fall through */
             case BottEventType.REACTION: {
-              const result = await this.send(event as BottEvent);
-
-              if (result && "id" in result) {
-                event.id = result.id;
-              }
-
-              break;
+              this.send(event);
+              return;
             }
             default:
-              break;
-          }
-
-          const eventTransaction = addEventData(event);
-          if ("error" in eventTransaction) {
-            console.error(
-              "[ERROR] Failed to add event to database:",
-              eventTransaction.error,
-            );
+              return;
           }
         }
       }),

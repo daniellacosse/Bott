@@ -25,7 +25,7 @@ export const storeOutputFile = (
 
   for (const [key, value] of Object.entries(BottOutputFileType)) {
     if (value === type) {
-      path += "." + key;
+      path += "." + key.toLowerCase();
       break;
     }
   }

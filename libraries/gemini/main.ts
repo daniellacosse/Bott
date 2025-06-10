@@ -14,4 +14,4 @@ export * from "./files/song.ts";
 export * from "./files/photo.ts";
 export * from "./files/essay.ts";
 export * from "./files/movie.ts";
-export * from "./errorResponse/generate.ts";
+export * from "./errors/generateMessage.ts";

@@ -21,7 +21,7 @@ import {
 import gemini from "../client.ts";
 import instructions from "./instructions.ts";
 
-export async function generateErrorResponse<O extends AnyShape>(
+export async function generateErrorMessage<O extends AnyShape>(
   // deno-lint-ignore no-explicit-any
   error: any,
   requestEvent: BottRequestEvent<O>,
