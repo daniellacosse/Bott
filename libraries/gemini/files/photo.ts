@@ -22,7 +22,7 @@ import type { OutputFileGenerator } from "./types.ts";
 export const generatePhotoFile: OutputFileGenerator = async (
   prompt: string,
   {
-    model = "imagen-3.0-generate-002",
+    model = "google/imagen-4.0-generate-preview-05-20",
     abortSignal,
     gemini = _gemini,
     storeOutputFile,
