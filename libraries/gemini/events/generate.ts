@@ -33,8 +33,9 @@ import {
 } from "../constants.ts";
 import {
   getGenerateResponseInstructions,
-  intentAssessment,
+  greetingAssessment,
   noveltyAssessment,
+  requestFulfillmentAssessment,
 } from "./instructions.ts";
 import { getOutputEventSchema, outputEventStream } from "./output.ts";
 
@@ -162,14 +163,19 @@ export async function* generateEvents<O extends AnyShape>(
           eventAssessmentContent,
         ];
 
+        // TODO (nit): Combine these into a single call.
         const score = Math.max(
           await _performAssessment(
             assessmentContent,
-            noveltyAssessment,
+            greetingAssessment,
           ),
           await _performAssessment(
             assessmentContent,
-            intentAssessment,
+            requestFulfillmentAssessment,
+          ),
+          await _performAssessment(
+            assessmentContent,
+            noveltyAssessment,
           ),
         );
 

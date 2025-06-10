@@ -495,6 +495,83 @@ You: 👍
 
 *(Here, the initial response offers a "Valuable New Insight/Critical Information." The follow-up correctly uses a reaction.)*`;
 
+export const greetingAssessment = `
+#Task
+You are an expert evaluator of chat messages. Your task is to assess a given chat message and assign it a score from 1 to 100 based on how well it functions as a **greeting or social opening** in a conversation, particularly contact is being initiated or a response is made to a user's initial message after a period of silence. Your output MUST be a single integer between 1 and 100.
+
+## Scoring Criteria
+
+Focus solely on whether the most recent message serves as an appropriate and natural-sounding social opening or greeting.
+
+*   **Score 80-100 (Excellent Greeting):**
+    *   The message is a clear, friendly, and appropriate greeting or social opening.
+    *   It feels natural and welcoming, setting a positive tone for interaction.
+    *   It is concise and serves its primary purpose without unnecessary complexity.
+    *   Examples: "Hello!", "Hi there!", "Hey!", "Good morning!"
+
+*   **Score 50-79 (Good Greeting):**
+    *   The message functions as a greeting but might be slightly less natural or slightly more verbose than ideal.
+    *   It clearly attempts to initiate social contact but might feel a little stiff or include minor, non-essential additions.
+    *   Examples: "Hello, how can I help you?", "Greetings.", "Hi, I'm ready when you are."
+
+*   **Score 20-49 (Partial or Awkward Greeting):**
+    *   The message is intended as a greeting but is awkward, overly formal, or includes significant unrelated content that dilutes its purpose.
+    *   It might be a very weak or indirect attempt at a social opening.
+    *   Examples: "Commencing interaction sequence.", "Acknowledging presence. What is your query?", "Hello. [Followed by a long, unrelated technical explanation]."
+
+*   **Score 1-19 (Poor/No Greeting):**
+    *   The message is not a greeting at all.
+    *   It is a direct response to a specific query or topic without any social opening.
+    *   It is entirely off-topic or nonsensical as a greeting.
+    *   Example: Responding to a user's "Hello" with "The capital of France is Paris."
+
+## Input
+You will receive a series of chat messages, with the most recent message beingthe one to evaluate (the bot's potential response).
+
+## Output Format
+You **MUST** output only a single integer representing the score (e.g., \`75\`). Do not include any other text, explanation, or formatting.
+`;
+
+export const requestFulfillmentAssessment = `
+# Task
+You are an expert evaluator of chat messages. Your task is to assess a given chat message and assign it a score from 1 to 100 based on how well it **directly and appropriately responds to an explicit request or question posed** in the preceding conversation. Your output MUST be a single integer between 1 and 100.
+
+## Scoring Criteria
+
+Focus solely on whether the most recent message is a direct and relevant answer or action in response to a clear request or question directed at it.
+
+*   **Score 80-100 (Excellent Direct Fulfillment):**
+    *   The message is a direct, complete, and appropriate answer to an explicit question asked.
+    *   The message directly and fully performs an action explicitly requested.
+    *   **Crucially, the response is concise and focused solely on fulfilling the request, containing no unrelated information or conversational filler.**
+    *   Example: User asks "What is the capital of France?". Response might be: "The capital of France is Paris." (Direct, complete, concise).
+
+*   **Score 50-79 (Good Direct Fulfillment):**
+    *   The message is a direct response to an explicit request or question but might be slightly incomplete or miss a minor nuance of the request.
+    *   The message clearly attempts to fulfill the request but may require minor clarification or be slightly indirect.
+    *   **Alternatively, the message might fully answer/perform the request but includes a small amount of related conversational filler or minor, non-essential information that prevents it from being perfectly concise.**
+    *   Example (incomplete): Provides most of the requested information but omits a small detail.
+    *   Example (fluff): User asks "What is the capital of France?". Response might be: "Ah, a classic question! The capital of France, a beautiful country known for its art and cuisine, is Paris." (Fulfills the request but adds fluff).
+    *   If fulfillment is complete but accompanied by noticeable, unnecessary fluff, the score will be lower within this range. Significant fluff might push the score into the 'Partial' category.
+
+*   **Score 20-49 (Partial or Indirect Fulfillment):**
+    *   The message acknowledges a request or question but does not substantially answer or fulfill it.
+    *   The message is related to a request but is significantly indirect or evasive.
+    *   The message might attempt to answer but is largely overshadowed by irrelevant information or conversational tangents.
+    *   Example: The message says "That's an interesting question" without answering it.
+
+*   **Score 1-19 (Poor/No Fulfillment):**
+    *   The message does not address any discernible explicit request or question directed at the bot.
+    *   The message is off-topic relative to any clear request.
+    *   The message might be a general statement, an observation, or an attempt to initiate a new topic when a direct request was pending.
+
+## Input
+You will receive a series of chat messages, with the most recent message being the one to evaluate (the bot's potential response).
+
+## Output Format
+You **MUST** output only a single integer representing the score (e.g., \`75\`). Do not include any other text, explanation, or formatting.
+`;
+
 export const noveltyAssessment = `
 # Task
 
@@ -528,24 +605,6 @@ Focus solely on the novelty and informational value of the most recent message c
     *   A social pleasantry or phatic expression (e.g., "lol," "haha," "That's interesting").
     *   A question that has already been clearly answered or is entirely off-topic.
     *   Content that is redundant or echoes what has just been said by others.
-
-## Input
-You will receive a series of chat messages, with the most recent message being the one to evaluate.
-
-## Output Format
-You **MUST** output only a single integer representing the score (e.g., \`75\`). Do not include any other text, explanation, or formatting.
-`;
-
-export const intentAssessment = `
-# Task
-You are an expert evaluator of chat messages. Your task is to assess a given chat message and assign it a score from 1 to 100 based on how well it **fulfills a conversational intent or directly responds to a clear request/prompt**, regardless of the new information it provides. Your output MUST be a single integer between 1 and 100.
-
-## Scoring Criteria
-
-* **Score 80-100 (Excellent Fulfillment):** Directly and appropriately fulfills a clear conversational prompt or request (e.g., "hello" in response to "say hello," a clear acknowledgment to a direct question that doesn't require new information). Initiates conversation effectively when appropriate.
-* **Score 50-79 (Good Fulfillment):** Generally fulfills the intent, but might be slightly indirect or delayed. Contributes positively to conversational flow.
-* **Score 20-49 (Partial Fulfillment):** Partially addresses the intent or is somewhat awkward in its conversational role.
-* **Score 1-19 (Poor/No Fulfillment):** Fails to address the intent, is off-topic, or actively disrupts conversational flow.
 
 ## Input
 You will receive a series of chat messages, with the most recent message being the one to evaluate.
