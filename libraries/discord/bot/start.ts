@@ -123,32 +123,34 @@ export async function startDiscordBot<
     },
   });
 
-  // Attempt to hydrate the DB.
-  // TODO(#36): Skip if the DB has data in it.
-  const events: BottEvent[] = [];
+  (async () => {
+    // Attempt to hydrate the DB.
+    // TODO(#36): Skip if the DB has data in it.
+    const events: BottEvent[] = [];
 
-  // Discord "guilds" are equivalent to Bott's "spaces":
-  for (const space of client.guilds.cache.values()) {
-    for (const channel of space.channels.cache.values()) {
-      if (channel.type !== ChannelType.GuildText) {
-        continue;
-      }
-
-      try {
-        for (const [_, message] of await channel.messages.fetch()) {
-          events.push(await getMessageEvent(message, storeNewInputFile));
+    // Discord "guilds" are equivalent to Bott's "spaces":
+    for (const space of client.guilds.cache.values()) {
+      for (const channel of space.channels.cache.values()) {
+        if (channel.type !== ChannelType.GuildText) {
+          continue;
         }
-      } catch (_) {
-        // Likely don't have access to this channel
+
+        try {
+          for (const [_, message] of await channel.messages.fetch()) {
+            events.push(await getMessageEvent(message, storeNewInputFile));
+          }
+        } catch (_) {
+          // Likely don't have access to this channel
+        }
       }
     }
-  }
 
-  const result = addEventData(...events);
+    const result = addEventData(...events);
 
-  if ("error" in result) {
-    console.error("[ERROR] Failed to hydrate database:", result.error);
-  }
+    if ("error" in result) {
+      console.error("[ERROR] Failed to hydrate database:", result.error);
+    }
+  })();
 
   handleMount?.call(_makeSelf());
 
