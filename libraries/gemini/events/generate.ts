@@ -10,6 +10,7 @@
  */
 
 import type { Content, Part } from "npm:@google/genai";
+
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import {
@@ -30,9 +31,11 @@ import {
   INPUT_EVENT_LIMIT,
   INPUT_FILE_TOKEN_LIMIT,
 } from "../constants.ts";
-import { createGeminiFunctionDefinition } from "../functions.ts";
-import { assessResponse, generateResponse } from "./instructions.ts";
-import { outputEventSchema, outputEventStream } from "./output.ts";
+import {
+  assessResponse,
+  getGenerateResponseInstructions,
+} from "./instructions.ts";
+import { getOutputEventSchema, outputEventStream } from "./output.ts";
 
 type GeminiResponseContext<O extends AnyShape> = {
   abortSignal: AbortSignal;
@@ -124,26 +127,6 @@ export async function* generateEvents<O extends AnyShape>(
     return;
   }
 
-  let additionalToolsList = "";
-  if (requestHandlers && requestHandlers.length > 0) {
-    const toolEntries = requestHandlers
-      .filter((handler) => handler.name)
-      .map((handler) => {
-        const name = handler.name!;
-        const desc = handler.description ||
-          "No specific description provided for this tool.";
-
-        return `  * \`${name}\`: ${desc}`;
-      });
-
-    if (toolEntries.length > 0) {
-      additionalToolsList = "\n" + toolEntries.join("\n");
-    }
-  }
-
-  const systemInstructionText = (context.identity + generateResponse)
-    .replace("{{ADDITIONAL_TOOLS_LIST}}", additionalToolsList);
-
   const responseGenerator = await gemini.models.generateContentStream({
     model,
     contents,
@@ -151,15 +134,12 @@ export async function* generateEvents<O extends AnyShape>(
       abortSignal,
       candidateCount: 1,
       systemInstruction: {
-        parts: [{ text: systemInstructionText }],
+        parts: [{
+          text: getGenerateResponseInstructions<O>(requestHandlers ?? []),
+        }],
       },
       responseMimeType: "application/json",
-      responseSchema: outputEventSchema,
-      tools: [{
-        functionDeclarations: requestHandlers?.map(
-          createGeminiFunctionDefinition,
-        ),
-      }],
+      responseSchema: getOutputEventSchema<O>(requestHandlers ?? []),
     },
   });
 
@@ -172,7 +152,10 @@ export async function* generateEvents<O extends AnyShape>(
         parts: [{ text: event.details.content }],
       };
 
-      if (event.type !== BottEventType.REACTION) {
+      if (
+        event.type !== BottEventType.REACTION &&
+        event.type !== BottEventType.REQUEST
+      ) {
         // Assess quality of the message:
         const assessmentResult = await gemini.models.generateContent({
           model: "gemini-2.0-flash-lite",

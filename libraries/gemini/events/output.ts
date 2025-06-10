@@ -14,11 +14,15 @@ import {
   type BottEvent,
   BottEventType,
   type BottRequestEvent,
+  type BottRequestHandler,
+  BottRequestOptionType,
 } from "@bott/model";
+import { request } from "node:http";
 
 import { Type as GeminiStructuredResponseType } from "npm:@google/genai";
 import type {
   GenerateContentResponse,
+  Part,
   Schema as GeminiStructuredResponseSchema,
 } from "npm:@google/genai";
 
@@ -28,7 +32,9 @@ export type GeminiOutputEvent<O extends AnyShape> = Omit<
   "id" | "timestamp"
 >;
 
-export const outputEventSchema: GeminiStructuredResponseSchema = {
+export const getOutputEventSchema = <O extends AnyShape>(
+  requestHandlers: BottRequestHandler<O, AnyShape>[],
+): GeminiStructuredResponseSchema => ({
   type: GeminiStructuredResponseType.ARRAY,
   items: {
     type: GeminiStructuredResponseType.OBJECT,
@@ -39,9 +45,10 @@ export const outputEventSchema: GeminiStructuredResponseSchema = {
           BottEventType.MESSAGE,
           BottEventType.REPLY,
           BottEventType.REACTION,
+          BottEventType.REQUEST,
         ],
         description:
-          "The type of event to send: 'message', 'reply', or 'reaction'.",
+          "The type of event to send: 'message', 'reply', 'reaction', or 'request'.",
       },
       details: {
         type: GeminiStructuredResponseType.OBJECT,
@@ -49,10 +56,50 @@ export const outputEventSchema: GeminiStructuredResponseSchema = {
           content: {
             type: GeminiStructuredResponseType.STRING,
             description:
-              "The content of the message or reaction (e.g., an emoji for reactions).",
+              "The content of the message or reaction (e.g., an emoji for reactions). Required if event is of type 'message', 'reply', or 'reaction'.",
+          },
+          name: {
+            type: GeminiStructuredResponseType.STRING,
+            enum: requestHandlers.map((handler) => handler.name),
+            description:
+              "The name of the request to make. Required if event is of type 'request'.",
+          },
+          options: {
+            type: GeminiStructuredResponseType.OBJECT,
+            description:
+              "The options to pass to the request. Required if event is of type 'request'.",
+            properties: requestHandlers.reduce((acc, handler) => {
+              if (!handler.options) {
+                return acc;
+              }
+
+              for (const option of handler.options) {
+                let type: GeminiStructuredResponseType;
+
+                switch (option.type) {
+                  case BottRequestOptionType.INTEGER:
+                    type = GeminiStructuredResponseType.NUMBER;
+                    break;
+                  case BottRequestOptionType.BOOLEAN:
+                    type = GeminiStructuredResponseType.BOOLEAN;
+                    break;
+                  case BottRequestOptionType.STRING:
+                  default:
+                    type = GeminiStructuredResponseType.STRING;
+                    break;
+                }
+
+                acc[option.name] = {
+                  type,
+                  description:
+                    `${option.description} Required for a "request" of name "${request.name}"`,
+                };
+              }
+
+              return acc;
+            }, {} as Record<string, GeminiStructuredResponseSchema>),
           },
         },
-        required: ["content"],
       },
       parent: {
         type: GeminiStructuredResponseType.OBJECT,
@@ -72,7 +119,7 @@ export const outputEventSchema: GeminiStructuredResponseSchema = {
   },
   description:
     "A list of event objects to send. Send an empty array if no response is warranted.",
-};
+});
 
 // outputGenerator processes the structured content stream from Gemini,
 // extracting and yielding GeminiOutputEvent objects.
@@ -85,24 +132,10 @@ export async function* outputEventStream<O extends AnyShape>(
   let firstChunkProcessed = false;
 
   for await (const streamPart of geminiResponseStream) {
-    let textFromPart = "";
-    for (const part of streamPart.candidates?.[0]?.content?.parts ?? []) {
-      if (part.text) {
-        textFromPart += part.text;
-      }
-
-      if (
-        part.functionCall && part.functionCall.name
-      ) {
-        yield {
-          type: BottEventType.REQUEST,
-          details: {
-            name: part.functionCall.name,
-            options: part.functionCall.args as O,
-          },
-        };
-      }
-    }
+    const textFromPart = streamPart.candidates?.[0]?.content?.parts
+      ?.filter((part: Part) => "text" in part && typeof part.text === "string")
+      .map((part: Part) => (part as { text: string }).text)
+      .join("") ?? "";
 
     if (textFromPart) {
       buffer += textFromPart;
@@ -121,7 +154,7 @@ export async function* outputEventStream<O extends AnyShape>(
       buffer,
     );
     for (const event of extractedObjects) {
-      if (_isGeminiTextOutputEvent(event)) {
+      if (_isGeminiOutputEvent(event)) {
         yield event as GeminiOutputEvent<O>;
       }
     }
@@ -134,7 +167,7 @@ export async function* outputEventStream<O extends AnyShape>(
       buffer,
     );
     for (const event of extractedObjects) {
-      if (_isGeminiTextOutputEvent(event)) {
+      if (_isGeminiOutputEvent(event)) {
         yield event as GeminiOutputEvent<O>;
       }
     }
@@ -242,44 +275,40 @@ export function _extractTopLevelObjectsFromString(
   };
 }
 
-const _isGeminiTextOutputEvent = (
+function _isGeminiOutputEvent(
   obj: unknown,
-): obj is Omit<BottEvent<{ content: string }>, "id" | "timestamp"> => {
-  if (typeof obj !== "object" || obj === null) {
+): obj is GeminiOutputEvent<AnyShape> {
+  if (
+    typeof obj !== "object" || obj === null || obj === undefined ||
+    Array.isArray(obj)
+  ) {
     return false;
   }
 
-  const event = obj as Record<string, unknown>;
+  // deno-lint-ignore no-explicit-any
+  const event = obj as Record<string, any>;
 
   if (
     typeof event.type !== "string" ||
-    !(event.type === BottEventType.MESSAGE ||
-      event.type === BottEventType.REPLY ||
-      event.type === BottEventType.REACTION)
+    !Object.values(BottEventType).includes(event.type as BottEventType)
   ) {
     return false;
   }
 
   if (
-    typeof event.details !== "object" ||
-    event.details === null ||
-    typeof (event.details as Record<string, unknown>).content !== "string"
+    typeof event.details !== "object" || event.details === null ||
+    typeof event.details.content !== "string"
   ) {
     return false;
   }
 
-  if (Object.prototype.hasOwnProperty.call(event, "parent")) {
-    const parent = event.parent;
-    if (parent === undefined) {
-      // This case is fine if parent is optional and explicitly undefined
-    } else if (
-      typeof parent !== "object" ||
-      parent === null ||
-      typeof (parent as Record<string, unknown>).id !== "string"
-    ) {
-      return false;
-    }
+  if (
+    event.parent !== undefined &&
+    (typeof event.parent !== "object" || event.parent === null ||
+      typeof event.parent.id !== "string")
+  ) {
+    return false;
   }
 
   return true;
-};
+}
