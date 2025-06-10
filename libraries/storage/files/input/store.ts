@@ -15,7 +15,11 @@ import { type BottInputFile, BottInputFileType } from "@bott/model";
 
 import { commit } from "../../data/commit.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
-import { prepareStaticImageAsJpeg } from "./prepare/ffmpeg.ts";
+import {
+  prepareAudioAsMp3,
+  prepareDynamicImageAsMp4,
+  prepareStaticImageAsJpeg,
+} from "./prepare/ffmpeg.ts";
 import { sql } from "../../data/sql.ts";
 import { STORAGE_FILE_INPUT_ROOT } from "../../start.ts";
 import { SupportedRawFileType } from "../types.ts";
@@ -85,6 +89,14 @@ export const storeNewInputFile = async (
     case SupportedRawFileType.PNG:
     case SupportedRawFileType.JPEG:
       [resultData, resultType] = await prepareStaticImageAsJpeg(sourceData);
+      break;
+    case SupportedRawFileType.MP3:
+    case SupportedRawFileType.WAV:
+      [resultData, resultType] = await prepareAudioAsMp3(sourceData);
+      break;
+    case SupportedRawFileType.GIF:
+    case SupportedRawFileType.MP4:
+      [resultData, resultType] = await prepareDynamicImageAsMp4(sourceData);
       break;
     default:
       throw new Error(`Unsupported source type: ${sourceType}`);

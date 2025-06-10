@@ -165,7 +165,7 @@ export async function startDiscordBot<
             events.push(await getMessageEvent(message, storeNewInputFile));
           }
         } catch (_) {
-          // Likely don't have access to this channel
+          // Likely don't haveaccess to this channel
         }
       }
     }
@@ -174,6 +174,8 @@ export async function startDiscordBot<
 
     if ("error" in result) {
       console.error("[ERROR] Failed to hydrate database:", result.error);
+    } else {
+      console.info("[INFO] Hydrated database with", events.length, "events.");
     }
   })();
 
