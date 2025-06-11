@@ -77,7 +77,6 @@ export class TaskManager {
 
     for (const bucket of this.buckets.values()) {
       if (!bucket.next) {
-        console.debug("[DEBUG] No new task:", bucket.name);
         continue;
       }
 
@@ -154,6 +153,15 @@ export class TaskManager {
 
           this.flushTasks();
         });
+
+      // Debug log currently running tasks:
+      const runningTasks = Array.from(this.buckets.values()).filter((b) =>
+        b.current !== undefined
+      ).map((b) => `${b.name}:${b.current!.nonce}`);
+
+      if (runningTasks.length > 0) {
+        console.debug("[DEBUG] Currently running tasks:", runningTasks);
+      }
     }
 
     this.isFlushing = false;
