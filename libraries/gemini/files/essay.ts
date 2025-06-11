@@ -54,7 +54,7 @@ export const generateEssayFile: OutputFileGenerator = async (
   const outputFile = storeOutputFile(
     new TextEncoder().encode(sanitizedResponse.text),
     BottOutputFileType.TXT,
-    prompt.toLowerCase().replaceAll(" ", "-").replaceAll(/[,.]/, "").slice(
+    prompt.toLowerCase().replaceAll(" ", "-").replaceAll(/[,.]/g, "").slice(
       0,
       35,
     ),
