@@ -57,6 +57,9 @@ const _getInputFile = (url: URL): BottInputFile | undefined => {
   return result;
 };
 
+const MAX_TXT_WORDS = 600;
+const TRUNCATED_MARKER = " (truncated)";
+
 export const storeNewInputFile = async (
   url: URL,
 ): Promise<BottInputFile> => {
@@ -79,6 +82,22 @@ export const storeNewInputFile = async (
   // Prepare file of type:
   let resultData, resultType;
   switch (sourceType) {
+    case SupportedRawFileType.TXT:
+      {
+        const textDecoder = new TextDecoder();
+        let textContent = textDecoder.decode(sourceData);
+        const words = textContent.split(/\s+/);
+
+        if (words.length > MAX_TXT_WORDS) {
+          textContent = words.slice(0, MAX_TXT_WORDS).join(" ") +
+            TRUNCATED_MARKER;
+          resultData = new TextEncoder().encode(textContent);
+        } else {
+          resultData = sourceData;
+        }
+      }
+      resultType = BottInputFileType.MD;
+      break;
     case SupportedRawFileType.HTML:
       [resultData, resultType] = await prepareHtmlAsMarkdown(sourceData);
       break;

@@ -18,7 +18,7 @@ export enum SupportedRawFileType {
   // PDF = "application/pdf",
   PNG = "image/png",
   JPEG = "image/jpeg",
-  // TXT = "text/plain",
+  TXT = "text/plain",
   // WAV = "audio/wav",
   // MP3 = "audio/mp3",
 }
