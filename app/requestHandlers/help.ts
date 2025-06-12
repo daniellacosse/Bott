@@ -28,7 +28,7 @@ export const help: BottRequestHandler<AnyShape, AnyShape> = Object.assign(
             {
               name: "About",
               value:
-                "@Bott (they/them) is a helpful agent that responds to your messages and generates media for you.",
+                "@Bott (they/them) is a helpful agent that responds to your messages and generates media for you: essay, songs, photos and videos.",
             },
             {
               name: "Limitations",
