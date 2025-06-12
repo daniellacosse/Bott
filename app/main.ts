@@ -11,12 +11,7 @@
 
 import { delay } from "jsr:@std/async";
 
-import {
-  type AnyShape,
-  BottEventType,
-  BottRequestEvent,
-  BottResponseEvent,
-} from "@bott/model";
+import { type AnyShape, BottEventType, BottRequestEvent } from "@bott/model";
 import {
   addEventData,
   getEventIdsForChannel,
