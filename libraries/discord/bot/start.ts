@@ -102,38 +102,39 @@ export async function startDiscordBot<
         })
       );
 
-      let message;
+      let messageResult;
       switch (event.type) {
         case BottEventType.MESSAGE:
-          message = await currentChannel.send({
+          messageResult = await currentChannel.send({
             content: event.details.content,
             files,
           });
           break;
         case BottEventType.REPLY: {
-          message = await currentChannel.messages.fetch(
+          const sourceMessage = await currentChannel.messages.fetch(
             String(event.parent!.id),
           );
-          message.reply({
+          messageResult = await sourceMessage.reply({
             content: event.details.content,
             files,
           });
           break;
         }
         case BottEventType.REACTION: {
-          message = await currentChannel.messages.fetch(
+          const sourceMessage = await currentChannel.messages.fetch(
             // TODO: Sometimes this isn't a Discord ID...
             String(event.parent!.id),
           );
-          message.react(event.details.content);
+          // There's no Discord DB object for reactions
+          await sourceMessage.react(event.details.content);
           break;
         }
         default:
           return;
       }
 
-      if (message && "id" in message) {
-        event.id = message.id;
+      if (messageResult && "id" in messageResult) {
+        event.id = messageResult.id;
       }
 
       const eventTransaction = addEventData(event);
@@ -144,7 +145,7 @@ export async function startDiscordBot<
         );
       }
 
-      return message;
+      return event;
     },
   });
 

@@ -170,8 +170,6 @@ startDiscordBot({
                     channel: thisChannel,
                     parent: genEvent.parent,
                   });
-
-                  addEventData(responseEvent);
                 } catch (error) {
                   console.warn("[WARN] Failed to generate media:", error);
 

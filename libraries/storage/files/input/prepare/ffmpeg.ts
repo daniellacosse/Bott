@@ -61,7 +61,7 @@ const _ffmpeg = async (
   }
 };
 
-const MAX_DIMENSION = 240;
+const MAX_DIMENSION = 480;
 
 export const prepareStaticImageAsWebp: InputFileDataTransformer = async (
   data,

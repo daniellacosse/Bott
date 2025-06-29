@@ -19,6 +19,8 @@ import {
   type BottChannel,
   type BottEvent,
   BottEventType,
+  type BottInputFile,
+  BottInputFileType,
   type BottRequestEvent,
   type BottRequestHandler,
   type BottUser,
@@ -29,7 +31,9 @@ import gemini from "../client.ts";
 import {
   CONFIG_ASSESSMENT_SCORE_THRESHOLD,
   INPUT_EVENT_LIMIT,
+  INPUT_FILE_AUDIO_COUNT_LIMIT,
   INPUT_FILE_TOKEN_LIMIT,
+  INPUT_FILE_VIDEO_COUNT_LIMIT,
 } from "../constants.ts";
 import {
   getGenerateResponseInstructions,
@@ -66,6 +70,8 @@ export async function* generateEvents<O extends AnyShape>(
 > {
   const modelUserId = context.user.id;
 
+  console.log(inputEvents.length);
+
   const contents: Content[] = [];
   let pointer = inputEvents.length;
   let goingOverSeenEvents = false;
@@ -75,7 +81,12 @@ export async function* generateEvents<O extends AnyShape>(
 
   // We only want the model to respond to the most recent user messages,
   // since the model's last response:
-  let estimatedTokens = 0;
+  const resourceAccumulator = {
+    estimatedTokens: 0,
+    unseenEvents: 0,
+    audioFiles: 0,
+    videoFiles: 0,
+  };
   while (pointer--) {
     const event = {
       ...inputEvents[pointer],
@@ -93,20 +104,54 @@ export async function* generateEvents<O extends AnyShape>(
     // Determine if this event was from the model itself:
     if (event.user?.id === modelUserId) goingOverSeenEvents = true;
 
-    // Prune old, stale assets that bloat the context window:
-    if (
-      goingOverSeenEvents && estimatedTokens > INPUT_FILE_TOKEN_LIMIT
-    ) {
-      delete event.files;
-    } else {
-      for (const asset of event.files ?? []) {
-        estimatedTokens += asset.data.byteLength;
-      }
-    }
-
-    // Remove parent assets from events that the model has already seen:
+    // Remove unnecessary parent assets from events:
     if (event.parent) {
       delete event.parent.files;
+    }
+
+    // Prune old, stale assets that bloat the context window:
+    if (event.files?.length) {
+      const filesToKeep = [];
+      for (const asset of event.files) {
+        let shouldPrune = false;
+
+        if (
+          resourceAccumulator.estimatedTokens + asset.data.byteLength >
+            INPUT_FILE_TOKEN_LIMIT
+        ) {
+          shouldPrune = true;
+        } else if (
+          asset.type === BottInputFileType.OPUS &&
+          resourceAccumulator.audioFiles >= INPUT_FILE_AUDIO_COUNT_LIMIT
+        ) {
+          shouldPrune = true;
+        } else if (
+          asset.type === BottInputFileType.MP4 &&
+          resourceAccumulator.videoFiles >= INPUT_FILE_VIDEO_COUNT_LIMIT
+        ) {
+          shouldPrune = true;
+        }
+
+        if (shouldPrune) {
+          continue;
+        }
+
+        filesToKeep.push(asset);
+
+        if (asset.type === BottInputFileType.OPUS) {
+          resourceAccumulator.audioFiles++;
+        } else if (asset.type === BottInputFileType.MP4) {
+          resourceAccumulator.videoFiles++;
+        }
+
+        resourceAccumulator.estimatedTokens += asset.data.byteLength;
+      }
+
+      if (filesToKeep.length) {
+        event.files = filesToKeep as BottInputFile[];
+      } else {
+        delete event.files;
+      }
     }
 
     const content = _transformBottEventToContent({
@@ -116,6 +161,7 @@ export async function* generateEvents<O extends AnyShape>(
 
     if (!goingOverSeenEvents) {
       assessmentHistory.unshift(content);
+      resourceAccumulator.unseenEvents++;
     }
 
     contents.unshift(content);
@@ -128,6 +174,10 @@ export async function* generateEvents<O extends AnyShape>(
   if (contents.length === 0) {
     return;
   }
+
+  console.debug(
+    `[DEBUG] Generating response to ${resourceAccumulator.unseenEvents} events, with ${resourceAccumulator.audioFiles} audio files and ${resourceAccumulator.videoFiles} video files...`,
+  );
 
   const responseGenerator = await gemini.models.generateContentStream({
     model,
