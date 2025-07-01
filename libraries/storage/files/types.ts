@@ -20,7 +20,7 @@ export enum SupportedRawFileType {
   JPEG = "image/jpeg",
 
   WAV = "audio/x-wav",
-  MP3 = "audio/mp3",
+  MP3 = "audio/mpeg",
   TXT = "text/plain",
 }
 
