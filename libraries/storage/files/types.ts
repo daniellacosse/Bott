@@ -12,15 +12,15 @@
 import type { BottInputFileType } from "@bott/model";
 
 export enum SupportedRawFileType {
-  // GIF = "image/gif",
+  GIF = "image/gif",
   HTML = "text/html",
-  // MP4 = "video/mp4",
-  // PDF = "application/pdf",
+  MP4 = "video/mp4",
   PNG = "image/png",
   JPEG = "image/jpeg",
+
+  WAV = "audio/x-wav",
+  MP3 = "audio/mpeg",
   TXT = "text/plain",
-  // WAV = "audio/wav",
-  // MP3 = "audio/mp3",
 }
 
 export type InputFileDataTransformer = (

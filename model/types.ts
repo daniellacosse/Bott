@@ -57,9 +57,9 @@ export interface BottUser {
  */
 export enum BottInputFileType {
   MP4 = "video/mp4",
-  JPEG = "image/jpeg",
+  WEBP = "image/webp",
   MD = "text/markdown",
-  MP3 = "audio/mp3",
+  OPUS = "audio/opus",
 }
 
 /**
