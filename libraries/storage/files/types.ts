@@ -15,7 +15,6 @@ export enum SupportedRawFileType {
   GIF = "image/gif",
   HTML = "text/html",
   MP4 = "video/mp4",
-  // PDF = "application/pdf",
   PNG = "image/png",
   JPEG = "image/jpeg",
 

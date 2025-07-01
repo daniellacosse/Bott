@@ -69,9 +69,6 @@ export async function* generateEvents<O extends AnyShape>(
   | BottRequestEvent<O>
 > {
   const modelUserId = context.user.id;
-
-  console.log(inputEvents.length);
-
   const contents: Content[] = [];
   let pointer = inputEvents.length;
   let goingOverSeenEvents = false;
