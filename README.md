@@ -74,36 +74,30 @@ _TODO: make sure this works_
 > Review the code data model annotated in [./model/types.ts](./model/types.ts).
 
 ```mermaid
-graph LR
-  subgraph "External Services"
-    DiscordPlatform["Discord Platform"]
-    GeminiPlatform["Google Gemini Platform"]
-  end
-
-  subgraph "Bott System"
-    BottDiscord["Discord Libraries<br>(@bott/discord)<br>Adapts Discord events, sends replies"]
+graph TD
+  subgraph "@bott/model"
+    BottDiscord["**@bott/discord**"]
     
-    subgraph "Application Core"
-      direction TB
-      BottAppLayer["App Layer<br>(Command Logic, Orchestration)<br>Handles core bot logic, uses services"]
-      BottDataLayer["Data Layer<br>(@bott/storage, @bott/model)<br>Manages data persistence and models"]
+    subgraph App["./app"]
+      BottAppLayer["**@bott/task**"]
+      BottDataLayer["**@bott/storage**<br>Persistence layer"]
       
-      BottAppLayer -- "Data Storage / Retrieval" --> BottDataLayer
-      BottDataLayer -- "Data" --> BottAppLayer
+      BottAppLayer --> BottDataLayer
+      BottDataLayer --> BottAppLayer
     end
     
-    BottGemini["Gemini Libraries<br>(@bott/gemini)<br>Interfaces with Gemini, processes AI tasks"]
+    BottGemini["**@bott/gemini**"]
   end
 
   %% Flow from Discord User to Bot and back
-  DiscordPlatform -- "User Interaction (e.g., Slash Command)" --> BottDiscord
-  BottDiscord -- "Parsed Event/Command" --> BottAppLayer
-  BottAppLayer -- "Requests AI Processing / File Generation" --> BottGemini
-  BottGemini -- "Calls Gemini API" --> GeminiPlatform
-  GeminiPlatform -- "AI Model Response / Generated Data" --> BottGemini
-  BottGemini -- "AI Result / File" --> BottAppLayer
-  BottAppLayer -- "Response Data (Text, Embeds, Files)" --> BottDiscord
-  BottDiscord -- "Formatted Bot Reply" --> DiscordPlatform
+  Discord -- "User Message" --> BottDiscord
+  BottDiscord -- "BottEvent (Input)" --> App
+  App -- "BottEvent (Request)" --> BottGemini
+  BottGemini -- "Calls Gemini API" --> Gemini
+  Gemini -- "AI Model Response / Generated Data" --> BottGemini
+  BottGemini -- "BottEvent (Response)" --> App
+  App -- "BottEvent (Output)" --> BottDiscord
+  BottDiscord -- "System Message" --> Discord
 ```
 
 ---
