@@ -9,7 +9,9 @@
   "tasks": {
     "build": "docker build -t bott .",
     "reset": "rm -rf ./fs_root",
-    "start:app": "deno run --allow-all --env-file=.env.development ./app/main.ts"
+    "setup": "brew bundle && gcloud auth login",
+    "start:dev": "deno run --allow-all --env-file=.env.development ./app/main.ts",
+    "start": "TODO: docker container"
   },
   "workspace": [
     "./model",

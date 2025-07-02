@@ -1,5 +1,7 @@
 # Contributing to Bott
 
+> TODO: mention issues are tracked on github, CLA
+
 Thinking about contributing to Bott? There are a number of ways you can help!
 
 ### Report Unexpected Behavior
