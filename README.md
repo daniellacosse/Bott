@@ -71,7 +71,7 @@ Due to the nature of the Vertex AI API, Bott supports only GCP.
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/daniellacosse-code/Bott.git)
 
-### Architecture
+### High-level Architecture
 
 > [!TIP]
 > Review the code data model annotated in [./model/types.ts](./model/types.ts).
