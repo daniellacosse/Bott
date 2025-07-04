@@ -11,7 +11,7 @@
     "reset": "rm -rf ./fs_root",
     "setup": "brew bundle && gcloud auth login",
     "start:dev": "deno run --allow-all --env-file=.env.development ./app/main.ts",
-    "start": "TODO: docker container"
+    "start": "deno task build && docker run --rm --env-file .env.development -p 8080:8080 -v \"$(pwd)/fs_root:/app/fs_root\" bott"
   },
   "workspace": [
     "./model",

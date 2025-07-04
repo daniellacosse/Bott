@@ -30,6 +30,8 @@ type TaskBucket = {
 
 type TaskBucketMap = Map<TaskBucketName, TaskBucket>;
 
+// TODO(#44): instantiate TaskManager with prior runs,
+// persisting rate limit across deploys
 export class TaskManager {
   buckets: TaskBucketMap = new Map();
   private isFlushing = false;
@@ -140,7 +142,7 @@ export class TaskManager {
       }
     }
 
-    // TODO: toString?
+    // TODO (nit): toString?
     // Display currently running/idle tasks:
     const runningTasks = [];
     const idleTasks = [];

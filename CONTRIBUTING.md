@@ -1,7 +1,5 @@
 # Contributing to Bott
 
-> TODO: mention issues are tracked on github, CLA
-
 Thinking about contributing to Bott? There are a number of ways you can help!
 
 ### Report Unexpected Behavior
@@ -18,6 +16,8 @@ If you have an idea for a new feature or an improvement to an existing one,
 please open an issue to discuss it!
 
 ### Submit Pull Requests
+
+There are numerous issues tracked in the [issues tab](https://github.com/daniellacosse-code/Bott/issues) that need work! 
 
 In order to submit a pull request, you will need to sign the
 [**Contributor License Agreement (CLA)**](./CONTRIBUTOR_AGREEMENT.md). By

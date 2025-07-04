@@ -122,7 +122,7 @@ export async function startDiscordBot<
         }
         case BottEventType.REACTION: {
           const sourceMessage = await currentChannel.messages.fetch(
-            // TODO: Sometimes this isn't a Discord ID...
+            // TODO (nit): Sometimes this isn't a Discord ID...
             String(event.parent!.id),
           );
           // There's no Discord DB object for reactions

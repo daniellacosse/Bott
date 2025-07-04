@@ -15,4 +15,4 @@ COPY ./model /model
 
 EXPOSE 8080
 
-CMD ["deno", "task", "start:app"]
+CMD ["deno", "task", "start:dev"]

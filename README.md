@@ -10,9 +10,13 @@ A Discord bot, powered by Gemini.
 
 ## Features
 
-- Engages with server members when appropriate.
-- Generates images, videos and audio when requested.
-- ???
+- Engages with server members when appropriate, taking channel context into
+  consideration.
+- Views and discusses media posted in chat.
+  - Supports reading JPEGs, PNGs, and most websites.
+  - Experimental support for MP4s, GIFs, WAVs and MP3 files.
+- Generates images, videos and audio as requested.
+- Translates technical errors into user-friendly language, when appropriate.
 
 ## Development
 
@@ -23,9 +27,11 @@ A Discord bot, powered by Gemini.
 
 #### Prerequisites
 
-- GCP Project (TODO)
-- Discord developer account (TODO)
-- Homebrew (TODO)
+- Homebrew ([https://brew.sh/](https://brew.sh/))
+- GCP Project
+  ([https://developers.google.com/workspace/guides/create-project](https://developers.google.com/workspace/guides/create-project))
+- Discord Application
+  ([https://discord.com/developers/applications](https://discord.com/developers/applications))
 
 #### Instructions
 
@@ -34,6 +40,7 @@ A Discord bot, powered by Gemini.
 ```sh
 cp .env.example .env.development
 ```
+
 3. Get your GCP information and add it to `.env.development`.
 4. Get your Discord information and add it to `.env.development`.
 5. Set up the environment with `deno task setup`.
@@ -41,30 +48,26 @@ cp .env.example .env.development
 
 ### Configuring Bott
 
-Bott is configured via a series of environment variables. _(...)_
-<!-- TODO: ticket for hydrating rate limiter -->
+Bott is configured via a series of environment variables.
 
-Name                                | Description    | Default
---                                  | --             | --
-`CONFIG_ASSESSMENT_SCORE_THRESHOLD` | TODO           | 70
-`CONFIG_INPUT_EVENT_LIMIT`          | TODO           | 2000
-`CONFIG_INPUT_FILE_TOKEN_LIMIT`     | TODO           | 500000
-`CONFIG_RATE_LIMIT_IMAGES`          | TODO           | 100
-`CONFIG_RATE_LIMIT_MUSIC`           | TODO           | 25
-`CONFIG_RATE_LIMIT_VIDEOS`          | TODO           | 10
-`DISCORD_TOKEN`                     | TODO           | -
-`FILE_SYSTEM_ROOT`                  | TODO           | `./fs_root`
-`GOOGLE_ACCESS_TOKEN`               | TODO           | -
-`GOOGLE_PROJECT_ID`                 | TODO           | -
-`GOOGLE_PROJECT_LOCATION`           | TODO           | -
-`PORT`                              | TODO           | 8080
-
+| Name                                | Description                                                                                                               | Default     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `CONFIG_ASSESSMENT_SCORE_THRESHOLD` | The minimum score (1-100) a potential response must achieve in quality assessments (e.g., novelty, relevance) to be sent. | 70          |
+| `CONFIG_INPUT_EVENT_LIMIT`          | The maximum number of past chat events to include in the context for the AI model.                                        | 2000        |
+| `CONFIG_INPUT_FILE_TOKEN_LIMIT`     | The maximum number of tokens to use for analyzing the content of input files (images, websites).                          | 500000      |
+| `CONFIG_RATE_LIMIT_IMAGES`          | The maximum number of images Bott can generate per month.                                                                 | 100         |
+| `CONFIG_RATE_LIMIT_MUSIC`           | The maximum number of songs Bott can generate per month.                                                                  | 25          |
+| `CONFIG_RATE_LIMIT_VIDEOS`          | The maximum number of videos Bott can generate per month.                                                                 | 10          |
+| `DISCORD_TOKEN`                     | The authentication token for your Discord bot application.                                                                | -           |
+| `FILE_SYSTEM_ROOT`                  | The root directory on the local file system for storing input and output files.                                           | `./fs_root` |
+| `GOOGLE_ACCESS_TOKEN`               | An access token for authenticating with Google Cloud APIs.                                                                | -           |
+| `GOOGLE_PROJECT_ID`                 | The ID of your Google Cloud project.                                                                                      | -           |
+| `GOOGLE_PROJECT_LOCATION`           | The GCP region where your Vertex AI resources are located (e.g., `us-central1`).                                          | -           |
+| `PORT`                              | The port of the health check server required for GCP Cloud Run.                                                           | 8080        |
 
 ### Deploying Bott
 
 Due to the nature of the Vertex AI API, Bott supports only GCP.
-
-_TODO: make sure this works_
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/daniellacosse-code/Bott.git)
 
