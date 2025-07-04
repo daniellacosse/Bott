@@ -221,10 +221,6 @@ export const addEventData = (
     getAddOutputFilesSql(...outputFiles.values()),
   );
 
-  if ("error" in results) {
-    throw results.error;
-  }
-
   return results;
 };
 
