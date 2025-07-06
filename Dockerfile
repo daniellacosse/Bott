@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libx265-199 && \
     rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /deno/fs_root && chown -R deno:deno /deno/fs_root
+
 USER deno
 COPY ./deno.json ./deno.lock* ./
 COPY ./app /app
@@ -15,4 +17,4 @@ COPY ./model /model
 
 EXPOSE 8080
 
-CMD ["deno", "task", "start:dev"]
+CMD ["deno", "task", "start:prod"]

@@ -2,7 +2,7 @@
 
 # 🤖 `@Bott`
 
-![in development](https://img.shields.io/badge/development%20in%20development-blue)
+![in development](https://img.shields.io/badge/in%20development-blue)
 ![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
 [![discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
@@ -10,12 +10,12 @@ A Discord bot, powered by Gemini.
 
 ## Features
 
-- Engages with server members when appropriate, taking channel context into
+- Uses judgement on when to engage with server members, taking channel context into
   consideration.
 - Views and discusses media posted in chat.
   - Supports reading JPEGs, PNGs, and most websites.
   - Experimental support for MP4s, GIFs, WAVs and MP3 files.
-- Generates images, videos and audio as requested.
+- Generates photos, movies, songs and essays as requested.
 - Translates technical errors into user-friendly language, when appropriate.
 
 ## Development
