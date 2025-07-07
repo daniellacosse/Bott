@@ -10,8 +10,8 @@ A Discord bot, powered by Gemini.
 
 ## Features
 
-- Uses judgement on when to engage with server members, taking channel context into
-  consideration.
+- Uses judgement on when to engage with server members, taking channel context
+  into consideration.
 - Views and discusses media posted in chat.
   - Supports reading JPEGs, PNGs, and most websites.
   - Experimental support for MP4s, GIFs, WAVs and MP3 files.
