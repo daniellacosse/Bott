@@ -9,14 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { join } from "jsr:@std/path";
-
 import type { AnyBottEvent, BottEventType, BottFile } from "@bott/model";
 
-import {
-  STORAGE_FILE_INPUT_ROOT,
-  STORAGE_FILE_OUTPUT_ROOT,
-} from "../../start.ts";
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
 import { resolveFile } from "../../files/resolve.ts";
@@ -32,9 +26,7 @@ export const getEvents = async (
         s.id as s_id, s.name as s_name, s.description as s_description, -- space
         u.id as u_id, u.name as u_name, -- user
         p.id as p_id, -- parent event
-        f.id as f_id, f.source_url as f_source_url, -- file (main)
-          f.raw_type as f_raw_type, f.raw_path as f_raw_path, -- file (raw)
-          f.compressed_type as f_compressed_type, f.compressed_path as f_compressed_path -- file (compressed)
+        f.id as f_id, f.source_url as f_source_url, f.raw_type as f_raw_type, f.compressed_type as f_compressed_type -- file
       from
         events e
       left join
@@ -72,14 +64,6 @@ export const getEvents = async (
       fileInRow = await resolveFile({
         id: context.f_id,
         source: new URL(context.f_source_url),
-        raw: {
-          type: context.f_raw_type,
-          path: join(STORAGE_FILE_INPUT_ROOT, context.f_raw_path),
-        },
-        compressed: {
-          type: context.f_compressed_type,
-          path: join(STORAGE_FILE_OUTPUT_ROOT, context.f_compressed_path),
-        },
       });
     }
 

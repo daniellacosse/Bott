@@ -73,20 +73,18 @@ const getAddFilesSql = (...files: BottFile[]) => {
     id,
     source_url,
     raw_type,
-    raw_path,
     compressed_type,
-    compressed_path,
     parent_id
   ) values ${
     files.map((f) =>
-      sql`(${f.id}, ${f.source.toString()}, ${f.raw.type}, ${f.raw.path}, ${f.compressed.type}, ${f.compressed.path}, ${f.parent?.id})`
+      sql`(${f.id}, ${
+        f.source?.toString() ?? null
+      }, ${f.raw.type}, ${f.compressed.type}, ${f.parent?.id})`
     )
   } on conflict(id) do update set
     source_url = excluded.source_url,
     raw_type = excluded.raw_type,
-    raw_path = excluded.raw_path,
     compressed_type = excluded.compressed_type,
-    compressed_path = excluded.compressed_path,
     parent_id = excluded.parent_id
   `;
 };
@@ -166,7 +164,7 @@ export const addEventData = async (
       for (const file of event.files) {
         const resolvedFile = await resolveFile(file);
 
-        files.set(resolvedFile.source.toString(), {
+        files.set(resolvedFile.id, {
           ...resolvedFile,
           parent: event,
         });

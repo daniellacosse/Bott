@@ -12,20 +12,17 @@
 import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
-import { BottOutputFileType } from "@bott/model";
+import { BottFileType } from "@bott/model";
 
 import _gemini from "../client.ts";
-import type { OutputFileGenerator } from "./types.ts";
+import type { BottFileDataGenerator } from "./types.ts";
 
-// NOTE: This stores output files to disk, even if they
-// are not in the database yet.
-export const generatePhotoFile: OutputFileGenerator = async (
+export const generatePhotoFile: BottFileDataGenerator = async (
   prompt: string,
   {
     model = "imagen-4.0-generate-preview-06-06",
     abortSignal,
     gemini = _gemini,
-    storeOutputFile,
   },
 ) => {
   const response = await gemini.models.generateImages({
@@ -60,10 +57,8 @@ export const generatePhotoFile: OutputFileGenerator = async (
     throw new Error("No image bytes");
   }
 
-  const outputFile = storeOutputFile(
-    decodeBase64(imageData.image.imageBytes),
-    BottOutputFileType.PNG,
-  );
-
-  return outputFile;
+  return {
+    data: decodeBase64(imageData.image.imageBytes),
+    type: BottFileType.PNG,
+  };
 };

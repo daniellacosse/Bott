@@ -11,15 +11,17 @@
 
 import { type BottFile, BottFileType } from "@bott/model";
 
-import { prepareHtmlAsMarkdown } from "./input/prepare/html.ts";
+import { STORAGE_FILE_ROOT } from "../start.ts";
+import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
 import {
   prepareAudioAsOpus,
   prepareDynamicImageAsMp4,
   prepareStaticImageAsWebp,
 } from "./prepare/ffmpeg.ts";
+import { join } from "node:path";
+import { exists } from "jsr:@std/fs";
 
-// TODO: what was this value?
-const MAX_TXT_WORDS = 0;
+const MAX_TXT_WORDS = 600;
 
 export const _getResponseContentType = (response: Response): string => {
   const contentTypeHeader = response.headers.get("content-type");
@@ -34,38 +36,52 @@ export const resolveFile = async (
     throw new Error("resolveFile: File ID is required.");
   }
 
-  if (!partialFile.source) {
-    throw new Error("rresolveFile: File source URL is required.");
-  }
+  const fileRoot = join(STORAGE_FILE_ROOT, partialFile.id);
+  const rawFilePath = join(fileRoot, "raw");
+  const compressedFilePath = join(
+    fileRoot,
+    "compressed",
+  );
 
   if (!partialFile.raw) {
-    const response = await fetch(partialFile.source);
-    const data = new Uint8Array(await response.arrayBuffer());
-    const type = _getResponseContentType(response) as BottFileType;
+    if (await exists(rawFilePath)) {
+      partialFile.raw = {
+        data: Deno.readFileSync(rawFilePath),
+        type: BottFileType.TXT, // TODO: how do I determine this?
+      };
+    } else if (partialFile.source) {
+      const response = await fetch(partialFile.source);
+      const data = new Uint8Array(await response.arrayBuffer());
+      const type = _getResponseContentType(response) as BottFileType;
 
-    partialFile.raw = { data, type };
+      partialFile.raw = { data, type };
+    } else {
+      throw new Error("TODO");
+    }
   }
 
-  if (!partialFile.raw.path) {
-    // TODO: Write file to disk
-  }
-
-  if (!partialFile.raw.data) {
-    // TODO: Read file from disk
+  if (!(await exists(rawFilePath))) {
+    Deno.mkdirSync(fileRoot, { recursive: true });
+    Deno.writeFileSync(rawFilePath, partialFile.raw.data);
   }
 
   if (!partialFile.compressed) {
-    const rawData = partialFile.raw.data as Uint8Array;
-    const rawType = partialFile.raw.type;
+    if (await exists(compressedFilePath)) {
+      partialFile.raw = {
+        data: Deno.readFileSync(compressedFilePath),
+        type: BottFileType.TXT, // TODO: how do I determine this?
+      };
+    } else {
+      const rawData = partialFile.raw.data as Uint8Array;
+      const rawType = partialFile.raw.type;
 
-    let data, type;
-    switch (rawType) {
-      case BottFileType.TXT:
-        {
+      switch (rawType) {
+        case BottFileType.TXT: {
           const textDecoder = new TextDecoder();
           let textContent = textDecoder.decode(rawData);
           const words = textContent.split(/\s+/);
 
+          let data;
           if (words.length > MAX_TXT_WORDS) {
             textContent = words.slice(0, MAX_TXT_WORDS).join(" ") +
               "\n\n...(truncated)";
@@ -73,49 +89,41 @@ export const resolveFile = async (
           } else {
             data = rawData;
           }
+          partialFile.compressed = { data, type: BottFileType.MD };
+          break;
         }
-        type = BottFileType.MD;
-        break;
-      case BottFileType.HTML:
-        data = await prepareHtmlAsMarkdown(
-          rawData,
-        );
-        type = BottFileType.MD;
-        break;
-      case BottFileType.PNG:
-      case BottFileType.JPEG:
-        data = await prepareStaticImageAsWebp(
-          rawData,
-        );
-        type = BottFileType.WEBP;
-        break;
-      case BottFileType.MP3:
-      case BottFileType.WAV:
-        data = await prepareAudioAsOpus(
-          rawData,
-        );
-        type = BottFileType.OPUS;
-        break;
-      case BottFileType.GIF:
-      case BottFileType.MP4:
-        data = await prepareDynamicImageAsMp4(
-          rawData,
-        );
-        type = BottFileType.MP4;
-        break;
-      default:
-        throw new Error(`Unsupported source type: ${rawType}`);
+        case BottFileType.HTML:
+          partialFile.compressed = await prepareHtmlAsMarkdown(
+            rawData,
+          );
+          break;
+        case BottFileType.PNG:
+        case BottFileType.JPEG:
+          partialFile.compressed = await prepareStaticImageAsWebp(
+            rawData,
+          );
+          break;
+        case BottFileType.MP3:
+        case BottFileType.WAV:
+          partialFile.compressed = await prepareAudioAsOpus(
+            rawData,
+          );
+          break;
+        case BottFileType.GIF:
+        case BottFileType.MP4:
+          partialFile.compressed = await prepareDynamicImageAsMp4(
+            rawData,
+          );
+          break;
+        default:
+          throw new Error(`Unsupported source type: ${rawType}`);
+      }
     }
-
-    partialFile.compressed = { data, type };
   }
 
-  if (!partialFile.compressed.path) {
-    // TODO: Write file to disk
-  }
-
-  if (!partialFile.compressed.data) {
-    // TODO: Read file from disk
+  if (!(await exists(compressedFilePath))) {
+    Deno.mkdirSync(fileRoot, { recursive: true });
+    Deno.writeFileSync(rawFilePath, partialFile.compressed!.data);
   }
 
   return partialFile as BottFile;

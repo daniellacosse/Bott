@@ -11,15 +11,12 @@
 
 import type { Message } from "npm:discord.js";
 
-import { type BottEvent, BottEventType, type BottInputFile } from "@bott/model";
-import type { storeNewInputFile } from "@bott/storage";
+import { type BottEvent, BottEventType, type BottFile } from "@bott/model";
 
 import { getMarkdownLinks } from "./markdown.ts";
 
-// NOTE: this currently stores attached files as inputs to the file system.
 export const messageToBottEvent = async (
   message: Message<true>,
-  storeFile: typeof storeNewInputFile,
 ): Promise<BottEvent> => {
   const event: BottEvent = {
     id: message.id,
@@ -56,7 +53,6 @@ export const messageToBottEvent = async (
         await message.channel.messages.fetch(
           message.reference.messageId,
         ),
-        storeFile,
       );
     } catch (_) {
       // If the parent message isn't available, we can't populate the parent event.
@@ -73,25 +69,12 @@ export const messageToBottEvent = async (
   ];
 
   if (urls.length) {
-    event.files = [] as BottInputFile[];
-
-    for (const url of urls) {
-      let file;
-      try {
-        file = await storeFile(new URL(url));
-      } catch (error) {
-        console.warn(
-          "[WARN] Failed to store input file:",
-          (error as Error).message,
-        );
-
-        continue;
-      }
-
-      file.parent = event;
-
-      event.files.push(file);
-    }
+    // TODO: how to handle this case (partial state?)
+    event.files = urls.map<BottFile>((url) => ({
+      id: crypto.randomUUID(),
+      source: new URL(url),
+      parent: event,
+    }));
   }
 
   return event;

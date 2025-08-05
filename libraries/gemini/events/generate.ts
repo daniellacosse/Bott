@@ -19,8 +19,8 @@ import {
   type BottChannel,
   type BottEvent,
   BottEventType,
-  type BottInputFile,
-  BottInputFileType,
+  type BottFile,
+  BottFileType,
   type BottRequestEvent,
   type BottRequestHandler,
   type BottUser,
@@ -113,17 +113,18 @@ export async function* generateEvents<O extends AnyShape>(
         let shouldPrune = false;
 
         if (
-          resourceAccumulator.estimatedTokens + file.data.byteLength >
+          resourceAccumulator.estimatedTokens +
+              file.compressed.data!.byteLength >
             INPUT_FILE_TOKEN_LIMIT
         ) {
           shouldPrune = true;
         } else if (
-          file.type === BottInputFileType.OPUS &&
+          file.compressed.type === BottFileType.OPUS &&
           resourceAccumulator.audioFiles >= INPUT_FILE_AUDIO_COUNT_LIMIT
         ) {
           shouldPrune = true;
         } else if (
-          file.type === BottInputFileType.MP4 &&
+          file.compressed.type === BottFileType.MP4 &&
           resourceAccumulator.videoFiles >= INPUT_FILE_VIDEO_COUNT_LIMIT
         ) {
           shouldPrune = true;
@@ -135,17 +136,17 @@ export async function* generateEvents<O extends AnyShape>(
 
         filesToKeep.push(file);
 
-        if (file.type === BottInputFileType.OPUS) {
+        if (file.compressed.type === BottFileType.OPUS) {
           resourceAccumulator.audioFiles++;
-        } else if (file.type === BottInputFileType.MP4) {
+        } else if (file.compressed.type === BottFileType.MP4) {
           resourceAccumulator.videoFiles++;
         }
 
-        resourceAccumulator.estimatedTokens += file.data.byteLength;
+        resourceAccumulator.estimatedTokens += file.compressed.data!.byteLength;
       }
 
       if (filesToKeep.length) {
-        event.files = filesToKeep as BottInputFile[];
+        event.files = filesToKeep as BottFile[];
       } else {
         delete event.files;
       }
@@ -354,8 +355,8 @@ const _transformBottEventToContent = (
     for (const file of event.files) {
       parts.push({
         inlineData: {
-          mimeType: file.type,
-          data: encodeBase64(file.data),
+          mimeType: file.compressed.type,
+          data: encodeBase64(file.compressed.data!),
         },
       });
     }

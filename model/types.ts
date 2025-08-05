@@ -76,11 +76,6 @@ export enum BottFileType {
 export type BottFileData = {
   data: Uint8Array;
   type: BottFileType;
-  path?: string;
-} | {
-  data?: Uint8Array;
-  type: BottFileType;
-  path: string;
 };
 
 /**
@@ -89,7 +84,7 @@ export type BottFileData = {
  */
 export interface BottFile {
   id: string;
-  source: URL;
+  source?: URL;
   raw: BottFileData;
   compressed: BottFileData;
   parent?: BottEvent<AnyShape>;

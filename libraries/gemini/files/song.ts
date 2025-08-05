@@ -11,9 +11,9 @@
 
 import { decodeBase64 } from "jsr:@std/encoding";
 
-import { BottOutputFileType } from "@bott/model";
+import { BottFileType } from "@bott/model";
 
-import type { OutputFileGenerator } from "./types.ts";
+import type { BottFileDataGenerator } from "./types.ts";
 
 const GOOGLE_PROJECT_LOCATION = Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
   "us-central1";
@@ -27,11 +27,9 @@ const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 const VERTEX_API_URL =
   `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/lyria-002:predict`;
 
-// NOTE: This stores output files to disk, even if they
-// are not in the database yet.
-export const generateSongFile: OutputFileGenerator = async (
+export const generateSongFile: BottFileDataGenerator = async (
   prompt,
-  { abortSignal, storeOutputFile },
+  { abortSignal },
 ) => {
   const response = await fetch(VERTEX_API_URL, {
     signal: abortSignal,
@@ -55,16 +53,10 @@ export const generateSongFile: OutputFileGenerator = async (
 
   const { predictions } = await response.json();
 
-  const outputFile = storeOutputFile(
-    decodeBase64(predictions[0].bytesBase64Encoded),
-    BottOutputFileType.WAV,
-    prompt.toLowerCase().replaceAll(" ", "-").replaceAll(/[,.]/g, "").slice(
-      0,
-      35,
-    ),
-  );
-
-  return outputFile;
+  return {
+    data: decodeBase64(predictions[0].bytesBase64Encoded),
+    type: BottFileType.WAV,
+  };
 };
 
 async function getAccessToken(): Promise<string> {

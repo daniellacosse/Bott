@@ -15,10 +15,10 @@ import { BottEventType } from "@bott/model";
 
 import { addEventData } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
-import { prepareHtmlAsMarkdown } from "./files/input/prepare/html.ts";
+import { prepareHtmlAsMarkdown } from "./files/prepare/html.ts";
 import { startStorage } from "./start.ts";
 
-// TODO: add test files?
+// TODO: add files test
 Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();
 
@@ -137,8 +137,8 @@ Deno.test("Storage - prepareHtml", async () => {
 
   const inputData = new TextEncoder().encode(htmlInput);
 
-  const [resultData] = await prepareHtmlAsMarkdown(inputData);
-  const resultMarkdown = new TextDecoder().decode(resultData);
+  const { data } = await prepareHtmlAsMarkdown(inputData);
+  const resultMarkdown = new TextDecoder().decode(data);
 
   assertEquals(
     resultMarkdown,

@@ -15,20 +15,17 @@ import {
 } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
-import { BottOutputFileType } from "@bott/model";
+import { BottFileType } from "@bott/model";
 
 import _gemini from "../client.ts";
-import type { OutputFileGenerator } from "./types.ts";
+import type { BottFileDataGenerator } from "./types.ts";
 
-// NOTE: This stores output files to disk, even if they
-// are not in the database yet.
-export const generateMovieFile: OutputFileGenerator = async (
+export const generateMovieFile: BottFileDataGenerator = async (
   prompt: string,
   {
     model = "veo-3.0-generate-preview",
     gemini = _gemini,
     abortSignal,
-    storeOutputFile,
   },
 ) => {
   let operation = await gemini.models.generateVideos({
@@ -75,12 +72,10 @@ export const generateMovieFile: OutputFileGenerator = async (
     throw new Error("No video bytes");
   }
 
-  const outputFile = storeOutputFile(
-    decodeBase64(videoData.video.videoBytes),
-    BottOutputFileType.MP4,
-  );
-
-  return outputFile;
+  return {
+    type: BottFileType.MP4,
+    data: decodeBase64(videoData.video.videoBytes),
+  };
 };
 
 function doVideoJob(

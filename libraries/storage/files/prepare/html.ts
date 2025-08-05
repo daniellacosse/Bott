@@ -11,9 +11,9 @@
 
 import { extractFromHtml } from "npm:@extractus/article-extractor";
 import TurndownService from "npm:turndown";
+import { BottFileType } from "@bott/model";
 
-// TODO: what was this value?
-const STORAGE_FILE_SIZE_CAUTION = 0;
+import { STORAGE_FILE_SIZE_CAUTION } from "../../start.ts";
 
 const turndownService = new TurndownService({
   headingStyle: "atx", // Use # for headings.
@@ -50,5 +50,5 @@ export const prepareHtmlAsMarkdown = async (data: Uint8Array) => {
       "\n\n...(truncated)";
   }
 
-  return new TextEncoder().encode(result);
+  return { data: new TextEncoder().encode(result), type: BottFileType.MD };
 };

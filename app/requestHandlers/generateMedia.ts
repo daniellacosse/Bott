@@ -11,13 +11,12 @@
 
 import {
   BottEventType,
-  type BottOutputFile,
+  type BottFileData,
   type BottRequestEvent,
   type BottRequestHandler,
   BottRequestOptionType,
   type BottResponseEvent,
 } from "@bott/model";
-import { storeOutputFile } from "@bott/storage";
 import { createTask } from "@bott/task";
 import {
   generateEssayFile,
@@ -105,27 +104,26 @@ export const generateMedia: BottRequestHandler<
         taskManager.push(
           type,
           createTask(async (abortSignal: AbortSignal) => {
-            let file: BottOutputFile | undefined;
+            let fileData: BottFileData | undefined;
 
             try {
               const context = {
                 abortSignal,
-                storeOutputFile,
               };
 
               switch (type) {
                 case GeneratedMediaType.PHOTO:
-                  file = await generatePhotoFile(prompt, context);
+                  fileData = await generatePhotoFile(prompt, context);
                   break;
                 case GeneratedMediaType.MOVIE:
-                  file = await generateMovieFile(prompt, context);
+                  fileData = await generateMovieFile(prompt, context);
                   break;
                 case GeneratedMediaType.SONG:
-                  file = await generateSongFile(prompt, context);
+                  fileData = await generateSongFile(prompt, context);
                   break;
                 case GeneratedMediaType.ESSAY:
                 default:
-                  file = await generateEssayFile(prompt, context);
+                  fileData = await generateEssayFile(prompt, context);
                   break;
               }
             } catch (error) {
@@ -137,7 +135,7 @@ export const generateMedia: BottRequestHandler<
             }
 
             // This shouldn't happen.
-            if (!file) {
+            if (!fileData) {
               throw new Error("Failed to generate media");
             }
 
@@ -147,7 +145,11 @@ export const generateMedia: BottRequestHandler<
               details: {
                 content: "",
               },
-              files: [file],
+              // TODO: how to handle this case (partial file state?)
+              files: [{
+                id: crypto.randomUUID(),
+                raw: fileData,
+              }],
               timestamp: new Date(),
               user: requestEvent.user,
               channel: requestEvent.channel,

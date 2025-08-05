@@ -9,6 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { BottFileType } from "@bott/model";
+
 const _ffmpeg = async (
   args: string[],
   input: Uint8Array,
@@ -84,7 +86,7 @@ export const prepareStaticImageAsWebp = async (
     "webp", // Output format container
     "{{OUTPUT_FILE}}",
   ];
-  return await _ffmpeg(args, data);
+  return { data: await _ffmpeg(args, data), type: BottFileType.WEBP };
 };
 
 export const prepareAudioAsOpus = async (
@@ -113,7 +115,7 @@ export const prepareAudioAsOpus = async (
     "opus", // Output format
     "{{OUTPUT_FILE}}",
   ];
-  return await _ffmpeg(args, data);
+  return { data: await _ffmpeg(args, data), type: BottFileType.OPUS };
 };
 
 export const prepareDynamicImageAsMp4 = async (
@@ -139,5 +141,5 @@ export const prepareDynamicImageAsMp4 = async (
     "{{OUTPUT_FILE}}",
   ];
 
-  return await _ffmpeg(args, data);
+  return { data: await _ffmpeg(args, data), type: BottFileType.MP4 };
 };

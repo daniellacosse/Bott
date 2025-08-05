@@ -30,7 +30,7 @@ import {
   type BottRequestHandler,
 } from "@bott/model";
 
-import type { addEventData, storeNewInputFile } from "@bott/storage";
+import type { addEventData } from "@bott/storage";
 
 import { createErrorEmbed } from "../message/embed/error.ts";
 import { messageToBottEvent } from "../message/event.ts";
@@ -54,7 +54,6 @@ type DiscordBotOptions<
   identityToken: string;
   mount?: (this: DiscordBotContext) => void;
   addEventData: typeof addEventData;
-  storeNewInputFile: typeof storeNewInputFile;
 };
 
 export async function startDiscordBot<
@@ -63,7 +62,6 @@ export async function startDiscordBot<
   identityToken: token,
   requestHandlerCommands: commands,
   addEventData,
-  storeNewInputFile,
   event: handleEvent,
   mount: handleMount,
 }: DiscordBotOptions<O>) {
@@ -97,8 +95,8 @@ export async function startDiscordBot<
       const files = event.files?.map((
         file,
       ) =>
-        new AttachmentBuilder(Buffer.from(file.data), {
-          name: file.path.split("/").at(-1),
+        new AttachmentBuilder(Buffer.from(file.raw.data as Uint8Array), {
+          name: file.id,
         })
       );
 
@@ -163,7 +161,7 @@ export async function startDiscordBot<
 
         try {
           for (const [_, message] of await channel.messages.fetch()) {
-            events.push(await messageToBottEvent(message, storeNewInputFile));
+            events.push(await messageToBottEvent(message));
           }
         } catch (_) {
           // Likely don't haveaccess to this channel
@@ -191,7 +189,6 @@ export async function startDiscordBot<
 
     const event = await messageToBottEvent(
       message as Message<true>,
-      storeNewInputFile,
     );
 
     console.debug(
@@ -235,7 +232,6 @@ export async function startDiscordBot<
     if (reaction.message.content) {
       event.parent = await messageToBottEvent(
         reaction.message as Message<true>,
-        storeNewInputFile,
       );
     }
 
