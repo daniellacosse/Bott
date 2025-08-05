@@ -47,5 +47,5 @@ create table if not exists files (
   raw_type varchar(36) not null,
   compressed_type varchar(36) not null,
   parent_id varchar(36),
-  foreign key(parent_id) references events(id),
+  foreign key(parent_id) references events(id)
 );
