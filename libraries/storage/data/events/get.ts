@@ -56,23 +56,26 @@ export const getEvents = async (
       e_type: type,
       e_details: details,
       e_timestamp: timestamp,
-      ...context
+      ...rowData
     } of result.reads
   ) {
     let fileInRow: BottFile | undefined;
-    if (context.f_id) {
-      fileInRow = await resolveFile({
-        id: context.f_id,
-        source: context.f_source_url
-          ? new URL(context.f_source_url)
-          : undefined,
-      });
+    if (rowData.f_id) {
+      try {
+        fileInRow = await resolveFile({
+          id: rowData.f_id,
+          source: rowData.f_source_url
+            ? new URL(rowData.f_source_url)
+            : undefined,
+        });
+      } catch (e) {
+        console.warn(`[WARN] Failed to resolve file [${rowData.f_id}]: ${e}`);
+      }
     }
 
     if (events.has(id)) {
       if (fileInRow) {
         events.get(id)!.files ??= [];
-
         events.get(id)!.files!.push(fileInRow);
       }
 
@@ -87,28 +90,28 @@ export const getEvents = async (
       files: fileInRow ? [fileInRow] : undefined,
     };
 
-    if (context.c_id) {
+    if (rowData.c_id) {
       event.channel = {
-        id: context.c_id,
-        name: context.c_name,
-        description: context.c_description,
+        id: rowData.c_id,
+        name: rowData.c_name,
+        description: rowData.c_description,
         space: {
-          id: context.s_id,
-          name: context.s_name,
-          description: context.s_description,
+          id: rowData.s_id,
+          name: rowData.s_name,
+          description: rowData.s_description,
         },
       };
     }
 
-    if (context.u_id) {
+    if (rowData.u_id) {
       event.user = {
-        id: context.u_id,
-        name: context.u_name,
+        id: rowData.u_id,
+        name: rowData.u_name,
       };
     }
 
-    if (context.p_id) {
-      [event.parent] = await getEvents(context.p_id);
+    if (rowData.p_id) {
+      [event.parent] = await getEvents(rowData.p_id);
     }
 
     events.set(id, event);

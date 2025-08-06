@@ -37,7 +37,6 @@ export const generateMovieData: BottFileDataGenerator = async (
       enhancePrompt: true,
       fps: 24,
       numberOfVideos: 1,
-      durationSeconds: 6, // to keep it under Discord's 8MB limit
       personGeneration: PersonGeneration.ALLOW_ADULT,
       resolution: "720p",
     },

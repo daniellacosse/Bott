@@ -27,6 +27,7 @@ import {
   type AnyShape,
   type BottEvent,
   BottEventType,
+  BottFileType,
   type BottRequestHandler,
 } from "@bott/model";
 
@@ -37,6 +38,11 @@ import { messageToBottEvent } from "../message/event.ts";
 import { getCommandRequestEvent } from "./command/request.ts";
 import { getCommandJson } from "./command/json.ts";
 import type { DiscordBotContext } from "./types.ts";
+
+// TODO: Don't repeat this.
+const REVERSE_FILE_TYPE_ENUM = Object.fromEntries(
+  Object.entries(BottFileType).map(([key, value]) => [value, key]),
+);
 
 const REQUIRED_INTENTS = [
   GatewayIntentBits.GuildMembers,
@@ -101,7 +107,9 @@ export async function startDiscordBot<
 
         files.push(
           new AttachmentBuilder(Buffer.from(file.raw.data as Uint8Array), {
-            name: file.id,
+            name: `${file.id}.${
+              REVERSE_FILE_TYPE_ENUM[file.raw.type].toLowerCase()
+            }`,
           }),
         );
       }

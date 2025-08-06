@@ -156,12 +156,16 @@ export const addEventData = async (
 
     if (event.files) {
       for (const file of event.files) {
-        const resolvedFile = await resolveFile(file);
+        try {
+          const resolvedFile = await resolveFile(file);
 
-        files.set(resolvedFile.id, {
-          ...resolvedFile,
-          parent: event,
-        });
+          files.set(resolvedFile.id, {
+            ...resolvedFile,
+            parent: event,
+          });
+        } catch (e) {
+          console.warn(`[WARN] Failed to resolve file [${file.id}]: ${e}`);
+        }
       }
     }
   }

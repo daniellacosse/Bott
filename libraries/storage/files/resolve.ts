@@ -48,7 +48,7 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
     }
   }
 
-  if (rawFilePath && !file.raw) {
+  if (rawFilePath) {
     const rawFileExtension = rawFilePath.split(".").pop();
 
     file.raw = {
@@ -57,21 +57,18 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
         rawFileExtension?.toUpperCase() as keyof typeof BottFileType
       ],
     };
-  } else if (!rawFilePath && file.raw) {
-    Deno.writeFileSync(
-      join(
-        fileRoot,
-        `raw.${REVERSE_FILE_TYPE_ENUM[file.raw.type].toLowerCase()}`,
-      ),
-      file.raw.data,
-    );
-  } else if (!rawFilePath && !file.raw) {
+  }
+
+  if (!file.raw) {
     if (!file.source) {
       throw new Error(
         "File source URL is required when raw data is missing.",
       );
     }
 
+    console.debug(
+      `[DEBUG] Fetching raw file from source URL: ${file.source}`,
+    );
     const response = await fetch(file.source);
     const data = new Uint8Array(await response.arrayBuffer());
     const type = response.headers.get("content-type")?.split(";")[0].trim() ??
@@ -84,7 +81,21 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
     file.raw = { data, type: type as BottFileType };
   }
 
-  if (compressedFilePath && !file.compressed) {
+  if (!rawFilePath) {
+    console.debug(
+      `[DEBUG] Writing raw file to disk: ${file.id}, type: ${file.raw.type}`,
+    );
+
+    Deno.writeFileSync(
+      join(
+        fileRoot,
+        `raw.${REVERSE_FILE_TYPE_ENUM[file.raw.type].toLowerCase()}`,
+      ),
+      file.raw.data,
+    );
+  }
+
+  if (compressedFilePath) {
     const compressedFileExtension = compressedFilePath.split(".").pop();
 
     file.compressed = {
@@ -94,18 +105,9 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
           ?.toUpperCase() as keyof typeof BottFileType
       ],
     };
-  } else if (!compressedFilePath && file.compressed) {
-    Deno.writeFileSync(
-      join(
-        fileRoot,
-        `compressed.${
-          REVERSE_FILE_TYPE_ENUM[file.compressed.type]
-            .toLowerCase()
-        }`,
-      ),
-      file.compressed.data,
-    );
-  } else if (!compressedFilePath && !file.compressed) {
+  }
+
+  if (!file.compressed) {
     if (!file.raw) {
       throw new Error(
         "File raw data is required when compressed data is missing.",
@@ -158,6 +160,23 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
       default:
         throw new Error(`Unsupported source type: ${rawType}`);
     }
+  }
+
+  if (!compressedFilePath) {
+    console.debug(
+      `[DEBUG] Writing compressed file to disk: ${file.id}, type: ${file.compressed.type}`,
+    );
+
+    Deno.writeFileSync(
+      join(
+        fileRoot,
+        `compressed.${
+          REVERSE_FILE_TYPE_ENUM[file.compressed.type]
+            .toLowerCase()
+        }`,
+      ),
+      file.compressed.data,
+    );
   }
 
   return file;
