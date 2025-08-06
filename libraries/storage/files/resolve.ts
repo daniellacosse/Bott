@@ -77,7 +77,7 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
     const type = response.headers.get("content-type")?.split(";")[0].trim() ??
       "";
 
-    if (!(type in BottFileType)) {
+    if (!Object.values(BottFileType).includes(type as BottFileType)) {
       throw new Error(`Unsupported content type: ${type}`);
     }
 
