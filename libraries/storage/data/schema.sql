@@ -44,8 +44,6 @@ create table if not exists events (
 create table if not exists files (
   id varchar(36) primary key not null,
   source_url text,
-  raw_type varchar(36) not null,
-  compressed_type varchar(36) not null,
   parent_id varchar(36),
   foreign key(parent_id) references events(id)
 );

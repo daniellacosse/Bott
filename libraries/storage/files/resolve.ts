@@ -1,13 +1,13 @@
-// /**
-//  * @license
-//  * This file is part of Bott.
-//  *
-//  * This project is dual-licensed:
-//  * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
-//  * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
-//  *
-//  * Copyright (C) 2025 DanielLaCos.se
-//  */
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
 
 import { join } from "jsr:@std/path";
 
@@ -27,59 +27,52 @@ const REVERSE_FILE_TYPE_ENUM = Object.fromEntries(
   Object.entries(BottFileType).map(([key, value]) => [value, key]),
 );
 
-export const _getResponseContentType = (response: Response): string => {
-  const contentTypeHeader = response.headers.get("content-type");
-  if (!contentTypeHeader) return "";
-  return contentTypeHeader.split(";")[0].trim();
-};
+/**
+ * Fully resolves a `BottFile` object by ensuring its `raw` and `compressed` data are available.
+ * If `raw` data is missing, it attempts to fetch it from the `source` URL.
+ * If `compressed` data is missing, it generates it from the `raw` data based on the file type.
+ * @param file `file` to be resolved.
+ * @returns `BottFile` with its `raw` and `compressed` data populated.
+ */
+export const resolveFile = async (file: BottFile): Promise<BottFile> => {
+  const fileRoot = join(STORAGE_FILE_ROOT, file.id);
 
-export const resolveFile = async (
-  partialFile: Partial<BottFile>,
-): Promise<BottFile> => {
-  if (!partialFile.id) {
-    throw new Error("File ID is required.");
-  }
-
-  const resolvedFileRoot = join(STORAGE_FILE_ROOT, partialFile.id);
-
-  Deno.mkdirSync(resolvedFileRoot, { recursive: true });
+  Deno.mkdirSync(fileRoot, { recursive: true });
 
   let rawFilePath, compressedFilePath;
-  for (const file of Deno.readDirSync(resolvedFileRoot)) {
+  for (const file of Deno.readDirSync(fileRoot)) {
     if (file.name.startsWith("raw.")) {
-      rawFilePath = join(resolvedFileRoot, file.name);
+      rawFilePath = join(fileRoot, file.name);
     } else if (file.name.startsWith("compressed.")) {
-      compressedFilePath = join(resolvedFileRoot, file.name);
+      compressedFilePath = join(fileRoot, file.name);
     }
   }
 
-  if (rawFilePath && !partialFile.raw) {
+  if (rawFilePath && !file.raw) {
     const rawFileExtension = rawFilePath.split(".").pop();
 
-    partialFile.raw = {
+    file.raw = {
       data: Deno.readFileSync(rawFilePath),
       type: BottFileType[
         rawFileExtension?.toUpperCase() as keyof typeof BottFileType
       ],
     };
-  } else if (!rawFilePath && partialFile.raw) {
+  } else if (!rawFilePath && file.raw) {
     Deno.writeFileSync(
       join(
-        resolvedFileRoot,
-        `raw.${
-          REVERSE_FILE_TYPE_ENUM[partialFile.raw.type].toLowerCase()
-        }`,
+        fileRoot,
+        `raw.${REVERSE_FILE_TYPE_ENUM[file.raw.type].toLowerCase()}`,
       ),
-      partialFile.raw.data,
+      file.raw.data,
     );
-  } else if (!rawFilePath && !partialFile.raw) {
-    if (!partialFile.source) {
+  } else if (!rawFilePath && !file.raw) {
+    if (!file.source) {
       throw new Error(
-        "File source is required when raw data is missing.",
+        "File source URL is required when raw data is missing.",
       );
     }
 
-    const response = await fetch(partialFile.source);
+    const response = await fetch(file.source);
     const data = new Uint8Array(await response.arrayBuffer());
     const type = response.headers.get("content-type")?.split(";")[0].trim() ??
       "";
@@ -88,33 +81,33 @@ export const resolveFile = async (
       throw new Error(`Unsupported content type: ${type}`);
     }
 
-    partialFile.raw = { data, type: type as BottFileType };
+    file.raw = { data, type: type as BottFileType };
   }
 
-  if (compressedFilePath && !partialFile.compressed) {
+  if (compressedFilePath && !file.compressed) {
     const compressedFileExtension = compressedFilePath.split(".").pop();
 
-    partialFile.compressed = {
+    file.compressed = {
       data: Deno.readFileSync(compressedFilePath),
       type: BottFileType[
         compressedFileExtension
           ?.toUpperCase() as keyof typeof BottFileType
       ],
     };
-  } else if (!compressedFilePath && partialFile.compressed) {
+  } else if (!compressedFilePath && file.compressed) {
     Deno.writeFileSync(
       join(
-        resolvedFileRoot,
+        fileRoot,
         `compressed.${
-          REVERSE_FILE_TYPE_ENUM[partialFile.compressed.type]
+          REVERSE_FILE_TYPE_ENUM[file.compressed.type]
             .toLowerCase()
         }`,
       ),
-      partialFile.compressed.data,
+      file.compressed.data,
     );
-  } else if (!compressedFilePath && !partialFile.compressed) {
-    const rawData = partialFile.raw!.data as Uint8Array;
-    const rawType = partialFile.raw!.type;
+  } else if (!compressedFilePath && !file.compressed) {
+    const rawData = file.raw!.data as Uint8Array;
+    const rawType = file.raw!.type;
 
     switch (rawType) {
       case BottFileType.TXT: {
@@ -130,29 +123,29 @@ export const resolveFile = async (
         } else {
           data = rawData;
         }
-        partialFile.compressed = { data, type: BottFileType.MD };
+        file.compressed = { data, type: BottFileType.MD };
         break;
       }
       case BottFileType.HTML:
-        partialFile.compressed = await prepareHtmlAsMarkdown(
+        file.compressed = await prepareHtmlAsMarkdown(
           rawData,
         );
         break;
       case BottFileType.PNG:
       case BottFileType.JPEG:
-        partialFile.compressed = await prepareStaticImageAsWebp(
+        file.compressed = await prepareStaticImageAsWebp(
           rawData,
         );
         break;
       case BottFileType.MP3:
       case BottFileType.WAV:
-        partialFile.compressed = await prepareAudioAsOpus(
+        file.compressed = await prepareAudioAsOpus(
           rawData,
         );
         break;
       case BottFileType.GIF:
       case BottFileType.MP4:
-        partialFile.compressed = await prepareDynamicImageAsMp4(
+        file.compressed = await prepareDynamicImageAsMp4(
           rawData,
         );
         break;
@@ -161,5 +154,5 @@ export const resolveFile = async (
     }
   }
 
-  return partialFile as BottFile;
+  return file;
 };

@@ -72,19 +72,13 @@ const getAddFilesSql = (...files: BottFile[]) => {
   insert into files (
     id,
     source_url,
-    raw_type,
-    compressed_type,
     parent_id
   ) values ${
     files.map((f) =>
-      sql`(${f.id}, ${
-        f.source?.toString() ?? null
-      }, ${f.raw.type}, ${f.compressed.type}, ${f.parent?.id})`
+      sql`(${f.id}, ${f.source?.toString() ?? null}, ${f.parent?.id})`
     )
   } on conflict(id) do update set
     source_url = excluded.source_url,
-    raw_type = excluded.raw_type,
-    compressed_type = excluded.compressed_type,
     parent_id = excluded.parent_id
   `;
 };

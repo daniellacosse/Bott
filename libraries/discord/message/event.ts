@@ -69,7 +69,7 @@ export const messageToBottEvent = async (
   ];
 
   if (urls.length) {
-    event.files = urls.map<Partial<BottFile>>((url) => ({
+    event.files = urls.map<BottFile>((url) => ({
       id: crypto.randomUUID(),
       source: new URL(url),
       parent: event,

@@ -53,7 +53,7 @@ export interface BottUser {
 }
 
 /**
- * Enumerates the different types of files that can be associated with a Bott event.
+ * Enumerates the different types of files that can be associated with a BottEvent.
  */
 export enum BottFileType {
   GIF = "image/gif",
@@ -85,8 +85,8 @@ export type BottFileData = {
 export interface BottFile {
   id: string;
   source?: URL;
-  raw: BottFileData;
-  compressed: BottFileData;
+  raw?: BottFileData;
+  compressed?: BottFileData;
   parent?: BottEvent<AnyShape>;
 }
 
@@ -127,7 +127,7 @@ export interface BottEvent<
   /** Optional user who triggered or is associated with the event. */
   user?: BottUser;
   /** Optional array of files associated with the event. */
-  files?: Partial<BottFile>[];
+  files?: BottFile[];
 }
 
 /**
@@ -175,6 +175,7 @@ export type BottResponseEvent<D extends AnyShape = { content: string }> =
     D,
     BottEventType.RESPONSE
   >;
+
 /**
  * Defines the signature for a handler function that processes `BottRequestEvent`s.
  * @template O - Shape of the options for the incoming request.

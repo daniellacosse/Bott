@@ -26,7 +26,7 @@ export const getEvents = async (
         s.id as s_id, s.name as s_name, s.description as s_description, -- space
         u.id as u_id, u.name as u_name, -- user
         p.id as p_id, -- parent event
-        f.id as f_id, f.source_url as f_source_url, f.raw_type as f_raw_type, f.compressed_type as f_compressed_type -- file
+        f.id as f_id, f.source_url as f_source_url -- file
       from
         events e
       left join
