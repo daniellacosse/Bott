@@ -67,7 +67,7 @@ export const resolveFile = async (
       join(
         resolvedFileRoot,
         `raw.${
-          REVERSE_FILE_TYPE_ENUM[partialFile.raw.type].toLocaleLowerCase()
+          REVERSE_FILE_TYPE_ENUM[partialFile.raw.type].toLowerCase()
         }`,
       ),
       partialFile.raw.data,
