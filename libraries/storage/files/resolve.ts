@@ -98,7 +98,7 @@ export const resolveFile = async (
       data: Deno.readFileSync(compressedFilePath),
       type: BottFileType[
         compressedFileExtension
-          ?.toLocaleUpperCase() as keyof typeof BottFileType
+          ?.toUpperCase() as keyof typeof BottFileType
       ],
     };
   } else if (!compressedFilePath && partialFile.compressed) {
