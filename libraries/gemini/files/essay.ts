@@ -14,7 +14,7 @@ import type { BottFileDataGenerator } from "./types.ts";
 
 import { BottFileType } from "@bott/model";
 
-export const generateEssayFile: BottFileDataGenerator = async (
+export const generateEssayData: BottFileDataGenerator = async (
   prompt: string,
   {
     model = "gemini-2.5-pro",

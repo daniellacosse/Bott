@@ -27,7 +27,7 @@ const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 const VERTEX_API_URL =
   `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/lyria-002:predict`;
 
-export const generateSongFile: BottFileDataGenerator = async (
+export const generateSongData: BottFileDataGenerator = async (
   prompt,
   { abortSignal },
 ) => {

@@ -17,7 +17,7 @@ import { BottFileType } from "@bott/model";
 import _gemini from "../client.ts";
 import type { BottFileDataGenerator } from "./types.ts";
 
-export const generatePhotoFile: BottFileDataGenerator = async (
+export const generatePhotoData: BottFileDataGenerator = async (
   prompt: string,
   {
     model = "imagen-4.0-generate-preview-06-06",

@@ -20,7 +20,7 @@ import { BottFileType } from "@bott/model";
 import _gemini from "../client.ts";
 import type { BottFileDataGenerator } from "./types.ts";
 
-export const generateMovieFile: BottFileDataGenerator = async (
+export const generateMovieData: BottFileDataGenerator = async (
   prompt: string,
   {
     model = "veo-3.0-generate-preview",

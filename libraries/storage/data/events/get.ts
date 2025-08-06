@@ -63,7 +63,9 @@ export const getEvents = async (
     if (context.f_id) {
       fileInRow = await resolveFile({
         id: context.f_id,
-        source: new URL(context.f_source_url),
+        source: context.f_source_url
+          ? new URL(context.f_source_url)
+          : undefined,
       });
     }
 

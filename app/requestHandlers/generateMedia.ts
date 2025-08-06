@@ -19,10 +19,10 @@ import {
 } from "@bott/model";
 import { createTask } from "@bott/task";
 import {
-  generateEssayFile,
-  generateMovieFile,
-  generatePhotoFile,
-  generateSongFile,
+  generateEssayData,
+  generateMovieData,
+  generatePhotoData,
+  generateSongData,
 } from "@bott/gemini";
 
 import { taskManager } from "../tasks.ts";
@@ -113,17 +113,17 @@ export const generateMedia: BottRequestHandler<
 
               switch (type) {
                 case GeneratedMediaType.PHOTO:
-                  fileData = await generatePhotoFile(prompt, context);
+                  fileData = await generatePhotoData(prompt, context);
                   break;
                 case GeneratedMediaType.MOVIE:
-                  fileData = await generateMovieFile(prompt, context);
+                  fileData = await generateMovieData(prompt, context);
                   break;
                 case GeneratedMediaType.SONG:
-                  fileData = await generateSongFile(prompt, context);
+                  fileData = await generateSongData(prompt, context);
                   break;
                 case GeneratedMediaType.ESSAY:
                 default:
-                  fileData = await generateEssayFile(prompt, context);
+                  fileData = await generateEssayData(prompt, context);
                   break;
               }
             } catch (error) {
