@@ -45,6 +45,7 @@ Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deployNonce);
 
 startDiscordBot({
   addEventData,
+  getEvents,
   requestHandlerCommands: [help],
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {

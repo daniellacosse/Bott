@@ -15,6 +15,7 @@ import { type BottEvent, BottEventType, type BottFile } from "@bott/model";
 
 import { getMarkdownLinks } from "./markdown.ts";
 
+// TODO: this is for creating _new_ events?
 export const messageToBottEvent = async (
   message: Message<true>,
 ): Promise<BottEvent> => {

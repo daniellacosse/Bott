@@ -31,7 +31,7 @@ import {
   type BottRequestHandler,
 } from "@bott/model";
 
-import type { addEventData } from "@bott/storage";
+import type { addEventData, getEvents } from "@bott/storage";
 
 import { createErrorEmbed } from "../message/embed/error.ts";
 import { messageToBottEvent } from "../message/event.ts";
@@ -60,6 +60,7 @@ type DiscordBotOptions<
   identityToken: string;
   mount?: (this: DiscordBotContext) => void;
   addEventData: typeof addEventData;
+  getEvents: typeof getEvents;
 };
 
 export async function startDiscordBot<
@@ -68,6 +69,7 @@ export async function startDiscordBot<
   identityToken: token,
   requestHandlerCommands: commands,
   addEventData,
+  getEvents,
   event: handleEvent,
   mount: handleMount,
 }: DiscordBotOptions<O>) {
@@ -163,7 +165,6 @@ export async function startDiscordBot<
 
   (async () => {
     // Attempt to hydrate the DB.
-    // TODO(#36): Skip if the DB has data in it.
     const events: BottEvent[] = [];
 
     // Discord "guilds" are equivalent to Bott's "spaces":
@@ -175,10 +176,14 @@ export async function startDiscordBot<
 
         try {
           for (const [_, message] of await channel.messages.fetch()) {
+            if ((await getEvents(message.id)).length) {
+              continue;
+            }
+
             events.push(await messageToBottEvent(message));
           }
         } catch (_) {
-          // Likely don't haveaccess to this channel
+          // Likely don't have access to this channel
         }
       }
     }
@@ -188,7 +193,11 @@ export async function startDiscordBot<
     if ("error" in result) {
       console.error("[ERROR] Failed to hydrate database:", result.error);
     } else {
-      console.info("[INFO] Hydrated database with", events.length, "events.");
+      console.info(
+        "[INFO] Hydrating database with",
+        events.length,
+        "new events.",
+      );
     }
   })();
 
@@ -201,6 +210,7 @@ export async function startDiscordBot<
       return;
     }
 
+    // TODO: should this be the same "message -> event" thing?
     const event = await messageToBottEvent(
       message as Message<true>,
     );
@@ -244,9 +254,10 @@ export async function startDiscordBot<
     }
 
     if (reaction.message.content) {
-      event.parent = await messageToBottEvent(
-        reaction.message as Message<true>,
-      );
+      // TODO: should this be the same "message -> event" thing?
+      event.parent = (await getEvents(
+        reaction.message.id,
+      ))[0];
     }
 
     console.debug("[DEBUG] Reaction event:", {
