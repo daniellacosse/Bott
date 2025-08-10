@@ -215,7 +215,7 @@ export async function* generateEvents<O extends AnyShape>(
           ...assessmentHistory,
         ];
 
-        // TODO (nit): Combine these into a single call.
+        // TODO (#42): Combine these into a single call.
         const scores = {
           greeting: await _performAssessment(
             assessmentContent,

@@ -18,7 +18,6 @@ import { getEvents } from "./data/events/get.ts";
 import { prepareHtmlAsMarkdown } from "./files/prepare/html.ts";
 import { startStorage } from "./start.ts";
 
-// TODO: add files test
 Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();
 

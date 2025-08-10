@@ -11,14 +11,25 @@
 
 import type { Message } from "npm:discord.js";
 
-import { type BottEvent, BottEventType, type BottFile } from "@bott/model";
+import {
+  type AnyBottEvent,
+  type BottEvent,
+  BottEventType,
+  type BottFile,
+} from "@bott/model";
+import { addEventData, getEvents } from "@bott/storage";
 
 import { getMarkdownLinks } from "./markdown.ts";
 
-// TODO: this is for creating _new_ events?
-export const messageToBottEvent = async (
+export const resolveBottEventFromMessage = async (
   message: Message<true>,
-): Promise<BottEvent> => {
+): Promise<AnyBottEvent> => {
+  const [possibleEvent] = await getEvents(message.id);
+
+  if (possibleEvent) {
+    return possibleEvent;
+  }
+
   const event: BottEvent = {
     id: message.id,
     type: BottEventType.MESSAGE,
@@ -47,10 +58,10 @@ export const messageToBottEvent = async (
   if (message.reference?.messageId) {
     event.type = BottEventType.REPLY;
 
-    let parentMessage: BottEvent | undefined;
+    let parentMessage: AnyBottEvent | undefined;
 
     try {
-      parentMessage = await messageToBottEvent(
+      parentMessage = await resolveBottEventFromMessage(
         await message.channel.messages.fetch(
           message.reference.messageId,
         ),
@@ -75,6 +86,14 @@ export const messageToBottEvent = async (
       source: new URL(url),
       parent: event,
     }));
+  }
+
+  const result = await addEventData(event);
+  if ("error" in result) {
+    console.error(
+      "[ERROR] Failed to resolve message event to database:",
+      result.error,
+    );
   }
 
   return event;

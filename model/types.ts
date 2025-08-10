@@ -70,6 +70,13 @@ export enum BottFileType {
 }
 
 /**
+ * Convenience map for looking up an extension based on its file type.
+ */
+export const BOTT_FILE_TYPE_LOOKUP = Object.fromEntries(
+  Object.entries(BottFileType).map(([key, value]) => [value, key]),
+);
+
+/**
  * Defines the structure for file data, which can be either a direct `Uint8Array`
  * or a path to the file, along with its `BottFileType`.
  */

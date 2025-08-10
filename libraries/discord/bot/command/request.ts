@@ -14,6 +14,7 @@ import {
   BottEventType,
   type BottRequestEvent,
 } from "@bott/model";
+import { addEventData } from "@bott/storage";
 import {
   ApplicationCommandOptionType,
   ChannelType,
@@ -22,7 +23,7 @@ import {
   type GuildTextBasedChannel,
 } from "npm:discord.js";
 
-export function getCommandRequestEvent<
+export function resolveCommandRequestEvent<
   O extends Record<string, unknown> = Record<string, unknown>,
 >(
   interaction: ChatInputCommandInteraction,
@@ -62,6 +63,14 @@ export function getCommandRequestEvent<
     channel,
     timestamp: new Date(),
   };
+
+  const result = addEventData(event);
+  if ("error" in result) {
+    console.error(
+      "[ERROR] Failed to resolve request event to database:",
+      result.error,
+    );
+  }
 
   return event;
 }
