@@ -29,7 +29,9 @@ import type { getEvents } from "@bott/storage";
 
 import gemini from "../client.ts";
 import {
+  CONFIG_ASSESSMENT_MODEL,
   CONFIG_ASSESSMENT_SCORE_THRESHOLD,
+  CONFIG_EVENTS_MODEL,
   INPUT_EVENT_LIMIT,
   INPUT_FILE_AUDIO_COUNT_LIMIT,
   INPUT_FILE_TOKEN_LIMIT,
@@ -58,7 +60,7 @@ type GeminiResponseContext<O extends AnyShape> = {
 export async function* generateEvents<O extends AnyShape>(
   inputEvents: AnyBottEvent[],
   {
-    model = "gemini-2.5-flash",
+    model = CONFIG_EVENTS_MODEL,
     abortSignal,
     context,
     getEvents,
@@ -279,7 +281,7 @@ const _performAssessment = async (
   assessmentInstructions: string,
 ): Promise<number> => {
   const assessmentResult = await gemini.models.generateContent({
-    model: "gemini-2.5-flash-lite",
+    model: CONFIG_ASSESSMENT_MODEL,
     contents,
     config: {
       candidateCount: 1,

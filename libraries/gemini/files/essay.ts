@@ -11,6 +11,7 @@
 
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
+import { CONFIG_ESSAY_MODEL } from "../constants.ts";
 
 import { BottOutputFileType } from "@bott/model";
 
@@ -19,7 +20,7 @@ import { BottOutputFileType } from "@bott/model";
 export const generateEssayFile: OutputFileGenerator = async (
   prompt: string,
   {
-    model = "gemini-2.5-pro",
+    model = CONFIG_ESSAY_MODEL,
     gemini = _gemini,
     storeOutputFile,
   },

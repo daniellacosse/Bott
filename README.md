@@ -50,20 +50,27 @@ cp .env.example .env.development
 
 Bott is configured via a series of environment variables.
 
-| Name                                | Description                                                                                                               | Default     |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| `CONFIG_ASSESSMENT_SCORE_THRESHOLD` | The minimum score (1-100) a potential response must achieve in quality assessments (e.g., novelty, relevance) to be sent. | 70          |
-| `CONFIG_INPUT_EVENT_LIMIT`          | The maximum number of past chat events to include in the context for the AI model.                                        | 2000        |
-| `CONFIG_INPUT_FILE_TOKEN_LIMIT`     | The maximum number of tokens to use for analyzing the content of input files (images, websites).                          | 500000      |
-| `CONFIG_RATE_LIMIT_IMAGES`          | The maximum number of images Bott can generate per month.                                                                 | 100         |
-| `CONFIG_RATE_LIMIT_MUSIC`           | The maximum number of songs Bott can generate per month.                                                                  | 25          |
-| `CONFIG_RATE_LIMIT_VIDEOS`          | The maximum number of videos Bott can generate per month.                                                                 | 10          |
-| `DISCORD_TOKEN`                     | The authentication token for your Discord bot application.                                                                | -           |
-| `FILE_SYSTEM_ROOT`                  | The root directory on the local file system for storing input and output files.                                           | `./fs_root` |
-| `GOOGLE_ACCESS_TOKEN`               | An access token for authenticating with Google Cloud APIs (for local development).                                        | -           |
-| `GOOGLE_PROJECT_ID`                 | The ID of your Google Cloud project. (Automatically set during Cloud Run deployment.)                                     | -           |
-| `GOOGLE_PROJECT_LOCATION`           | The GCP region where your Vertex AI resources are located. (Automatically set during Cloud Run deployment.)               | -           |
-| `PORT`                              | The port of the health check server required for GCP Cloud Run.                                                           | 8080        |
+| Name                                | Description                                                                                                               | Default                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `CONFIG_ASSESSMENT_MODEL`           | The AI model used for quality assessment of potential bot responses.                                                      | gemini-2.5-flash-lite             |
+| `CONFIG_ASSESSMENT_SCORE_THRESHOLD` | The minimum score (1-100) a potential response must achieve in quality assessments (e.g., novelty, relevance) to be sent. | 70                                |
+| `CONFIG_ERROR_MODEL`                | The AI model used for generating user-friendly error messages.                                                            | gemini-2.5-flash                  |
+| `CONFIG_ESSAY_MODEL`                | The AI model used for generating essays and long-form text content.                                                       | gemini-2.5-pro                    |
+| `CONFIG_EVENTS_MODEL`               | The AI model used for generating responses to chat events and user messages.                                              | gemini-2.5-flash                  |
+| `CONFIG_INPUT_EVENT_LIMIT`          | The maximum number of past chat events to include in the context for the AI model.                                        | 2000                              |
+| `CONFIG_INPUT_FILE_TOKEN_LIMIT`     | The maximum number of tokens to use for analyzing the content of input files (images, websites).                          | 500000                            |
+| `CONFIG_MOVIE_MODEL`                | The AI model used for generating video content.                                                                           | veo-3.0-generate-preview          |
+| `CONFIG_PHOTO_MODEL`                | The AI model used for generating images.                                                                                  | imagen-4.0-generate-preview-06-06 |
+| `CONFIG_RATE_LIMIT_IMAGES`          | The maximum number of images Bott can generate per month.                                                                 | 100                               |
+| `CONFIG_RATE_LIMIT_MUSIC`           | The maximum number of songs Bott can generate per month.                                                                  | 25                                |
+| `CONFIG_RATE_LIMIT_VIDEOS`          | The maximum number of videos Bott can generate per month.                                                                 | 10                                |
+| `CONFIG_SONG_MODEL`                 | The AI model used for generating music and audio content.                                                                 | lyria-002                         |
+| `DISCORD_TOKEN`                     | The authentication token for your Discord bot application.                                                                | -                                 |
+| `FILE_SYSTEM_ROOT`                  | The root directory on the local file system for storing input and output files.                                           | `./fs_root`                       |
+| `GOOGLE_ACCESS_TOKEN`               | An access token for authenticating with Google Cloud APIs (for local development).                                        | -                                 |
+| `GOOGLE_PROJECT_ID`                 | The ID of your Google Cloud project. (Automatically set during Cloud Run deployment.)                                     | -                                 |
+| `GOOGLE_PROJECT_LOCATION`           | The GCP region where your Vertex AI resources are located. (Automatically set during Cloud Run deployment.)               | -                                 |
+| `PORT`                              | The port of the health check server required for GCP Cloud Run.                                                           | 8080                              |
 
 ### Deploying Bott
 
