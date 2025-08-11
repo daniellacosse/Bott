@@ -82,7 +82,7 @@ export async function startDiscordBot<
 
         try {
           for (const [_, message] of await channel.messages.fetch()) {
-            resolveBottEventFromMessage(message);
+            await resolveBottEventFromMessage(message);
           }
         } catch (_) {
           // Likely don't have access to this channel
