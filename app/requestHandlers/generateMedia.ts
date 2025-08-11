@@ -11,19 +11,18 @@
 
 import {
   BottEventType,
-  type BottOutputFile,
+  type BottFileData,
   type BottRequestEvent,
   type BottRequestHandler,
   BottRequestOptionType,
   type BottResponseEvent,
 } from "@bott/model";
-import { storeOutputFile } from "@bott/storage";
 import { createTask } from "@bott/task";
 import {
-  generateEssayFile,
-  generateMovieFile,
-  generatePhotoFile,
-  generateSongFile,
+  generateEssayData,
+  generateMovieData,
+  generatePhotoData,
+  generateSongData,
 } from "@bott/gemini";
 
 import { taskManager } from "../tasks.ts";
@@ -105,27 +104,26 @@ export const generateMedia: BottRequestHandler<
         taskManager.push(
           type,
           createTask(async (abortSignal: AbortSignal) => {
-            let file: BottOutputFile | undefined;
+            let fileData: BottFileData | undefined;
 
             try {
               const context = {
                 abortSignal,
-                storeOutputFile,
               };
 
               switch (type) {
                 case GeneratedMediaType.PHOTO:
-                  file = await generatePhotoFile(prompt, context);
+                  fileData = await generatePhotoData(prompt, context);
                   break;
                 case GeneratedMediaType.MOVIE:
-                  file = await generateMovieFile(prompt, context);
+                  fileData = await generateMovieData(prompt, context);
                   break;
                 case GeneratedMediaType.SONG:
-                  file = await generateSongFile(prompt, context);
+                  fileData = await generateSongData(prompt, context);
                   break;
                 case GeneratedMediaType.ESSAY:
                 default:
-                  file = await generateEssayFile(prompt, context);
+                  fileData = await generateEssayData(prompt, context);
                   break;
               }
             } catch (error) {
@@ -137,7 +135,7 @@ export const generateMedia: BottRequestHandler<
             }
 
             // This shouldn't happen.
-            if (!file) {
+            if (!fileData) {
               throw new Error("Failed to generate media");
             }
 
@@ -147,7 +145,10 @@ export const generateMedia: BottRequestHandler<
               details: {
                 content: "",
               },
-              files: [file],
+              files: [{
+                id: crypto.randomUUID(),
+                raw: fileData,
+              }],
               timestamp: new Date(),
               user: requestEvent.user,
               channel: requestEvent.channel,

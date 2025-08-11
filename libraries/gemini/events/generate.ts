@@ -19,8 +19,8 @@ import {
   type BottChannel,
   type BottEvent,
   BottEventType,
-  type BottInputFile,
-  BottInputFileType,
+  type BottFile,
+  BottFileType,
   type BottRequestEvent,
   type BottRequestHandler,
   type BottUser,
@@ -114,18 +114,23 @@ export async function* generateEvents<O extends AnyShape>(
       for (const file of event.files) {
         let shouldPrune = false;
 
+        if (!file.compressed) {
+          continue;
+        }
+
         if (
-          resourceAccumulator.estimatedTokens + file.data.byteLength >
+          resourceAccumulator.estimatedTokens +
+              file.compressed.data.byteLength >
             INPUT_FILE_TOKEN_LIMIT
         ) {
           shouldPrune = true;
         } else if (
-          file.type === BottInputFileType.OPUS &&
+          file.compressed.type === BottFileType.OPUS &&
           resourceAccumulator.audioFiles >= INPUT_FILE_AUDIO_COUNT_LIMIT
         ) {
           shouldPrune = true;
         } else if (
-          file.type === BottInputFileType.MP4 &&
+          file.compressed.type === BottFileType.MP4 &&
           resourceAccumulator.videoFiles >= INPUT_FILE_VIDEO_COUNT_LIMIT
         ) {
           shouldPrune = true;
@@ -137,17 +142,17 @@ export async function* generateEvents<O extends AnyShape>(
 
         filesToKeep.push(file);
 
-        if (file.type === BottInputFileType.OPUS) {
+        if (file.compressed.type === BottFileType.OPUS) {
           resourceAccumulator.audioFiles++;
-        } else if (file.type === BottInputFileType.MP4) {
+        } else if (file.compressed.type === BottFileType.MP4) {
           resourceAccumulator.videoFiles++;
         }
 
-        resourceAccumulator.estimatedTokens += file.data.byteLength;
+        resourceAccumulator.estimatedTokens += file.compressed.data.byteLength;
       }
 
       if (filesToKeep.length) {
-        event.files = filesToKeep as BottInputFile[];
+        event.files = filesToKeep as BottFile[];
       } else {
         delete event.files;
       }
@@ -212,7 +217,7 @@ export async function* generateEvents<O extends AnyShape>(
           ...assessmentHistory,
         ];
 
-        // TODO (nit): Combine these into a single call.
+        // TODO (#42): Combine these into a single call.
         const scores = {
           greeting: await _performAssessment(
             assessmentContent,
@@ -354,10 +359,14 @@ const _transformBottEventToContent = (
 
   if (event.files) {
     for (const file of event.files) {
+      if (!file.compressed) {
+        continue;
+      }
+
       parts.push({
         inlineData: {
-          mimeType: file.type,
-          data: encodeBase64(file.data),
+          mimeType: file.compressed.type,
+          data: encodeBase64(file.compressed.data!),
         },
       });
     }
