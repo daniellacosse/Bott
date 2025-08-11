@@ -19,7 +19,7 @@ import {
 } from "@bott/model";
 
 import gemini from "../client.ts";
-import { GEMINI_ERROR_MODEL } from "../constants.ts";
+import { CONFIG_ERROR_MODEL } from "../constants.ts";
 import instructions from "./instructions.ts";
 
 export async function generateErrorMessage<O extends AnyShape>(
@@ -28,7 +28,7 @@ export async function generateErrorMessage<O extends AnyShape>(
   requestEvent: BottRequestEvent<O>,
   context: { user: BottUser; channel: BottChannel; identity: string },
 ): Promise<BottEvent> {
-  const model = GEMINI_ERROR_MODEL;
+  const model = CONFIG_ERROR_MODEL;
 
   const geminiInput = {
     request: {

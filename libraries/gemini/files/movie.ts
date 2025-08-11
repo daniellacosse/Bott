@@ -16,6 +16,7 @@ import {
 import { decodeBase64 } from "jsr:@std/encoding";
 
 import { BottOutputFileType } from "@bott/model";
+import { CONFIG_MOVIE_MODEL } from "../constants.ts";
 
 import _gemini from "../client.ts";
 import type { OutputFileGenerator } from "./types.ts";
@@ -25,7 +26,7 @@ import type { OutputFileGenerator } from "./types.ts";
 export const generateMovieFile: OutputFileGenerator = async (
   prompt: string,
   {
-    model = "veo-3.0-generate-preview",
+    model = CONFIG_MOVIE_MODEL,
     gemini = _gemini,
     abortSignal,
     storeOutputFile,

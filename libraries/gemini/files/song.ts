@@ -12,6 +12,7 @@
 import { decodeBase64 } from "jsr:@std/encoding";
 
 import { BottOutputFileType } from "@bott/model";
+import { CONFIG_SONG_MODEL } from "../constants.ts";
 
 import type { OutputFileGenerator } from "./types.ts";
 
@@ -25,7 +26,7 @@ const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN") ??
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
 const VERTEX_API_URL =
-  `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/lyria-002:predict`;
+  `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/${CONFIG_SONG_MODEL}:predict`;
 
 // NOTE: This stores output files to disk, even if they
 // are not in the database yet.
