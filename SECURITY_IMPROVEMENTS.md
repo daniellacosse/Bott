@@ -9,56 +9,55 @@ Based on the analysis of the codebase, the following critical vulnerabilities we
 ### 1. FFmpeg Command Injection (HIGH RISK) ✅ FIXED
 **Issue**: The FFmpeg execution function could potentially be exploited through command injection.
 **Solution**: 
-- Added strict argument validation with allowlists
-- Implemented dangerous pattern detection
-- Added secure command building functions
+- Added validation focused on critical dangerous patterns
+- Implemented shell metacharacter detection
+- Added secure command building functions using templates
 - Improved temporary file handling with proper validation
 
 ### 2. File Path Traversal (MEDIUM RISK) ✅ FIXED  
 **Issue**: File operations could be vulnerable to directory traversal attacks.
 **Solution**:
-- Added comprehensive path validation
-- Implemented safe path construction functions
-- Added checks for dangerous characters and reserved names
-- Prevented access to system directories
+- Added path validation using Deno standard library functions
+- Implemented safe path construction with `@std/path`
+- Added checks for dangerous characters and null bytes
+- Prevented access outside allowed directories
 
 ### 3. File Content Validation (MEDIUM RISK) ✅ FIXED
 **Issue**: Uploaded files could contain malicious content or misleading MIME types.
 **Solution**:
-- Added file signature verification
-- Implemented content pattern detection for scripts
-- Added size limits and content type validation
-- Enhanced binary content security checks
+- Added basic MIME type and size validation
+- Implemented content pattern detection for critical script injection
+- Added size limits and content type checking
+- Simplified binary content validation
 
 ### 4. String Sanitization (LOW-MEDIUM RISK) ✅ FIXED
 **Issue**: User input could contain dangerous characters or injection attempts.
 **Solution**:
-- Added comprehensive string sanitization functions
-- Implemented HTML escaping when needed
-- Added filename sanitization for filesystem safety
+- Uses Deno standard library `@std/html` escape() function  
+- Added basic dangerous character removal
+- Simplified approach focusing on essential security
 
 ## Security Libraries Implemented
 
 ### `/libraries/security/validators/filePath.ts`
-- `validateFilePath()`: Prevents path traversal attacks
-- `safeJoinPath()`: Safely constructs file paths
-- Checks for dangerous characters, null bytes, and reserved names
+- `validateFilePath()`: Prevents path traversal attacks using `@std/path` functions
+- `safeJoinPath()`: Safely constructs file paths  
+- Checks for dangerous characters and null bytes
 
 ### `/libraries/security/validators/ffmpeg.ts`
-- `validateFFmpegArgs()`: Validates FFmpeg arguments against allowlists
-- `buildSafeFFmpegArgs()`: Safely constructs FFmpeg command arguments
-- Prevents command injection and dangerous flag usage
+- `validateFFmpegArgs()`: Validates FFmpeg arguments against critical dangerous patterns
+- `buildSafeFFmpegArgs()`: Safely constructs FFmpeg command arguments with templates
+- Prevents command injection focusing on shell metacharacters
 
 ### `/libraries/security/validators/fileContent.ts`
-- `validateFileContent()`: Validates file content and MIME types
-- File signature verification to prevent MIME type spoofing
-- Malicious content pattern detection
-- Size limits and entropy checks
+- `validateFileContent()`: Basic file type and size validation
+- Checks for critical dangerous content patterns in text files
+- MIME type and size limit enforcement
 
 ### `/libraries/security/sanitizers/string.ts`
-- `sanitizeString()`: Removes dangerous characters from strings
-- `sanitizeFilename()`: Makes filenames safe for filesystem operations
-- HTML escaping and Unicode validation
+- `sanitizeString()`: Uses Deno standard library for HTML escaping
+- Removes control characters and excessive whitespace
+- Simplified approach focusing on essential security
 
 ## Container Security Improvements
 
