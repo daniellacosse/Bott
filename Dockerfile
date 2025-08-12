@@ -3,8 +3,8 @@ FROM denoland/deno:latest
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
-    libmp3lame0 \
-    libx265-199 && \
+    libmp3lame-dev \
+    libx265-dev && \
     rm -rf /var/lib/apt/lists/*
 
 COPY ./deno.json ./deno.lock* ./
