@@ -1,0 +1,4 @@
+{
+  "name": "@bott/security",
+  "exports": "./validation.ts"
+}

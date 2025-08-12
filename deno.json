@@ -20,6 +20,7 @@
     "./libraries/task",
     "./libraries/gemini",
     "./libraries/discord",
+    "./libraries/security",
     "./app"
   ]
 }

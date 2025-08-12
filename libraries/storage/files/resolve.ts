@@ -16,6 +16,7 @@ import {
   type BottFile,
   BottFileType,
 } from "@bott/model";
+import { validateUrl, validateFileSize } from "@bott/security";
 
 import { STORAGE_FILE_ROOT } from "../start.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
@@ -66,19 +67,52 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
       );
     }
 
+    // Security validation: validate URL for SSRF protection
+    validateUrl(file.source);
+
     console.debug(
       `[DEBUG] Fetching raw file from source URL: ${file.source}`,
     );
-    const response = await fetch(file.source);
-    const data = new Uint8Array(await response.arrayBuffer());
-    const type = response.headers.get("content-type")?.split(";")[0].trim() ??
-      "";
+    
+    // Security: Set timeout for fetch requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const response = await fetch(file.source, {
+        signal: controller.signal,
+        // Security headers
+        headers: {
+          "User-Agent": "Bott-Discord-Bot/1.0",
+        },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = new Uint8Array(await response.arrayBuffer());
+      
+      // Security validation: check file size
+      validateFileSize(data);
+      
+      const type = response.headers.get("content-type")?.split(";")[0].trim() ??
+        "";
 
-    if (!Object.values(BottFileType).includes(type as BottFileType)) {
-      throw new Error(`Unsupported content type: ${type}`);
+      if (!Object.values(BottFileType).includes(type as BottFileType)) {
+        throw new Error(`Unsupported content type: ${type}`);
+      }
+
+      file.raw = { data, type: type as BottFileType };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout while fetching file');
+      }
+      throw error;
     }
-
-    file.raw = { data, type: type as BottFileType };
   }
 
   if (!rawFilePath) {

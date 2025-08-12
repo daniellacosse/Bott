@@ -17,6 +17,7 @@ import {
   BottRequestOptionType,
   type BottResponseEvent,
 } from "@bott/model";
+import { sanitizeAIPrompt } from "@bott/security";
 import { createTask } from "@bott/task";
 import {
   generateEssayData,
@@ -54,11 +55,14 @@ export const generateMedia: BottRequestHandler<
       prompt: string;
     }>,
   ) {
-    const { type, prompt } = requestEvent.details.options;
+    const { type, prompt: rawPrompt } = requestEvent.details.options;
+
+    // Security: Sanitize the AI prompt to prevent injection attacks
+    const prompt = sanitizeAIPrompt(rawPrompt);
 
     console.debug("[DEBUG] generateMedia() called with options:", {
       type,
-      prompt,
+      prompt: prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""), // Log truncated version
     });
 
     if (!taskManager.has(type)) {

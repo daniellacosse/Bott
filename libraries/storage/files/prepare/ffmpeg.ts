@@ -10,11 +10,18 @@
  */
 
 import { BottFileType } from "@bott/model";
+import { validateFFmpegArgs, validateFileSize } from "@bott/security";
 
 const _ffmpeg = async (
   args: string[],
   input: Uint8Array,
 ): Promise<Uint8Array> => {
+  // Security validation: check file size
+  validateFileSize(input);
+  
+  // Security validation: validate FFmpeg arguments
+  validateFFmpegArgs(args);
+
   const tempInputFilePath = await Deno.makeTempFile({
     prefix: "bott_ffmpeg_in_",
   });
@@ -40,6 +47,8 @@ const _ffmpeg = async (
       stdin: "null",
       stdout: "null",
       stderr: "piped",
+      // Security: Set timeout to prevent long-running processes
+      signal: AbortSignal.timeout(300000), // 5 minutes max
     });
 
     const { success, code, stderr: ffmpegStderr } = await command
@@ -53,10 +62,24 @@ const _ffmpeg = async (
       );
     }
 
-    return Deno.readFile(tempOutputFilePath);
+    const outputData = await Deno.readFile(tempOutputFilePath);
+    
+    // Security validation: check output file size
+    validateFileSize(outputData);
+    
+    return outputData;
   } finally {
-    await Deno.remove(tempInputFilePath);
-    await Deno.remove(tempOutputFilePath);
+    // Ensure temp files are always cleaned up
+    try {
+      await Deno.remove(tempInputFilePath);
+    } catch {
+      // Ignore cleanup errors
+    }
+    try {
+      await Deno.remove(tempOutputFilePath);
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 };
 
