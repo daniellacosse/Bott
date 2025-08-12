@@ -18,4 +18,5 @@ Deno.test("Logger exports expected methods", () => {
   assertEquals(typeof log.info, "function");
   assertEquals(typeof log.warn, "function");
   assertEquals(typeof log.error, "function");
+  assertEquals(typeof log.perf, "function");
 });

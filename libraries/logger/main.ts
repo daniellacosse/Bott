@@ -47,4 +47,10 @@ export const log = {
       console.error(...args);
     }
   },
+
+  perf(...args: unknown[]): void {
+    if (shouldLog("perf")) {
+      console.log(...args);
+    }
+  },
 };
