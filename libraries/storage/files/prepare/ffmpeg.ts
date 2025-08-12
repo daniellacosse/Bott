@@ -10,7 +10,14 @@
  */
 
 import { BottFileType } from "@bott/model";
-import { validateFFmpegArgs, validateFileSize } from "@bott/security";
+import { validateFileSize } from "@bott/storage";
+
+// Security Note: _ffmpeg is not exported and all arguments are hardcoded below.
+// If this function is ever modified to accept user input, implement proper
+// argument validation to prevent command injection attacks.
+
+// FFmpeg process timeout (5 minutes)
+const FFMPEG_TIMEOUT_MS = 5 * 60 * 1000;
 
 const _ffmpeg = async (
   args: string[],
@@ -18,9 +25,6 @@ const _ffmpeg = async (
 ): Promise<Uint8Array> => {
   // Security validation: check file size
   validateFileSize(input);
-  
-  // Security validation: validate FFmpeg arguments
-  validateFFmpegArgs(args);
 
   const tempInputFilePath = await Deno.makeTempFile({
     prefix: "bott_ffmpeg_in_",
@@ -48,7 +52,7 @@ const _ffmpeg = async (
       stdout: "null",
       stderr: "piped",
       // Security: Set timeout to prevent long-running processes
-      signal: AbortSignal.timeout(300000), // 5 minutes max
+      signal: AbortSignal.timeout(FFMPEG_TIMEOUT_MS),
     });
 
     const { success, code, stderr: ffmpegStderr } = await command

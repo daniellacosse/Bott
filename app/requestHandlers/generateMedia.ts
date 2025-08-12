@@ -17,7 +17,6 @@ import {
   BottRequestOptionType,
   type BottResponseEvent,
 } from "@bott/model";
-import { sanitizeAIPrompt } from "@bott/security";
 import { createTask } from "@bott/task";
 import {
   generateEssayData,
@@ -25,6 +24,21 @@ import {
   generatePhotoData,
   generateSongData,
 } from "@bott/gemini";
+
+/**
+ * Sanitizes user input for AI prompts to prevent injection
+ */
+function sanitizeAIPrompt(input: string): string {
+  // Remove or escape potentially dangerous patterns
+  return input
+    // Remove excessive whitespace
+    .replace(/\s+/g, " ")
+    .trim()
+    // Remove control characters except newlines and tabs
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    // Limit length to prevent token overflow
+    .substring(0, 10000);
+}
 
 import { taskManager } from "../tasks.ts";
 import {

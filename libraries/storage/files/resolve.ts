@@ -16,7 +16,7 @@ import {
   type BottFile,
   BottFileType,
 } from "@bott/model";
-import { validateUrl, validateFileSize } from "@bott/security";
+import { validateUrl, validateFileSize } from "../validation.ts";
 
 import { STORAGE_FILE_ROOT } from "../start.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
@@ -25,6 +25,9 @@ import {
   prepareDynamicImageAsMp4,
   prepareStaticImageAsWebp,
 } from "./prepare/ffmpeg.ts";
+
+// Request timeout in milliseconds (30 seconds)
+const FETCH_TIMEOUT_MS = 30 * 1000;
 
 const MAX_TXT_WORDS = 600;
 
@@ -74,20 +77,15 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
       `[DEBUG] Fetching raw file from source URL: ${file.source}`,
     );
     
-    // Security: Set timeout for fetch requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
     try {
       const response = await fetch(file.source, {
-        signal: controller.signal,
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        redirect: "follow",
         // Security headers
         headers: {
-          "User-Agent": "Bott-Discord-Bot/1.0",
+          "User-Agent": "Bott",
         },
       });
-      
-      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -107,7 +105,6 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
 
       file.raw = { data, type: type as BottFileType };
     } catch (error) {
-      clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         throw new Error('Request timeout while fetching file');
       }
