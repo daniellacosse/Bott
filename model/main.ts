@@ -9,5 +9,4 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export * from "./guards.ts";
 export * from "./types.ts";

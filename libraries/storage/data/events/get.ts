@@ -9,56 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { join } from "jsr:@std/path";
+import type { AnyBottEvent, BottEventType, BottFile } from "@bott/model";
 
-import type {
-  AnyBottEvent,
-  BottEventType,
-  BottInputFile,
-  BottOutputFile,
-} from "@bott/model";
-
-import {
-  STORAGE_FILE_INPUT_ROOT,
-  STORAGE_FILE_OUTPUT_ROOT,
-} from "../../start.ts";
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
-
-const _getFileFromRow = (
-  // deno-lint-ignore no-explicit-any
-  row: any,
-): BottInputFile | BottOutputFile | undefined => {
-  try {
-    if (
-      row.i_url &&
-      Deno.statSync(join(STORAGE_FILE_INPUT_ROOT, row.i_path)).isFile
-    ) {
-      return {
-        url: new URL(row.i_url),
-        path: row.i_path,
-        type: row.i_type,
-        data: Deno.readFileSync(join(STORAGE_FILE_INPUT_ROOT, row.i_path)),
-      };
-    }
-
-    if (
-      row.o_id &&
-      Deno.statSync(join(STORAGE_FILE_OUTPUT_ROOT, row.o_path)).isFile
-    ) {
-      return {
-        id: row.o_id,
-        path: row.o_path,
-        type: row.o_type,
-        data: Deno.readFileSync(join(STORAGE_FILE_OUTPUT_ROOT, row.o_path)),
-      };
-    }
-  } catch (_) {
-    return undefined;
-  }
-
-  return undefined;
-};
+import { resolveFile } from "../../files/resolve.ts";
 
 export const getEvents = async (
   ...ids: string[]
@@ -71,8 +26,7 @@ export const getEvents = async (
         s.id as s_id, s.name as s_name, s.description as s_description, -- space
         u.id as u_id, u.name as u_name, -- user
         p.id as p_id, -- parent event
-        i.url as i_url, i.type as i_type, i.path as i_path, -- input file
-        o.id as o_id, o.type as o_type, o.path as o_path -- output file
+        f.id as f_id, f.source_url as f_source_url -- file
       from
         events e
       left join
@@ -84,9 +38,7 @@ export const getEvents = async (
       left join
         users u on e.user_id = u.id
       left join
-        input_files i on e.id = i.parent_id
-      left join
-        output_files o on e.id = o.parent_id
+        files f on e.id = f.parent_id
       where
         e.id in (${ids})
       order by e.timestamp asc`,
@@ -104,60 +56,62 @@ export const getEvents = async (
       e_type: type,
       e_details: details,
       e_timestamp: timestamp,
-      ...context
+      ...rowData
     } of result.reads
   ) {
-    let event: AnyBottEvent = {
+    let fileInRow: BottFile | undefined;
+    if (rowData.f_id) {
+      try {
+        fileInRow = await resolveFile({
+          id: rowData.f_id,
+          source: rowData.f_source_url
+            ? new URL(rowData.f_source_url)
+            : undefined,
+        });
+      } catch (e) {
+        console.warn(`[WARN] Failed to resolve file [${rowData.f_id}]: ${e}`);
+      }
+    }
+
+    if (events.has(id)) {
+      if (fileInRow) {
+        events.get(id)!.files ??= [];
+        events.get(id)!.files!.push(fileInRow);
+      }
+
+      continue;
+    }
+
+    const event: AnyBottEvent = {
       id,
       type: type as BottEventType,
       details: JSON.parse(details),
       timestamp: new Date(timestamp),
+      files: fileInRow ? [fileInRow] : undefined,
     };
 
-    const file = _getFileFromRow(context);
-
-    if (file && events.has(id)) {
-      event = events.get(id)!;
-      file.parent = event;
-
-      event.files ??= [];
-      file.parent = event;
-
-      // The type of array here shouldn't matter.
-      // deno-lint-ignore no-explicit-any
-      (event.files as any[]).push(file);
-
-      continue;
-    } else if (file) {
-      file.parent = event;
-
-      // The type of array here shouldn't matter.
-      // deno-lint-ignore no-explicit-any
-      event.files = [file] as any[];
-    }
-
-    if (context.c_id) {
+    if (rowData.c_id) {
       event.channel = {
-        id: context.c_id,
-        name: context.c_name,
-        description: context.c_description,
+        id: rowData.c_id,
+        name: rowData.c_name,
+        description: rowData.c_description,
         space: {
-          id: context.s_id,
-          name: context.s_name,
-          description: context.s_description,
+          id: rowData.s_id,
+          name: rowData.s_name,
+          description: rowData.s_description,
         },
       };
     }
 
-    if (context.u_id) {
+    if (rowData.u_id) {
       event.user = {
-        id: context.u_id,
-        name: context.u_name,
+        id: rowData.u_id,
+        name: rowData.u_name,
       };
     }
 
-    if (context.p_id) {
-      event.parent = (await getEvents(context.p_id))[0];
+    if (rowData.p_id) {
+      [event.parent] = await getEvents(rowData.p_id);
     }
 
     events.set(id, event);

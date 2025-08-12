@@ -9,11 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { SupportedValueType } from "node:sqlite";
+import type { SQLOutputValue } from "node:sqlite";
 
 export interface SqlInstructions {
   query: string;
-  params: SupportedValueType[];
+  params: SQLOutputValue[];
 }
 
 // deno-lint-ignore no-explicit-any
@@ -29,8 +29,8 @@ function isSqlInstructions(value: any): value is SqlInstructions {
 // Helper to process a single non-array interpolation item.
 // It returns the query string part for this item and pushes its parameters to the paramsCollector.
 function processInterpolationValue(
-  item: SupportedValueType | SqlInstructions | undefined,
-  paramsCollector: SupportedValueType[],
+  item: SQLOutputValue | SqlInstructions | undefined,
+  paramsCollector: SQLOutputValue[],
 ): string {
   if (isSqlInstructions(item)) {
     paramsCollector.push(...item.params);
@@ -49,13 +49,13 @@ export function sql( // naive sql tag
   strings: TemplateStringsArray,
   ...interpolations: (
     | undefined
-    | SupportedValueType
+    | SQLOutputValue
     | SqlInstructions
-    | (SqlInstructions | SupportedValueType)[]
+    | (SqlInstructions | SQLOutputValue)[]
   )[]
 ): SqlInstructions {
   let [query] = strings.raw;
-  const params: SupportedValueType[] = [];
+  const params: SQLOutputValue[] = [];
 
   for (let i = 0; i < interpolations.length; i++) {
     const interpolation = interpolations[i];

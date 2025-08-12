@@ -17,7 +17,6 @@ import {
   getEventIdsForChannel,
   getEvents,
   startStorage,
-  storeNewInputFile,
 } from "@bott/storage";
 import { createTask } from "@bott/task";
 import { startDiscordBot } from "@bott/discord";
@@ -45,8 +44,6 @@ const deployNonce = crypto.randomUUID();
 Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deployNonce);
 
 startDiscordBot({
-  addEventData,
-  storeNewInputFile,
   requestHandlerCommands: [help],
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {

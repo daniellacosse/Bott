@@ -9,12 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottInputFileType } from "@bott/model";
 import { validateFilePath } from "../../security.ts";
-import type { InputFileDataTransformer } from "../../types.ts";
+import { BottFileType } from "@bott/model";
 
 /*
- * SECURITY NOTE: The _ffmpeg function uses hardcoded, static argument templates 
+ * SECURITY NOTE: The _ffmpeg function uses hardcoded, static argument templates
  * that do not accept user input directly. This design prevents command injection
  * attacks. Future developers should maintain this practice:
  * - Keep FFmpeg arguments static and predefined
@@ -95,8 +94,8 @@ const _ffmpeg = async (
 
 const MAX_DIMENSION = 480;
 
-export const prepareStaticImageAsWebp: InputFileDataTransformer = async (
-  data,
+export const prepareStaticImageAsWebp = async (
+  data: Uint8Array,
 ) => {
   const args = [
     "-y",
@@ -119,11 +118,11 @@ export const prepareStaticImageAsWebp: InputFileDataTransformer = async (
     "webp", // Output format container
     "{{OUTPUT_FILE}}",
   ];
-  return [await _ffmpeg(args, data), BottInputFileType.WEBP];
+  return { data: await _ffmpeg(args, data), type: BottFileType.WEBP };
 };
 
-export const prepareAudioAsOpus: InputFileDataTransformer = async (
-  data,
+export const prepareAudioAsOpus = async (
+  data: Uint8Array,
 ) => {
   const DURATION_SECONDS = 60;
 
@@ -148,11 +147,11 @@ export const prepareAudioAsOpus: InputFileDataTransformer = async (
     "opus", // Output format
     "{{OUTPUT_FILE}}",
   ];
-  return [await _ffmpeg(args, data), BottInputFileType.OPUS];
+  return { data: await _ffmpeg(args, data), type: BottFileType.OPUS };
 };
 
-export const prepareDynamicImageAsMp4: InputFileDataTransformer = async (
-  data,
+export const prepareDynamicImageAsMp4 = async (
+  data: Uint8Array,
 ) => {
   const DURATION_SECONDS = 30;
   const FRAME_RATE = 15;
@@ -174,5 +173,5 @@ export const prepareDynamicImageAsMp4: InputFileDataTransformer = async (
     "{{OUTPUT_FILE}}",
   ];
 
-  return [await _ffmpeg(args, data), BottInputFileType.MP4];
+  return { data: await _ffmpeg(args, data), type: BottFileType.MP4 };
 };

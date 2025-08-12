@@ -142,7 +142,6 @@ export class TaskManager {
       }
     }
 
-    // TODO (nit): toString?
     // Display currently running/idle tasks:
     const runningTasks = [];
     const idleTasks = [];
