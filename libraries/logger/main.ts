@@ -9,7 +9,6 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-// Parse LOG_TOPICS environment variable into a Set of allowed topics
 const allowedTopics = new Set(
   (Deno.env.get("LOG_TOPICS") || "info,warn,error")
     .toLowerCase()
@@ -18,38 +17,42 @@ const allowedTopics = new Set(
     .filter((topic) => topic.length > 0),
 );
 
-const shouldLog = (topic: string): boolean => {
-  return allowedTopics.has(topic.toLowerCase());
+type Logger = {
+  debug(...args: unknown[]): void;
+  info(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+  perf(...args: unknown[]): void;
 };
 
 // Export a simple logger object
-export const log = {
+export const log: Logger = {
   debug(...args: unknown[]): void {
-    if (shouldLog("debug")) {
+    if (allowedTopics.has("debug")) {
       console.debug(...args);
     }
   },
 
   info(...args: unknown[]): void {
-    if (shouldLog("info")) {
+    if (allowedTopics.has("info")) {
       console.info(...args);
     }
   },
 
   warn(...args: unknown[]): void {
-    if (shouldLog("warn")) {
+    if (allowedTopics.has("warn")) {
       console.warn(...args);
     }
   },
 
   error(...args: unknown[]): void {
-    if (shouldLog("error")) {
+    if (allowedTopics.has("error")) {
       console.error(...args);
     }
   },
 
   perf(...args: unknown[]): void {
-    if (shouldLog("perf")) {
+    if (allowedTopics.has("perf")) {
       console.log(...args);
     }
   },
