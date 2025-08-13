@@ -13,8 +13,7 @@
  * Storage validation utilities for security
  */
 
-// Maximum file size in bytes (50MB)
-export const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 /**
  * Validates file size and throws if unsafe
@@ -23,7 +22,9 @@ export const MAX_FILE_SIZE = 50 * 1024 * 1024;
  */
 export function throwIfUnsafeFileSize(data: Uint8Array): void {
   if (data.length > MAX_FILE_SIZE) {
-    throw new Error(`File size ${data.length} exceeds maximum allowed size ${MAX_FILE_SIZE}`);
+    throw new Error(
+      `File size ${data.length} exceeds maximum allowed size ${MAX_FILE_SIZE}`,
+    );
   }
 }
 
@@ -32,40 +33,34 @@ export function throwIfUnsafeFileSize(data: Uint8Array): void {
  * @param url URL to validate
  * @throws Error if URL is invalid or blocked
  */
-export function throwIfUnsafeUrl(url: string): void {
-  let parsedUrl: URL;
-  
-  try {
-    parsedUrl = new URL(url);
-  } catch {
-    throw new Error(`Invalid URL format: ${url}`);
-  }
-  
+export function throwIfUnsafeUrl(url: URL): void {
   // Only allow HTTP and HTTPS
-  if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-    throw new Error(`Protocol not allowed: ${parsedUrl.protocol}`);
+  if (!["http:", "https:"].includes(url.protocol)) {
+    throw new Error(`Protocol not allowed: ${url.protocol}`);
   }
-  
+
   // Block localhost and private IP ranges
-  const hostname = parsedUrl.hostname.toLowerCase();
-  
+  const hostname = url.hostname.toLowerCase();
+
   // Block localhost variations
-  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+  if (
+    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+  ) {
     throw new Error(`Blocked URL: localhost not allowed`);
   }
-  
+
   // Block private IP ranges (IPv4)
   const ipv4Patterns = [
-    /^10\./,                    // 10.0.0.0/8
+    /^10\./, // 10.0.0.0/8
     /^172\.(1[6-9]|2[0-9]|3[01])\./, // 172.16.0.0/12
-    /^192\.168\./,              // 192.168.0.0/16
-    /^169\.254\./,              // 169.254.0.0/16 (link-local)
+    /^192\.168\./, // 192.168.0.0/16
+    /^169\.254\./, // 169.254.0.0/16 (link-local)
   ];
-  
-  if (ipv4Patterns.some(pattern => pattern.test(hostname))) {
+
+  if (ipv4Patterns.some((pattern) => pattern.test(hostname))) {
     throw new Error(`Blocked URL: private IP range not allowed`);
   }
-  
+
   // Block common internal hostnames
   const blockedHostnames = [
     "metadata.google.internal",
@@ -74,8 +69,8 @@ export function throwIfUnsafeUrl(url: string): void {
     "consul",
     "vault",
   ];
-  
-  if (blockedHostnames.some(blocked => hostname.includes(blocked))) {
+
+  if (blockedHostnames.some((blocked) => hostname.includes(blocked))) {
     throw new Error(`Blocked URL: internal hostname not allowed`);
   }
 }

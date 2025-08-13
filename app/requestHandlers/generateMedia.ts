@@ -26,6 +26,14 @@ import {
 } from "@bott/gemini";
 import { log } from "@bott/logger";
 
+import { taskManager } from "../tasks.ts";
+import {
+  RATE_LIMIT_IMAGES,
+  RATE_LIMIT_MUSIC,
+  RATE_LIMIT_VIDEOS,
+  RATE_LIMIT_WINDOW_MS,
+} from "../constants.ts";
+
 // Constants for AI prompt processing
 const MAX_AI_PROMPT_LENGTH = 10000;
 const LOG_TRUNCATE_LENGTH = 100;
@@ -34,24 +42,14 @@ const LOG_TRUNCATE_LENGTH = 100;
  * Sanitizes user input for AI prompts to prevent injection
  */
 function sanitizeAIPrompt(input: string): string {
-  // Remove or escape potentially dangerous patterns
   return input
-    // Remove excessive whitespace
     .replace(/\s+/g, " ")
     .trim()
     // Remove control characters except newlines and tabs
+    // deno-lint-ignore no-control-regex
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-    // Limit length to prevent token overflow
     .substring(0, MAX_AI_PROMPT_LENGTH);
 }
-
-import { taskManager } from "../tasks.ts";
-import {
-  RATE_LIMIT_IMAGES,
-  RATE_LIMIT_MUSIC,
-  RATE_LIMIT_VIDEOS,
-  RATE_LIMIT_WINDOW_MS,
-} from "../constants.ts";
 
 enum GeneratedMediaType {
   ESSAY = "essay",
@@ -80,7 +78,8 @@ export const generateMedia: BottRequestHandler<
 
     log.debug("generateMedia() called with options:", {
       type,
-      prompt: prompt.substring(0, LOG_TRUNCATE_LENGTH) + (prompt.length > LOG_TRUNCATE_LENGTH ? "…" : ""),
+      prompt: prompt.substring(0, LOG_TRUNCATE_LENGTH) +
+        (prompt.length > LOG_TRUNCATE_LENGTH ? "…" : ""),
     });
 
     if (!taskManager.has(type)) {

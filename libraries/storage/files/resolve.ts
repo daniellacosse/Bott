@@ -16,7 +16,7 @@ import {
   type BottFile,
   BottFileType,
 } from "@bott/model";
-import { throwIfUnsafeUrl, throwIfUnsafeFileSize, MAX_FILE_SIZE } from "../validation.ts";
+import { throwIfUnsafeFileSize, throwIfUnsafeUrl } from "../validation.ts";
 import { log } from "@bott/logger";
 
 import { STORAGE_FILE_ROOT } from "../start.ts";
@@ -75,38 +75,31 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
     log.debug(
       `Fetching raw file from source URL: ${file.source}`,
     );
-    
-    try {
-      const response = await fetch(file.source, {
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        redirect: "follow",
-        headers: {
-          "User-Agent": "Bott",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = new Uint8Array(await response.arrayBuffer());
-      
-      throwIfUnsafeFileSize(data);
-      
-      const type = response.headers.get("content-type")?.split(";")[0].trim() ??
-        "";
 
-      if (!Object.values(BottFileType).includes(type as BottFileType)) {
-        throw new Error(`Unsupported content type: ${type}`);
-      }
+    const response = await fetch(file.source, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Bott",
+      },
+    });
 
-      file.raw = { data, type: type as BottFileType };
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout while fetching file');
-      }
-      throw error;
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+
+    const data = new Uint8Array(await response.arrayBuffer());
+
+    throwIfUnsafeFileSize(data);
+
+    const type = response.headers.get("content-type")?.split(";")[0].trim() ??
+      "";
+
+    if (!Object.values(BottFileType).includes(type as BottFileType)) {
+      throw new Error(`Unsupported content type: ${type}`);
+    }
+
+    file.raw = { data, type: type as BottFileType };
   }
 
   if (!rawFilePath) {

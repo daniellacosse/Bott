@@ -10,7 +10,7 @@
  */
 
 import { BottFileType } from "@bott/model";
-import { throwIfUnsafeFileSize, MAX_FILE_SIZE } from "@bott/storage";
+import { throwIfUnsafeFileSize } from "@bott/storage";
 
 // Security Note: _ffmpeg is not exported and all arguments are hardcoded below.
 // If this function is ever modified to accept user input, implement proper
@@ -65,9 +65,9 @@ const _ffmpeg = async (
     }
 
     const outputData = await Deno.readFile(tempOutputFilePath);
-    
+
     throwIfUnsafeFileSize(outputData);
-    
+
     return outputData;
   } finally {
     // Ensure temp files are always cleaned up
