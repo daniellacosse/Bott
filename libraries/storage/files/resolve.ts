@@ -16,6 +16,7 @@ import {
   type BottFile,
   BottFileType,
 } from "@bott/model";
+import { throwIfUnsafeFileSize, throwIfUnsafeUrl } from "../validation.ts";
 import { log } from "@bott/logger";
 
 import { STORAGE_FILE_ROOT } from "../start.ts";
@@ -25,6 +26,8 @@ import {
   prepareDynamicImageAsMp4,
   prepareStaticImageAsWebp,
 } from "./prepare/ffmpeg.ts";
+
+const FETCH_TIMEOUT_MS = 30 * 1000;
 
 const MAX_TXT_WORDS = 600;
 
@@ -67,11 +70,28 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
       );
     }
 
+    throwIfUnsafeUrl(file.source);
+
     log.debug(
       `Fetching raw file from source URL: ${file.source}`,
     );
-    const response = await fetch(file.source);
+
+    const response = await fetch(file.source, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Bott",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data = new Uint8Array(await response.arrayBuffer());
+
+    throwIfUnsafeFileSize(data);
+
     const type = response.headers.get("content-type")?.split(";")[0].trim() ??
       "";
 

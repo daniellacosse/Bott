@@ -28,4 +28,4 @@ jobs:
           path-to-signatures: .signatures/cla.json
           path-to-document: CONTRIBUTOR_AGREEMENT.md
           branch: cla-signatures
-          allowlist: daniellacosse,copilot,copilot-swe-agent[bot]
+          allowlist: daniellacosse,Copilot
