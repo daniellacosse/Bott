@@ -22,16 +22,6 @@ content generation capabilities.
   - `GOOGLE_ACCESS_TOKEN` - GCP access token
   - `DISCORD_TOKEN` - Discord bot token
 
-### Build and Test Commands
-
-- Format check: `deno fmt --check` -- takes <1 second
-- Lint code: `deno lint` -- takes 1-2 minutes for dependency downloads. NEVER
-  CANCEL. Set timeout to 5+ minutes.
-- Run tests: `deno test --allow-all` -- takes 1-2 minutes for dependency
-  downloads. NEVER CANCEL. Set timeout to 5+ minutes.
-- Build Docker image: `docker build -t bott .` -- takes 30-45 seconds. NEVER
-  CANCEL. Set timeout to 3+ minutes.
-
 ### Development Workflow
 
 - Start development server: `deno task start:dev` -- requires configured
@@ -39,6 +29,27 @@ content generation capabilities.
   take 2-5 minutes.
 - Start production server: `deno task start:prod`
 - Build and run with Docker: `deno task start` -- combines Docker build and run
+
+## Validation
+
+### Manual Validation Steps
+
+- Build succeeds: `docker build -t bott .` completes successfully
+- Format check passes: `deno fmt --check` reports "Checked X files" with exit
+  code 0
+- Application starts: `deno task start:dev` begins without TypeScript
+  compilation errors
+- The application requires valid Discord and GCP credentials to run completely
+- Without credentials, the app will start but fail when attempting to connect to
+  Discord or Gemini services
+- Health endpoint responds: When running, http://localhost:8080 should return
+  "OK"
+
+### Testing Requirements
+
+- ALWAYS run `deno fmt --check` and `deno lint` before committing changes
+- ALWAYS run `deno test --allow-all` to validate unit tests
+- Test files are located in: `**/**.test.ts`
 
 ### CI/CD Validation
 
@@ -48,27 +59,6 @@ content generation capabilities.
   dual-licensed:" in their header
 - The CI workflow in `.github/workflows/qualityChecks.yml` runs: lint, unit
   tests, and license header validation
-
-## Validation
-
-### Testing Requirements
-
-- ALWAYS run `deno fmt --check` and `deno lint` before committing changes
-- ALWAYS run `deno test --allow-all` to validate unit tests
-- Test files are located in: `libraries/*/**.test.ts`
-- The application requires valid Discord and GCP credentials to run completely
-- Without credentials, the app will start but fail when attempting to connect to
-  Discord or Gemini services
-
-### Manual Validation Steps
-
-- Build succeeds: `docker build -t bott .` completes successfully
-- Format check passes: `deno fmt --check` reports "Checked X files" with exit
-  code 0
-- Application starts: `deno task start:dev` begins without TypeScript
-  compilation errors
-- Health endpoint responds: When running, http://localhost:8080 should return
-  "OK"
 
 ### Network Dependencies
 
@@ -80,34 +70,26 @@ content generation capabilities.
 
 ## Project Structure
 
-### Workspace Architecture
-
-The project uses Deno workspaces with the following libraries:
-
-- `libraries/discord/` - Discord.js integration and bot functionality
-- `libraries/gemini/` - Google Gemini AI integration
-- `libraries/logger/` - Centralized logging system
-- `libraries/storage/` - File system and data persistence
-- `libraries/task/` - Task queue management
-- `model/` - Shared TypeScript type definitions
-- `app/` - Main application entry point and request handlers
-
-### Key Files
-
-- `app/main.ts` - Application entry point
-- `app/tasks.ts` - Task management configuration
-- `app/identity.ts` - Bot identity and personality configuration
-- `app/requestHandlers/` - Handler implementations for bot commands
-- `model/types.ts` - Core type definitions and data model
-- `deno.json` - Project configuration and task definitions
-- `Dockerfile` - Container build configuration
-
-### Important Directories
-
-- Always check `app/requestHandlers/` when adding new bot commands
-- Review `model/types.ts` for understanding data structures
-- Check `libraries/gemini/events/` for AI response generation logic
-- Look in `libraries/discord/` for Discord API integration details
+```
+.
+├── README.md              # Project documentation
+├── deno.json             # Deno configuration and tasks
+├── Dockerfile            # Container build instructions
+├── Brewfile              # macOS dependencies via Homebrew
+├── .env.example          # Environment template
+├── app/                  # Main application
+│   ├── main.ts          # Entry point
+│   ├── tasks.ts         # Task management
+│   └── requestHandlers/ # Bot command handlers
+├── libraries/           # Modular libraries
+│   ├── discord/        # Discord integration
+│   ├── gemini/         # AI integration
+│   ├── logger/         # Logging
+│   ├── storage/        # Data persistence
+│   └── task/           # Task queue
+├── model/              # Type definitions
+└── .github/            # CI/CD workflows
+```
 
 ## Common Tasks
 
@@ -136,29 +118,3 @@ Key environment variables (see README.md for full list):
 - `CONFIG_INPUT_EVENT_LIMIT` - Chat history context limit (default: 2000)
 - `LOG_TOPICS` - Log verbosity control (default: info,warn,error)
 - `PORT` - Health check server port (default: 8080)
-
-### Repository Information
-
-```
-Repository Structure:
-.
-├── README.md              # Project documentation
-├── deno.json             # Deno configuration and tasks
-├── Dockerfile            # Container build instructions
-├── Brewfile              # macOS dependencies via Homebrew
-├── .env.example          # Environment template
-├── app/                  # Main application
-│   ├── main.ts          # Entry point
-│   ├── tasks.ts         # Task management
-│   └── requestHandlers/ # Bot command handlers
-├── libraries/           # Modular libraries
-│   ├── discord/        # Discord integration
-│   ├── gemini/         # AI integration
-│   ├── logger/         # Logging
-│   ├── storage/        # Data persistence
-│   └── task/           # Task queue
-├── model/              # Type definitions
-└── .github/            # CI/CD workflows
-```
-
-Fixes #58.
