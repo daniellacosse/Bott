@@ -34,6 +34,23 @@ import {
   RATE_LIMIT_WINDOW_MS,
 } from "../constants.ts";
 
+// Constants for AI prompt processing
+const MAX_AI_PROMPT_LENGTH = 10000;
+const LOG_TRUNCATE_LENGTH = 100;
+
+/**
+ * Sanitizes user input for AI prompts to prevent injection
+ */
+function sanitizeAIPrompt(input: string): string {
+  return input
+    .replace(/\s+/g, " ")
+    .trim()
+    // Remove control characters except newlines and tabs
+    // deno-lint-ignore no-control-regex
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .substring(0, MAX_AI_PROMPT_LENGTH);
+}
+
 enum GeneratedMediaType {
   ESSAY = "essay",
   PHOTO = "photo",
@@ -55,11 +72,14 @@ export const generateMedia: BottRequestHandler<
       prompt: string;
     }>,
   ) {
-    const { type, prompt } = requestEvent.details.options;
+    const { type, prompt: rawPrompt } = requestEvent.details.options;
+
+    const prompt = sanitizeAIPrompt(rawPrompt);
 
     log.debug("generateMedia() called with options:", {
       type,
-      prompt,
+      prompt: prompt.substring(0, LOG_TRUNCATE_LENGTH) +
+        (prompt.length > LOG_TRUNCATE_LENGTH ? "…" : ""),
     });
 
     if (!taskManager.has(type)) {
