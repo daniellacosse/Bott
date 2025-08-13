@@ -10,11 +10,10 @@
  */
 
 /**
- * Represents scores assigned to events during the multi-phase evaluation process.
+ * Represents scores assigned to incoming events during evaluation.
  * All scores use a 1-5 scale for consistency.
  */
-export interface BottEventScores {
-  // Incoming event scores (1-5 scale)
+export interface GeminiInputEventScores {
   /** How serious vs sarcastic the message is (1=very sarcastic, 5=very serious) */
   seriousness?: number;
   /** How important/urgent the message is (1=low priority, 5=high priority) */
@@ -25,8 +24,13 @@ export interface BottEventScores {
   factCheckingNeed?: number;
   /** How much the user needs conversational support (1=no support needed, 5=needs help) */
   supportNeed?: number;
+}
 
-  // Outgoing event scores (1-5 scale)
+/**
+ * Represents scores assigned to outgoing events during evaluation.
+ * All scores use a 1-5 scale for consistency.
+ */
+export interface GeminiOutputEventScores {
   /** How relevant the message is to the conversation (1=irrelevant, 5=highly relevant) */
   relevance?: number;
   /** How redundant the message is vs what others have said (1=very redundant, 5=very novel) */
@@ -35,9 +39,10 @@ export interface BottEventScores {
   wordiness?: number;
   /** How necessary the message is to conversation flow (1=unnecessary, 5=essential) */
   necessity?: number;
-
-  // Legacy scores (for backward compatibility during transition)
-  greeting?: number;
-  novelty?: number;
-  requestFulfillment?: number;
 }
+
+/**
+ * Combined scores interface for compatibility
+ */
+export interface GeminiEventScores
+  extends GeminiInputEventScores, GeminiOutputEventScores {}

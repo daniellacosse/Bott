@@ -19,7 +19,7 @@ import {
   BottRequestOptionType,
 } from "@bott/model";
 import { log } from "@bott/logger";
-import type { BottEventScores } from "./types.ts";
+import type { GeminiEventScores } from "./types.ts";
 
 import { Type as GeminiStructuredResponseType } from "npm:@google/genai";
 import type {
@@ -186,7 +186,7 @@ export const getOutputEventSchema = <O extends AnyShape>(
               },
               scores: {
                 type: GeminiStructuredResponseType.OBJECT,
-                description: "Scores for outgoing events (1-100 scale)",
+                description: "Scores for outgoing events (1-5 scale)",
                 properties: {
                   relevance: {
                     type: GeminiStructuredResponseType.NUMBER,

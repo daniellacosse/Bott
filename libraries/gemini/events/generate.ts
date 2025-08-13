@@ -25,7 +25,7 @@ import {
   type BottRequestHandler,
   type BottUser,
 } from "@bott/model";
-import type { getEvents } from "@bott/storage";
+import { getEvents, updateEventDetails } from "@bott/storage";
 
 import gemini from "../client.ts";
 import {
@@ -194,11 +194,18 @@ export async function* generateEvents<O extends AnyShape>(
 
   const multiPhaseResult = processMultiPhaseResponse<O>(response);
 
-  // First, yield the scored input events for database update
-  // Note: In a real implementation, the scored input events would be processed
-  // separately to update the database, but here we'll log them for now
+  // Update scored input events in the database
+  for (const scoredEvent of multiPhaseResult.scoredInputEvents) {
+    try {
+      await updateEventDetails(scoredEvent);
+      log.debug(`Updated event ${scoredEvent.id} with scores`);
+    } catch (error) {
+      log.error(`Failed to update event ${scoredEvent.id}: ${error}`);
+    }
+  }
+
   log.debug(
-    `Received ${multiPhaseResult.scoredInputEvents.length} scored input events and ${multiPhaseResult.filteredOutputEvents.length} filtered output events`,
+    `Processed ${multiPhaseResult.scoredInputEvents.length} scored input events and ${multiPhaseResult.filteredOutputEvents.length} filtered output events`,
   );
 
   // Yield the filtered output events

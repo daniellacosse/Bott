@@ -3,4 +3,6 @@
 
 .signatures/
 fs_root/
+
+# Temporary installation files
 deno.zip
