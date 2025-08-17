@@ -14,7 +14,6 @@ import type { Content, Part } from "npm:@google/genai";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import {
-  type AnyBottEvent,
   type AnyShape,
   type BottChannel,
   type BottEvent,
@@ -25,12 +24,10 @@ import {
   type BottRequestHandler,
   type BottUser,
 } from "@bott/model";
-import { addEventData, getEvents } from "@bott/storage";
+import { addEventData, type getEvents } from "@bott/storage";
 
 import gemini from "../client.ts";
 import {
-  CONFIG_ASSESSMENT_MODEL,
-  CONFIG_ASSESSMENT_SCORE_THRESHOLD,
   CONFIG_EVENTS_MODEL,
   INPUT_EVENT_LIMIT,
   INPUT_FILE_AUDIO_COUNT_LIMIT,
@@ -39,7 +36,7 @@ import {
 } from "../constants.ts";
 import { getGenerateResponseInstructions } from "./instructions.ts";
 import { log } from "@bott/logger";
-import { getOutputEventSchema, processResponse } from "./output.ts";
+import { getOutputEventSchema } from "./output.ts";
 
 type GeminiResponseContext<O extends AnyShape> = {
   abortSignal: AbortSignal;
@@ -54,7 +51,9 @@ type GeminiResponseContext<O extends AnyShape> = {
 };
 
 export async function* generateEvents<O extends AnyShape>(
-  inputEvents: AnyBottEvent[],
+  inputEvents: BottEvent<
+    { content: string; scores?: Record<string, number> }
+  >[],
   {
     model = CONFIG_EVENTS_MODEL,
     abortSignal,
@@ -63,7 +62,7 @@ export async function* generateEvents<O extends AnyShape>(
     requestHandlers,
   }: GeminiResponseContext<O>,
 ): AsyncGenerator<
-  | BottEvent
+  | BottEvent<{ content: string; scores?: Record<string, number> }>
   | BottRequestEvent<O>
 > {
   const modelUserId = context.user.id;
@@ -90,9 +89,6 @@ export async function* generateEvents<O extends AnyShape>(
       // Skip these events for now.
       continue;
     }
-
-    // Determine if this event has already been scored:
-    const hasScore = event.details.score !== undefined;
 
     // Remove unnecessary parent files from events:
     if (event.parent) {
@@ -149,16 +145,11 @@ export async function* generateEvents<O extends AnyShape>(
       }
     }
 
-    const content = _transformBottEventToContent({
-      ...event,
-      details: { ...event.details, seen: hasScore },
-    } as BottEvent<object & { seen: boolean }>, modelUserId);
-
-    if (!hasScore) {
+    if (!event.details.scores) {
       resourceAccumulator.unseenEvents++;
     }
 
-    contents.unshift(content);
+    contents.unshift(_transformBottEventToContent(event, modelUserId));
 
     if (contents.length >= INPUT_EVENT_LIMIT) {
       break;
@@ -166,6 +157,7 @@ export async function* generateEvents<O extends AnyShape>(
   }
 
   if (contents.length === 0) {
+    log.debug("No events to process");
     return;
   }
 
@@ -188,7 +180,12 @@ export async function* generateEvents<O extends AnyShape>(
     },
   });
 
-  const result = processResponse<O>(response);
+  const result = JSON.parse(
+    response.candidates?.[0]?.content?.parts
+      ?.filter((part: Part) => "text" in part && typeof part.text === "string")
+      .map((part: Part) => (part as { text: string }).text)
+      .join("") ?? "",
+  );
 
   // Update scored input events in the database
   if (result.scoredInputEvents.length > 0) {
@@ -235,7 +232,7 @@ export async function* generateEvents<O extends AnyShape>(
 }
 
 const _transformBottEventToContent = (
-  event: BottEvent<object & { seen: boolean }>,
+  event: BottEvent<{ content: string; scores?: Record<string, number> }>,
   modelUserId: string,
 ): Content => {
   // Explicitly construct the object to be stringified to avoid circular references,
