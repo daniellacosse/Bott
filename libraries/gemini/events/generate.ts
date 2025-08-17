@@ -34,7 +34,7 @@ import {
   INPUT_FILE_TOKEN_LIMIT,
   INPUT_FILE_VIDEO_COUNT_LIMIT,
 } from "../constants.ts";
-import { getGenerateResponseInstructions } from "./instructions.ts";
+import { getGenerateOutputInstructions } from "./instructions.ts";
 import { log } from "@bott/logger";
 import { getOutputEventSchema } from "./output.ts";
 
@@ -174,7 +174,10 @@ export async function* generateEvents<O extends AnyShape>(
         parts: [
           { text: context.identity },
           {
-            text: getGenerateResponseInstructions<O>(requestHandlers ?? []),
+            text: getGenerateOutputInstructions(
+              context.user,
+              requestHandlers,
+            ),
           },
         ],
       },

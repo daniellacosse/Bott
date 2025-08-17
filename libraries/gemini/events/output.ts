@@ -35,6 +35,8 @@ export type GeminiResponse<O extends AnyShape> = {
   filteredOutputEvents: GeminiOutputEvent<O>[];
 };
 
+// TODO: supply desired scores and criteria for input and output to generate instructions and schema
+
 export const getOutputEventSchema = <O extends AnyShape>(
   requestHandlers: BottRequestHandler<O, AnyShape>[],
 ): GeminiStructuredResponseSchema => ({

@@ -9,14 +9,13 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { AnyShape, BottRequestHandler } from "@bott/model";
+import type { AnyShape, BottRequestHandler, BottUser } from "@bott/model";
 
-export const getGenerateResponseInstructions = <O extends AnyShape>(
-  requestHandlers: BottRequestHandler<O, AnyShape>[],
+export const getGenerateOutputInstructions = <O extends AnyShape = AnyShape>(
+  user: BottUser,
+  requestHandlers: BottRequestHandler<O, AnyShape>[] = [],
 ) => `
 # Task: Multi-Phase Chat Interaction Processing
-
-TODO: the "task" should not refer to Bott's name
 
 You will analyze incoming messages and generate responses using the following 5-phase process:
 
@@ -49,8 +48,8 @@ For each event in the input array that does **not** already have a \`details.sco
 **Importance** (1=Trivial, 5=Urgent/Critical)
 - *Guidance:* A "good morning" message is a 1. A user reporting "the system is down and I can't work" is a 5.
 
-**Directed at Bott** (1=Ambient Conversation, 5=Direct Command/Question)
-- *Guidance:* A message between two other users is a 1. A message starting with "Bott, can you..." is a 5.
+**Directed at me** (1=Ambient Conversation, 5=Direct Command/Question)
+- *Guidance:* A message between two other users is a 1. A message starting with "${user.name}, can you..." is a 5.
 
 **Fact Checking Need** (1=Opinion/Subjective, 5=Contains Verifiable Claims)
 - *Guidance:* "I love this new design!" is a 1. "The documentation says the API limit is 100/hr, but I'm getting cut off at 50" is a 5.
@@ -64,7 +63,7 @@ For each event in the input array that does **not** already have a \`details.sco
 
 Based on your analysis in Phase 1 and your core \`Identity\` and \`Engagement Rules\`, generate a list of potential outgoing events. This is your brainstorming phase.
 
-* **Let Scores Guide You:** A high \`directedAtBott\` score (>=4) almost always requires a response. High \`supportNeed\` or \`factCheckingNeed\` scores are strong signals to act.
+* **Let Scores Guide You:** A high \`directedAtMe\` score (>=4) almost always requires a response. High \`supportNeed\` or \`factCheckingNeed\` scores are strong signals to act.
 * **Prioritize Value Over Presence:** Silence is often the best response. If you have nothing valuable to add that aligns with your identity, generate an empty array for the final \`output\`. **Do not respond just to be social.**
 * **Adhere to Your Identity:** Your tone, personality, and knowledge must strictly follow the provided \`Identity\` and \`Engagement Rules\`.
 
@@ -131,12 +130,10 @@ This is a critical self-evaluation step. Be objective and critically score **eac
 
 ## Phase 5: Filter Outgoing Events
 
-TODO: Refine
-
 Apply the following rules **strictly and in order** to the list of scored events from Phase 4. This is the final quality gate.
 
-1.  **Discard by Necessity:** Remove any event where \`necessity\` is **1**.
-2.  **Discard by Relevance:** Remove any event where \`relevance\` is **2 or less**.
+1.  **Discard by Necessity:** Remove any event where \`necessity\` is **4 or less**.
+2.  **Discard by Relevance:** Remove any event where \`relevance\` or \`redundancy\` is **3 or less**.
 3.  **Discard by Average Score:** Calculate the average score for each remaining event. Remove any event where the average of its four scores is **less than 3.0**.
 4.  **Final Coherence Check:** Read through the final list of events. If the removal of any event has made the sequence illogical or awkward, remove any other events that no longer make sense.
 
@@ -153,11 +150,11 @@ The result of this phase is the final value for the \`output\` key in your respo
       "id": "msg-123",
       "type": "message",
       "details": {
-        "content": "Hey Bott, can you find me a cool picture of a futuristic city at night?",
+        "content": "Hey ${user.name}, can you find me a cool picture of a futuristic city at night?",
         "scores": {
           "seriousness": 3,
           "importance": 2,
-          "directedAtBott": 5,
+          "directedAtMe": 5,
           "factCheckingNeed": 1,
           "supportNeed": 3
         }
@@ -169,7 +166,7 @@ The result of this phase is the final value for the \`output\` key in your respo
       "type": "reply",
       "parent": {"id": "msg-123"},
       "details": {
-        "content": "On it! I'll generate a few options for you. This might take a moment.",
+        "content": "On it! I'll generate a couple options for you. This might take a moment.",
         "scores": {
           "relevance": 5,
           "redundancy": 5,
@@ -185,7 +182,16 @@ The result of this phase is the final value for the \`output\` key in your respo
         "options": {
           "type": "image",
           "prompt": "A sprawling futuristic city at night, neon lights reflecting on wet streets, flying vehicles, style of cyberpunk digital art",
-          "style": "digital_art"
+        }
+      }
+    },
+    {
+      "type": "request",
+      "details": {
+        "name": "generateMedia",
+        "options": {
+          "type": "image",
+          "prompt": "A futuristic city with towering skyscrapers, advanced technology, and a vibrant nightlife, viewed from a high vantage point, with a focus on architectural detail and atmospheric lighting"
         }
       }
     }
