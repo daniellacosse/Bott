@@ -171,9 +171,12 @@ export async function* generateEvents<O extends AnyShape>(
       abortSignal,
       candidateCount: 1,
       systemInstruction: {
-        parts: [{
-          text: getGenerateResponseInstructions<O>(requestHandlers ?? []),
-        }],
+        parts: [
+          { text: context.identity },
+          {
+            text: getGenerateResponseInstructions<O>(requestHandlers ?? []),
+          },
+        ],
       },
       responseMimeType: "application/json",
       responseSchema: getOutputEventSchema<O>(requestHandlers ?? []),
