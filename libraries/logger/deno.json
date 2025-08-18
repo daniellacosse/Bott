@@ -1,0 +1,4 @@
+{
+  "name": "@bott/logger",
+  "exports": "./main.ts"
+}

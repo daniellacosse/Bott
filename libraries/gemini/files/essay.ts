@@ -10,18 +10,16 @@
  */
 
 import _gemini from "../client.ts";
-import type { OutputFileGenerator } from "./types.ts";
+import type { BottFileDataGenerator } from "./types.ts";
+import { CONFIG_ESSAY_MODEL } from "../constants.ts";
 
-import { BottOutputFileType } from "@bott/model";
+import { BottFileType } from "@bott/model";
 
-// NOTE: This stores output files to disk, even if they
-// are not in the database yet.
-export const generateEssayFile: OutputFileGenerator = async (
+export const generateEssayData: BottFileDataGenerator = async (
   prompt: string,
   {
-    model = "gemini-2.5-pro-preview-05-06",
+    model = CONFIG_ESSAY_MODEL,
     gemini = _gemini,
-    storeOutputFile,
   },
 ) => {
   const response = await gemini.models.generateContent({
@@ -30,6 +28,8 @@ export const generateEssayFile: OutputFileGenerator = async (
     config: {
       tools: [{ googleSearch: {} }],
       candidateCount: 1,
+      systemInstruction:
+        "Do NOT ask for additional information: fullfill the request as written to the best of your ability.",
     },
   });
 
@@ -51,14 +51,8 @@ export const generateEssayFile: OutputFileGenerator = async (
     throw new Error("No text in sanitized response");
   }
 
-  const outputFile = storeOutputFile(
-    new TextEncoder().encode(sanitizedResponse.text),
-    BottOutputFileType.TXT,
-    prompt.toLowerCase().replaceAll(" ", "-").replaceAll(/[,.]/, "").slice(
-      0,
-      35,
-    ),
-  );
-
-  return outputFile;
+  return {
+    data: new TextEncoder().encode(sanitizedResponse.text),
+    type: BottFileType.TXT,
+  };
 };

@@ -27,32 +27,24 @@ To support this dual-licensing model, we require contributors to sign this CLA.
 
 ## **2\. Your Grant of Rights**
 
-You hereby grant to the Project and to recipients of software distributed by the
-Project a perpetual, worldwide, non-exclusive, royalty-free, irrevocable
-license, including the right to sublicense through multiple tiers, to:
+You hereby grant to the Project a perpetual, worldwide, non-exclusive,
+no-charge, royalty-free, irrevocable copyright license to reproduce, prepare
+derivative works of, publicly display, publicly perform, sublicense, and
+distribute Your Contributions and such derivative works.
 
-- Reproduce, prepare derivative works of, publicly display, publicly perform,
-  and distribute Your Contributions and such derivative works.
-- Make, use, sell, offer for sale, import, and otherwise transfer Your
-  Contributions and such derivative works.
-
-**Crucially, this grant includes the right for the Project to license Your
-Contributions under the GNU Affero General Public License v3.0 (AGPLv3) AND
-under any other proprietary or open-source licenses chosen by the Project.**
-
-You confirm that you have the necessary rights to grant this license and that
-your Contributions do not infringe on the rights of any third party.
+This grant gives the Project the explicit and irrevocable right to license Your
+Contributions to third parties under any license terms the Project chooses,
+including, but not limited to, the GNU Affero General Public License v3.0
+(AGPLv3) or any proprietary commercial license.
 
 ## **3\. Your Representations**
 
 You represent that:
 
 - You are legally entitled to grant the above license.
-- The Contribution is Your original creation.
-- The Contribution does not violate any intellectual property rights of any
-  third party.
-- You are not aware of any third-party claims or proceedings (including any
-  intellectual property claims) relating to the Contribution.
+- Each of Your Contributions is Your original creation.
+- To the best of Your knowledge, Your Contribution does not infringe upon any
+  third-party's rights, including intellectual property rights.
 
 ## **4\. Maintenance and Support**
 

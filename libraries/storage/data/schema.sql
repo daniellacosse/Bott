@@ -41,18 +41,9 @@ create table if not exists events (
   foreign key(user_id) references users(id)
 );
 
-create table if not exists input_files (
-  url text primary key not null,
-  type text not null,
-  path text unique not null,
-  parent_id varchar(36),
-  parent_type text
-);
-
-create table if not exists output_files (
+create table if not exists files (
   id varchar(36) primary key not null,
-  type text not null,
-  path text unique not null,
+  source_url text,
   parent_id varchar(36),
-  parent_type text
+  foreign key(parent_id) references events(id)
 );

@@ -17,6 +17,7 @@ import {
   type BottRequestHandler,
   BottRequestOptionType,
 } from "@bott/model";
+import { log } from "@bott/logger";
 
 import { Type as GeminiStructuredResponseType } from "npm:@google/genai";
 import type {
@@ -98,6 +99,14 @@ export const getOutputEventSchema = <O extends AnyShape>(
 
               return acc;
             }, {} as Record<string, GeminiStructuredResponseSchema>),
+            // This is weird, as we are flattening the requirements
+            // across all calls, but we can just ignore the parameters
+            // we don't need in a given context.
+            required: requestHandlers.flatMap((handler) =>
+              handler.options?.filter((option) => option.required).map(
+                (option) => option.name,
+              ) ?? []
+            ),
           },
         },
       },
@@ -175,9 +184,9 @@ export async function* outputEventStream<O extends AnyShape>(
     const finalTrimmedBuffer = remainder.trim();
     if (finalTrimmedBuffer.length > 0 && finalTrimmedBuffer !== "]") {
       const warningMessage = finalTrimmedBuffer.startsWith("{")
-        ? "[WARN] Stream ended with what appears to be an incomplete JSON object in buffer:"
-        : "[WARN] Stream ended with unprocessed trailing data in buffer:";
-      console.warn(
+        ? "Stream ended with what appears to be an incomplete JSON object in buffer:"
+        : "Stream ended with unprocessed trailing data in buffer:";
+      log.warn(
         warningMessage,
         finalTrimmedBuffer.substring(0, 200) +
           (finalTrimmedBuffer.length > 200 ? "..." : ""),
@@ -250,7 +259,7 @@ export function _extractTopLevelObjectsFromString(
             try {
               extractedObjects.push(JSON.parse(objString));
             } catch (error) {
-              console.error("Failed to parse JSON object:", error);
+              log.error("Failed to parse JSON object:", error);
             }
             current = current.substring(i + 1);
             const commaMatch = current.match(/^\s*,\s*/);

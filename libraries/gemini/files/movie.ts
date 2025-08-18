@@ -15,20 +15,18 @@ import {
 } from "npm:@google/genai";
 import { decodeBase64 } from "jsr:@std/encoding";
 
-import { BottOutputFileType } from "@bott/model";
+import { BottFileType } from "@bott/model";
+import { CONFIG_MOVIE_MODEL } from "../constants.ts";
 
 import _gemini from "../client.ts";
-import type { OutputFileGenerator } from "./types.ts";
+import type { BottFileDataGenerator } from "./types.ts";
 
-// NOTE: This stores output files to disk, even if they
-// are not in the database yet.
-export const generateMovieFile: OutputFileGenerator = async (
+export const generateMovieData: BottFileDataGenerator = async (
   prompt: string,
   {
-    model = "veo-2.0-generate-001",
+    model = CONFIG_MOVIE_MODEL,
     gemini = _gemini,
     abortSignal,
-    storeOutputFile,
   },
 ) => {
   let operation = await gemini.models.generateVideos({
@@ -40,7 +38,6 @@ export const generateMovieFile: OutputFileGenerator = async (
       enhancePrompt: true,
       fps: 24,
       numberOfVideos: 1,
-      durationSeconds: 6, // to keep it under Discord's 8MB limit
       personGeneration: PersonGeneration.ALLOW_ADULT,
       resolution: "720p",
     },
@@ -75,12 +72,10 @@ export const generateMovieFile: OutputFileGenerator = async (
     throw new Error("No video bytes");
   }
 
-  const outputFile = storeOutputFile(
-    decodeBase64(videoData.video.videoBytes),
-    BottOutputFileType.MP4,
-  );
-
-  return outputFile;
+  return {
+    type: BottFileType.MP4,
+    data: decodeBase64(videoData.video.videoBytes),
+  };
 };
 
 function doVideoJob(

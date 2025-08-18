@@ -6,14 +6,22 @@
       "required": true
     },
     "GOOGLE_PROJECT_ID": {
-      "description": "Your Google Cloud Project ID.",
-      "required": true
+      "value": "PROJECT_ID"
     },
     "GOOGLE_PROJECT_LOCATION": {
-      "description": "The Google Cloud region for your project (e.g., us-central1).",
-      "required": true
+      "value": "LOCATION"
     }
   },
+  "requiredApis": [
+    {
+      "api": "aiplatform.googleapis.com",
+      "reason": "To use the Vertex AI models for generation."
+    },
+    {
+      "api": "storage.googleapis.com",
+      "reason": "To store and retrieve temporary files."
+    }
+  ],
   "options": {
     "port": 8080,
     "cpu": 1,

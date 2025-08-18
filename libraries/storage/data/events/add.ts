@@ -9,25 +9,18 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { join } from "jsr:@std/path";
-
-import {
-  type AnyBottEvent,
-  type BottChannel,
-  type BottInputFile,
-  type BottOutputFile,
-  type BottSpace,
-  type BottUser,
-  isBottInputFile,
-  isBottOutputFile,
+import type {
+  AnyBottEvent,
+  BottChannel,
+  BottFile,
+  BottSpace,
+  BottUser,
 } from "@bott/model";
+import { log } from "@bott/logger";
 
 import { sql } from "../sql.ts";
 import { commit, type TransactionResults } from "../commit.ts";
-import {
-  STORAGE_FILE_INPUT_ROOT,
-  STORAGE_FILE_OUTPUT_ROOT,
-} from "../../start.ts";
+import { resolveFile } from "../../files/resolve.ts";
 
 const getAddChannelsSql = (
   ...channels: BottChannel[]
@@ -71,50 +64,24 @@ const getAddEventsSql = (...events: AnyBottEvent[]) => {
   `;
 };
 
-const getAddInputFilesSql = (...inputs: BottInputFile[]) => {
-  if (!inputs.length) {
+const getAddFilesSql = (...files: BottFile[]) => {
+  if (!files.length) {
     return;
   }
 
   return sql`
-  insert into input_files (
-    url,
-    type,
-    path,
-    parent_id,
-    parent_type
-  ) values ${
-    inputs.map((f) =>
-      sql`(${f.url.toString()}, ${f.type}, ${f.path}, ${f.parent?.id}, "event")`
-    )
-  } on conflict(url) do update set
-    type = excluded.type,
-    path = excluded.path,
-    parent_id = excluded.parent_id,
-    parent_type = excluded.parent_type`;
-};
-
-const getAddOutputFilesSql = (...outputs: BottOutputFile[]) => {
-  if (!outputs.length) {
-    return;
-  }
-
-  return sql`
-  insert into output_files (
+  insert into files (
     id,
-    type,
-    path,
-    parent_id,
-    parent_type
+    source_url,
+    parent_id
   ) values ${
-    outputs.map((f) =>
-      sql`(${f.id}, ${f.type}, ${f.path}, ${f.parent?.id}, "event")`
+    files.map((f) =>
+      sql`(${f.id}, ${f.source?.toString() ?? null}, ${f.parent?.id})`
     )
   } on conflict(id) do update set
-    type = excluded.type,
-    path = excluded.path,
-    parent_id = excluded.parent_id,
-    parent_type = excluded.parent_type`;
+    source_url = excluded.source_url,
+    parent_id = excluded.parent_id
+  `;
 };
 
 const getAddSpacesSql = (...spaces: BottSpace[]) => {
@@ -150,9 +117,9 @@ const getAddUsersSql = (...users: BottUser[]) => {
   `;
 };
 
-export const addEventData = (
+export const addEventData = async (
   ...inputEvents: AnyBottEvent[]
-): TransactionResults => {
+): Promise<TransactionResults> => {
   // Extract all unique entities (events, spaces, channels, users)
   const events = new Map<string, AnyBottEvent>();
   const _queue: AnyBottEvent[] = [...inputEvents];
@@ -176,8 +143,7 @@ export const addEventData = (
   const spaces = new Map<string, BottSpace>();
   const channels = new Map<string, BottChannel>();
   const users = new Map<string, BottUser>();
-  const inputFiles = new Map<string, BottInputFile>();
-  const outputFiles = new Map<string, BottOutputFile>();
+  const files = new Map<string, BottFile>();
 
   for (const event of events.values()) {
     if (event.channel) {
@@ -192,19 +158,14 @@ export const addEventData = (
     if (event.files) {
       for (const file of event.files) {
         try {
-          if (
-            isBottInputFile(file) &&
-            Deno.statSync(join(STORAGE_FILE_INPUT_ROOT, file.path)).isFile
-          ) {
-            inputFiles.set(file.url.toString(), { ...file, parent: event });
-          } else if (
-            isBottOutputFile(file) &&
-            Deno.statSync(join(STORAGE_FILE_OUTPUT_ROOT, file.path)).isFile
-          ) {
-            outputFiles.set(file.id, { ...file, parent: event });
-          }
-        } catch (_) {
-          // Not a prepared file, ignore.
+          const resolvedFile = await resolveFile(file);
+
+          files.set(resolvedFile.id, {
+            ...resolvedFile,
+            parent: event,
+          });
+        } catch (e) {
+          log.warn(`Failed to resolve file [${file.id}]: ${e}`);
         }
       }
     }
@@ -217,13 +178,8 @@ export const addEventData = (
     getAddEventsSql(
       ...topologicallySortEvents(...events.values()),
     ),
-    getAddInputFilesSql(...inputFiles.values()),
-    getAddOutputFilesSql(...outputFiles.values()),
+    getAddFilesSql(...files.values()),
   );
-
-  if ("error" in results) {
-    throw results.error;
-  }
 
   return results;
 };

@@ -9,12 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { Buffer } from "node:buffer";
 import {
-  AttachmentBuilder,
   ChannelType,
   Client,
-  type EmbedBuilder,
   Events,
   GatewayIntentBits,
   type GuildTextBasedChannel,
@@ -28,15 +25,17 @@ import {
   type BottEvent,
   BottEventType,
   type BottRequestHandler,
+  type BottResponseEvent,
 } from "@bott/model";
 
-import type { addEventData, storeNewInputFile } from "@bott/storage";
-
 import { createErrorEmbed } from "../message/embed/error.ts";
-import { getMessageEvent } from "../message/event.ts";
-import { getCommandRequestEvent } from "./command/request.ts";
+import { resolveBottEventFromMessage } from "../message/event.ts";
+import { resolveCommandRequestEvent } from "./command/request.ts";
 import { getCommandJson } from "./command/json.ts";
-import type { DiscordBotContext } from "./types.ts";
+import type { DiscordBotContext } from "./context.ts";
+import { resolveCommandResponseEvent } from "./command/response.ts";
+import { callWithContext } from "./context.ts";
+import { log } from "@bott/logger";
 
 const REQUIRED_INTENTS = [
   GatewayIntentBits.GuildMembers,
@@ -53,8 +52,6 @@ type DiscordBotOptions<
   event?: (this: DiscordBotContext, event: BottEvent) => void;
   identityToken: string;
   mount?: (this: DiscordBotContext) => void;
-  addEventData: typeof addEventData;
-  storeNewInputFile: typeof storeNewInputFile;
 };
 
 export async function startDiscordBot<
@@ -62,97 +59,21 @@ export async function startDiscordBot<
 >({
   identityToken: token,
   requestHandlerCommands: commands,
-  addEventData,
-  storeNewInputFile,
   event: handleEvent,
   mount: handleMount,
 }: DiscordBotOptions<O>) {
   const client = new Client({ intents: REQUIRED_INTENTS });
 
   await client.login(token);
-  console.debug("[DEBUG] Logged in.");
+  log.debug("Logged in.");
 
-  // this is the bot user object
+  // This is the Bott user object.
   if (!client.user) {
     throw new Error("Bot user is not set!");
   }
 
-  const baseSelf = {
-    user: {
-      id: client.user.id,
-      name: client.user.username,
-    },
-  };
-
-  const _makeSelf = (currentChannel?: GuildTextBasedChannel) => ({
-    ...baseSelf,
-    startTyping: () => {
-      if (!currentChannel) return Promise.resolve();
-
-      return currentChannel.sendTyping();
-    },
-    send: async (event: BottEvent) => {
-      if (!currentChannel) return;
-
-      const files = event.files?.map((
-        file,
-      ) =>
-        new AttachmentBuilder(Buffer.from(file.data), {
-          name: file.path.split("/").at(-1),
-        })
-      );
-
-      let message;
-      switch (event.type) {
-        case BottEventType.MESSAGE:
-          message = await currentChannel.send({
-            content: event.details.content,
-            files,
-          });
-          break;
-        case BottEventType.REPLY: {
-          message = await currentChannel.messages.fetch(
-            String(event.parent!.id),
-          );
-          message.reply({
-            content: event.details.content,
-            files,
-          });
-          break;
-        }
-        case BottEventType.REACTION: {
-          message = await currentChannel.messages.fetch(
-            // TODO: Sometimes this isn't a Discord ID...
-            String(event.parent!.id),
-          );
-          message.react(event.details.content);
-          break;
-        }
-        default:
-          return;
-      }
-
-      if (message && "id" in message) {
-        event.id = message.id;
-      }
-
-      const eventTransaction = addEventData(event);
-      if ("error" in eventTransaction) {
-        console.error(
-          "[ERROR] Failed to add sent event to database:",
-          eventTransaction.error,
-        );
-      }
-
-      return message;
-    },
-  });
-
+  // Attempt to hydrate the DB.
   (async () => {
-    // Attempt to hydrate the DB.
-    // TODO(#36): Skip if the DB has data in it.
-    const events: BottEvent[] = [];
-
     // Discord "guilds" are equivalent to Bott's "spaces":
     for (const space of client.guilds.cache.values()) {
       for (const channel of space.channels.cache.values()) {
@@ -162,22 +83,18 @@ export async function startDiscordBot<
 
         try {
           for (const [_, message] of await channel.messages.fetch()) {
-            events.push(await getMessageEvent(message, storeNewInputFile));
+            await resolveBottEventFromMessage(message);
           }
         } catch (_) {
           // Likely don't have access to this channel
         }
       }
     }
-
-    const result = addEventData(...events);
-
-    if ("error" in result) {
-      console.error("[ERROR] Failed to hydrate database:", result.error);
-    }
   })();
 
-  handleMount?.call(_makeSelf());
+  if (handleMount) {
+    callWithContext(handleMount, { client });
+  }
 
   client.on(Events.MessageCreate, async (message) => {
     const currentChannel = message.channel;
@@ -186,17 +103,22 @@ export async function startDiscordBot<
       return;
     }
 
-    const event: BottEvent = await getMessageEvent(
+    const event = (await resolveBottEventFromMessage(
       message as Message<true>,
-      storeNewInputFile,
-    );
+    )) as BottEvent;
 
-    console.debug(
-      "[DEBUG] Message event:",
+    log.debug(
+      "Message event:",
       { id: event.id, preview: event.details?.content.slice(0, 100) },
     );
 
-    handleEvent?.call(_makeSelf(currentChannel), event);
+    if (handleEvent) {
+      callWithContext(handleEvent, {
+        client,
+        channel: currentChannel,
+        arguments: [event],
+      });
+    }
   });
 
   client.on(Events.MessageReactionAdd, async (reaction) => {
@@ -230,18 +152,23 @@ export async function startDiscordBot<
     }
 
     if (reaction.message.content) {
-      event.parent = await getMessageEvent(
+      event.parent = await resolveBottEventFromMessage(
         reaction.message as Message<true>,
-        storeNewInputFile,
       );
     }
 
-    console.debug("[DEBUG] Reaction event:", {
+    log.debug("Reaction event:", {
       id: event.id,
       details: event.details,
     });
 
-    handleEvent?.call(_makeSelf(currentChannel), event);
+    if (handleEvent) {
+      callWithContext(handleEvent, {
+        client,
+        channel: currentChannel,
+        arguments: [event],
+      });
+    }
   });
 
   // Handle commands, if they exist
@@ -261,18 +188,18 @@ export async function startDiscordBot<
     if (!command) {
       return;
     }
+
     await interaction.deferReply();
 
-    let responseEvent;
-
+    let responseEvent: BottResponseEvent;
     try {
-      const requestEvent = await getCommandRequestEvent<O>(interaction);
-
-      addEventData(requestEvent);
-
-      responseEvent = await command.call(
-        _makeSelf(interaction.channel! as GuildTextBasedChannel),
-        requestEvent,
+      responseEvent = await resolveCommandResponseEvent<O>(
+        command,
+        {
+          request: await resolveCommandRequestEvent<O>(interaction),
+          client,
+          channel: interaction.channel! as GuildTextBasedChannel,
+        },
       );
     } catch (error) {
       return interaction.editReply({
@@ -280,16 +207,7 @@ export async function startDiscordBot<
       });
     }
 
-    if (!responseEvent) {
-      return;
-    }
-
-    interaction.followUp({
-      content: responseEvent.details.content as string || undefined,
-      embeds: responseEvent.details.embeds as EmbedBuilder[],
-    });
-
-    addEventData(responseEvent);
+    interaction.followUp(responseEvent.details);
   });
 
   // Sync commands with discord origin via their custom http client 🙄:
@@ -299,7 +217,7 @@ export async function startDiscordBot<
   }
 
   await new REST({ version: "10" }).setToken(token).put(
-    Routes.applicationCommands(String(baseSelf.user.id)),
+    Routes.applicationCommands(String(client.user.id)),
     { body },
   );
 }

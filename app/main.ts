@@ -11,22 +11,17 @@
 
 import { delay } from "jsr:@std/async";
 
-import {
-  type AnyShape,
-  BottEventType,
-  BottRequestEvent,
-  BottResponseEvent,
-} from "@bott/model";
+import { type AnyShape, BottEventType, BottRequestEvent } from "@bott/model";
 import {
   addEventData,
   getEventIdsForChannel,
   getEvents,
   startStorage,
-  storeNewInputFile,
 } from "@bott/storage";
 import { createTask } from "@bott/task";
 import { startDiscordBot } from "@bott/discord";
 import { generateErrorMessage, generateEvents } from "@bott/gemini";
+import { log } from "@bott/logger";
 
 import { taskManager } from "./tasks.ts";
 import { getIdentity } from "./identity.ts";
@@ -50,18 +45,16 @@ const deployNonce = crypto.randomUUID();
 Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deployNonce);
 
 startDiscordBot({
-  addEventData,
-  storeNewInputFile,
   requestHandlerCommands: [help],
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {
-    console.info(
-      `[INFO] Running bot "${this.user.name}" at user id "<@${this.user.id}>"`,
+    log.info(
+      `Running bot "${this.user.name}" at user id "<@${this.user.id}>"`,
     );
   },
   event(event) {
     if (deployNonce !== _getCurrentDeployNonce()) {
-      console.debug("[DEBUG] Deploy nonce mismatch, ignoring event.");
+      log.debug("Deploy nonce mismatch, ignoring event.");
       return;
     }
 
@@ -78,7 +71,7 @@ startDiscordBot({
     const result = addEventData(event);
 
     if ("error" in result) {
-      console.error("[ERROR] Failed to add event to database:", result);
+      log.error("Failed to add event to database:", result);
       return;
     }
 
@@ -86,7 +79,7 @@ startDiscordBot({
       taskManager.add({
         name: event.channel.name,
         remainingSwaps: DEFAULT_RESPONSE_SWAPS,
-        record: [],
+        completions: [],
         config: {
           maximumSequentialSwaps: DEFAULT_RESPONSE_SWAPS,
         },
@@ -111,12 +104,13 @@ startDiscordBot({
           throw new Error("Aborted task: before getting event generator");
         }
 
+        const thisChannel = event.channel!;
         const context = {
           identity: getIdentity({
             user: this.user,
           }),
           user: this.user,
-          channel: event.channel!,
+          channel: thisChannel,
         };
 
         // 1. Get list of bot events (responses) from Gemini:
@@ -131,69 +125,69 @@ startDiscordBot({
         );
 
         // 2. Send one event at a time:
-        for await (const event of eventGenerator) {
+        for await (const genEvent of eventGenerator) {
           if (abortSignal.aborted) {
             throw new Error("Aborted task: before typing message");
           }
 
-          if (event.type !== BottEventType.REACTION) {
+          if (genEvent.type !== BottEventType.REACTION) {
             this.startTyping();
           }
 
-          switch (event.type) {
+          switch (genEvent.type) {
             case BottEventType.REQUEST: {
               let responsePromise;
 
-              switch ((event as BottRequestEvent<AnyShape>).details.name) {
+              switch ((genEvent as BottRequestEvent<AnyShape>).details.name) {
                 // We only have the "generateMedia" handler for now.
                 case "generateMedia":
                 default:
                   responsePromise = generateMedia(
-                    event as BottRequestEvent<GenerateMediaOptions>,
+                    genEvent as BottRequestEvent<GenerateMediaOptions>,
                   );
                   break;
               }
 
-              // We don't want to await here, it will hold up the process.
-              if ("then" in responsePromise) {
-                responsePromise.then(
-                  (responseEvent: BottResponseEvent) => {
-                    responseEvent.parent = event;
+              (async () => {
+                try {
+                  const responseEvent = await responsePromise;
+                  responseEvent.parent = genEvent;
 
-                    // Request/response events are system-only.
-                    this.send({
-                      id: crypto.randomUUID(),
-                      type: event.parent
-                        ? BottEventType.REPLY
-                        : BottEventType.MESSAGE,
-                      details: {
-                        content: responseEvent.details.content || "",
-                      },
-                      files: responseEvent.files,
-                      timestamp: new Date(),
-                      user: this.user,
-                      channel: event.channel,
-                      parent: event.parent,
-                    });
+                  // Request/response events are system-only.
+                  this.send({
+                    id: crypto.randomUUID(),
+                    type: genEvent.parent
+                      ? BottEventType.REPLY
+                      : BottEventType.MESSAGE,
+                    details: {
+                      content: responseEvent.details.content || "",
+                    },
+                    files: responseEvent.files,
+                    timestamp: new Date(),
+                    user: this.user,
+                    channel: thisChannel,
+                    parent: genEvent.parent,
+                  });
 
-                    addEventData(responseEvent);
-                  },
-                ).catch(async (error) => {
-                  console.warn("[WARN] Failed to generate media:", error);
+                  // Also store the "response" event.
+                  addEventData(responseEvent);
+                } catch (error) {
+                  log.warn("Failed to generate media:", error);
+
                   this.send(
                     await generateErrorMessage(
                       error,
-                      event as BottRequestEvent<AnyShape>,
+                      genEvent as BottRequestEvent<AnyShape>,
                       context,
                     ),
                   );
-                });
-              }
+                }
+              })();
               break;
             }
             case BottEventType.MESSAGE:
             case BottEventType.REPLY: {
-              const words = event.details.content.split(/\s+/).length;
+              const words = genEvent.details.content.split(/\s+/).length;
               const delayMs = (words / WORDS_PER_MINUTE) * MS_IN_MINUTE;
               const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
               await delay(cappedDelayMs, { signal: abortSignal });
@@ -203,7 +197,7 @@ startDiscordBot({
               }
             } /* fall through */
             case BottEventType.REACTION: {
-              this.send(event);
+              this.send(genEvent);
               return;
             }
             default:

@@ -74,7 +74,7 @@ Deno.test("TaskManager - should add a bucket and execute a single task", async (
 
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: maxSwaps, // Initial, but reset by logic
     config: { maximumSequentialSwaps: maxSwaps },
   });
@@ -106,7 +106,11 @@ Deno.test("TaskManager - should add a bucket and execute a single task", async (
     maxSwaps,
     "Remaining swaps should reset",
   );
-  assertEquals(bucket?.record.length, 1, "Task record should have one entry");
+  assertEquals(
+    bucket?.completions.length,
+    1,
+    "Task record should have one entry",
+  );
 });
 
 Deno.test("TaskManager - should swap tasks, aborting the current one, and manage remainingSwaps", async () => {
@@ -118,7 +122,7 @@ Deno.test("TaskManager - should swap tasks, aborting the current one, and manage
 
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: maxSwaps,
     config: { maximumSequentialSwaps: maxSwaps },
   });
@@ -171,7 +175,7 @@ Deno.test("TaskManager - should swap tasks, aborting the current one, and manage
     maxSwaps,
     `Swaps should reset to ${maxSwaps}`,
   );
-  assertEquals(bucketPostT2Complete.record.length, 2);
+  assertEquals(bucketPostT2Complete.completions.length, 1);
 });
 
 Deno.test("TaskManager - should respect swap limit (maximumSequentialSwaps)", async () => {
@@ -185,9 +189,9 @@ Deno.test("TaskManager - should respect swap limit (maximumSequentialSwaps)", as
 
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: 1,
-    config: { maximumSequentialSwaps: 1 }, // Only 1 swap allowed
+    config: { maximumSequentialSwaps: 1 },
   });
 
   const task1 = createTestTask("T1-limit", 80, false, undefined, () => {
@@ -266,7 +270,7 @@ Deno.test("TaskManager - should respect swap limit (maximumSequentialSwaps)", as
   await delay(80); // Wait for T3 to complete
   assert(t3Completed, "T3 should have completed");
   assertEquals(manager.buckets.get(bucketName)!.current, undefined);
-  assertEquals(manager.buckets.get(bucketName)!.record.length, 3);
+  assertEquals(manager.buckets.get(bucketName)!.completions.length, 2);
 });
 
 Deno.test("TaskManager - should throttle tasks and clear record after window", async () => {
@@ -277,7 +281,7 @@ Deno.test("TaskManager - should throttle tasks and clear record after window", a
 
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: 1,
     config: {
       maximumSequentialSwaps: 1,
@@ -292,7 +296,7 @@ Deno.test("TaskManager - should throttle tasks and clear record after window", a
   manager.push(bucketName, taskNoOp("T2-throttle"));
   await delay(15);
   assertEquals(
-    manager.buckets.get(bucketName)!.record.length,
+    manager.buckets.get(bucketName)!.completions.length,
     2,
     "Record: 2 after T1, T2",
   );
@@ -306,7 +310,7 @@ Deno.test("TaskManager - should throttle tasks and clear record after window", a
   }
   assert(rejected, "T3 should be rejected by throttle");
   assertEquals(
-    manager.buckets.get(bucketName)!.record.length,
+    manager.buckets.get(bucketName)!.completions.length,
     2,
     "Record: still 2 after T3 rejection",
   );
@@ -323,7 +327,7 @@ Deno.test("TaskManager - should throttle tasks and clear record after window", a
 
   // When T4 is pushed, record is filtered. T1 and T2 are older than windowMs.
   assertEquals(
-    manager.buckets.get(bucketName)!.record.length,
+    manager.buckets.get(bucketName)!.completions.length,
     1,
     "Record should only contain T4",
   );
@@ -346,7 +350,7 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
 
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: maxSwaps,
     config: { maximumSequentialSwaps: maxSwaps },
   });
@@ -366,7 +370,7 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
 
   assert(warnCalled, "console.warn should have been called");
   assert(
-    warnMessage.includes("[WARN] Task aborted:"),
+    warnMessage.includes("Task failed:"),
     "Warn message prefix incorrect",
   );
   assert(
@@ -401,7 +405,7 @@ Deno.test("TaskManager - has should correctly report bucket existence", () => {
   assert(!manager.has(bucketName), "Should not have bucket before adding");
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: 1,
     config: { maximumSequentialSwaps: 1 },
   });
@@ -437,7 +441,7 @@ Deno.test("TaskManager - should handle tasks pushed from another task's completi
 
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: 1,
     config: { maximumSequentialSwaps: 1 },
   });
@@ -457,7 +461,7 @@ Deno.test("TaskManager - should handle tasks pushed from another task's completi
     "Current should be undefined after T2",
   );
   assertEquals(
-    bucket.record.length,
+    bucket.completions.length,
     2,
     "Record should have 2 entries (T1, T2)",
   );
@@ -471,7 +475,7 @@ Deno.test("TaskManager - tasks in next should run if current is undefined and no
 
   manager.add({
     name: bucketName,
-    record: [],
+    completions: [],
     remainingSwaps: 1,
     config: { maximumSequentialSwaps: 1 },
   });

@@ -11,17 +11,26 @@
 
 import type { Message } from "npm:discord.js";
 
-import { type BottEvent, BottEventType, type BottInputFile } from "@bott/model";
-import type { storeNewInputFile } from "@bott/storage";
+import {
+  type AnyBottEvent,
+  type BottEvent,
+  BottEventType,
+  type BottFile,
+} from "@bott/model";
+import { addEventData, getEvents } from "@bott/storage";
+import { log } from "@bott/logger";
 
 import { getMarkdownLinks } from "./markdown.ts";
 
-// NOTE: this stores input files to disk, even if they
-// are not in the database yet.
-export const getMessageEvent = async (
+export const resolveBottEventFromMessage = async (
   message: Message<true>,
-  storeFile: typeof storeNewInputFile,
-): Promise<BottEvent> => {
+): Promise<AnyBottEvent> => {
+  const [possibleEvent] = await getEvents(message.id);
+
+  if (possibleEvent) {
+    return possibleEvent;
+  }
+
   const event: BottEvent = {
     id: message.id,
     type: BottEventType.MESSAGE,
@@ -50,14 +59,13 @@ export const getMessageEvent = async (
   if (message.reference?.messageId) {
     event.type = BottEventType.REPLY;
 
-    let parentMessage: BottEvent | undefined;
+    let parentMessage: AnyBottEvent | undefined;
 
     try {
-      parentMessage = await getMessageEvent(
+      parentMessage = await resolveBottEventFromMessage(
         await message.channel.messages.fetch(
           message.reference.messageId,
         ),
-        storeFile,
       );
     } catch (_) {
       // If the parent message isn't available, we can't populate the parent event.
@@ -74,25 +82,19 @@ export const getMessageEvent = async (
   ];
 
   if (urls.length) {
-    event.files = [] as BottInputFile[];
+    event.files = urls.map<BottFile>((url) => ({
+      id: crypto.randomUUID(),
+      source: new URL(url),
+      parent: event,
+    }));
+  }
 
-    for (const url of urls) {
-      let file;
-      try {
-        file = await storeFile(new URL(url));
-      } catch (error) {
-        console.warn(
-          "[WARN] Failed to store input file:",
-          (error as Error).message,
-        );
-
-        continue;
-      }
-
-      file.parent = event;
-
-      event.files.push(file);
-    }
+  const result = await addEventData(event);
+  if ("error" in result) {
+    log.error(
+      "Failed to resolve message event to database:",
+      result.error,
+    );
   }
 
   return event;

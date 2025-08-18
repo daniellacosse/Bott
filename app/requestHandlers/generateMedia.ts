@@ -11,20 +11,20 @@
 
 import {
   BottEventType,
-  type BottOutputFile,
+  type BottFileData,
   type BottRequestEvent,
   type BottRequestHandler,
   BottRequestOptionType,
   type BottResponseEvent,
 } from "@bott/model";
-import { storeOutputFile } from "@bott/storage";
 import { createTask } from "@bott/task";
 import {
-  generateEssayFile,
-  generateMovieFile,
-  generatePhotoFile,
-  generateSongFile,
+  generateEssayData,
+  generateMovieData,
+  generatePhotoData,
+  generateSongData,
 } from "@bott/gemini";
+import { log } from "@bott/logger";
 
 import { taskManager } from "../tasks.ts";
 import {
@@ -33,6 +33,23 @@ import {
   RATE_LIMIT_VIDEOS,
   RATE_LIMIT_WINDOW_MS,
 } from "../constants.ts";
+
+// Constants for AI prompt processing
+const MAX_AI_PROMPT_LENGTH = 10000;
+const LOG_TRUNCATE_LENGTH = 100;
+
+/**
+ * Sanitizes user input for AI prompts to prevent injection
+ */
+function sanitizeAIPrompt(input: string): string {
+  return input
+    .replace(/\s+/g, " ")
+    .trim()
+    // Remove control characters except newlines and tabs
+    // deno-lint-ignore no-control-regex
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .substring(0, MAX_AI_PROMPT_LENGTH);
+}
 
 enum GeneratedMediaType {
   ESSAY = "essay",
@@ -55,11 +72,14 @@ export const generateMedia: BottRequestHandler<
       prompt: string;
     }>,
   ) {
-    const { type, prompt } = requestEvent.details.options;
+    const { type, prompt: rawPrompt } = requestEvent.details.options;
 
-    console.debug("[DEBUG] generateMedia() called with options:", {
+    const prompt = sanitizeAIPrompt(rawPrompt);
+
+    log.debug("generateMedia() called with options:", {
       type,
-      prompt,
+      prompt: prompt.substring(0, LOG_TRUNCATE_LENGTH) +
+        (prompt.length > LOG_TRUNCATE_LENGTH ? "…" : ""),
     });
 
     if (!taskManager.has(type)) {
@@ -91,10 +111,10 @@ export const generateMedia: BottRequestHandler<
 
       taskManager.add({
         name: type,
-        remainingSwaps: 1, // Don't override media calls.
-        record: [],
+        remainingSwaps: 0, // Don't override media calls.
+        completions: [],
         config: {
-          maximumSequentialSwaps: 1,
+          maximumSequentialSwaps: 0,
           throttle,
         },
       });
@@ -105,27 +125,26 @@ export const generateMedia: BottRequestHandler<
         taskManager.push(
           type,
           createTask(async (abortSignal: AbortSignal) => {
-            let file: BottOutputFile | undefined;
+            let fileData: BottFileData | undefined;
 
             try {
               const context = {
                 abortSignal,
-                storeOutputFile,
               };
 
               switch (type) {
                 case GeneratedMediaType.PHOTO:
-                  file = await generatePhotoFile(prompt, context);
+                  fileData = await generatePhotoData(prompt, context);
                   break;
                 case GeneratedMediaType.MOVIE:
-                  file = await generateMovieFile(prompt, context);
+                  fileData = await generateMovieData(prompt, context);
                   break;
                 case GeneratedMediaType.SONG:
-                  file = await generateSongFile(prompt, context);
+                  fileData = await generateSongData(prompt, context);
                   break;
                 case GeneratedMediaType.ESSAY:
                 default:
-                  file = await generateEssayFile(prompt, context);
+                  fileData = await generateEssayData(prompt, context);
                   break;
               }
             } catch (error) {
@@ -137,7 +156,7 @@ export const generateMedia: BottRequestHandler<
             }
 
             // This shouldn't happen.
-            if (!file) {
+            if (!fileData) {
               throw new Error("Failed to generate media");
             }
 
@@ -147,8 +166,14 @@ export const generateMedia: BottRequestHandler<
               details: {
                 content: "",
               },
-              files: [file],
+              files: [{
+                id: crypto.randomUUID(),
+                raw: fileData,
+              }],
               timestamp: new Date(),
+              user: requestEvent.user,
+              channel: requestEvent.channel,
+              parent: requestEvent,
             });
           }),
         );
@@ -157,7 +182,7 @@ export const generateMedia: BottRequestHandler<
   },
   {
     description:
-      `You can use this request to create photos, songs, videos and essays based on a user's message or the conversational context.
+      `You can use this request to create photos, songs, movies and essays based on a user's message or the conversational context.
       When you decide to make this request, the system will handle the actual media generation based on the parameters you provide.
       IMPORTANT NOTE: Generating an 'essay' is particularly helpful when the situation calls for factual accuracy or nuance. When doing so, be sure to use user's names (e.g. "despoina") and not their user id (e.g. "<@USER_ID_001>").
       IMPORTANT NOTE: Don't generate text in photos, unless the text is under 20 characters.`,
@@ -170,12 +195,15 @@ export const generateMedia: BottRequestHandler<
         GeneratedMediaType.MOVIE,
         GeneratedMediaType.SONG,
       ],
-      description: "The type of media to generate.",
+      description:
+        "The type of media to generate. Can be a essay, photo, movie, or song.",
+      required: true,
     }, {
       name: "prompt",
       type: BottRequestOptionType.STRING,
       description:
         "A detailed description or prompt for the media to be generated. For example, 'a futuristic cityscape at sunset' for a photo, or 'a short story about a time-traveling cat' for an essay.",
+      required: true,
     }],
   },
 );

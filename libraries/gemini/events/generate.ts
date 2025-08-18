@@ -19,6 +19,8 @@ import {
   type BottChannel,
   type BottEvent,
   BottEventType,
+  type BottFile,
+  BottFileType,
   type BottRequestEvent,
   type BottRequestHandler,
   type BottUser,
@@ -27,16 +29,21 @@ import type { getEvents } from "@bott/storage";
 
 import gemini from "../client.ts";
 import {
+  CONFIG_ASSESSMENT_MODEL,
   CONFIG_ASSESSMENT_SCORE_THRESHOLD,
+  CONFIG_EVENTS_MODEL,
   INPUT_EVENT_LIMIT,
+  INPUT_FILE_AUDIO_COUNT_LIMIT,
   INPUT_FILE_TOKEN_LIMIT,
+  INPUT_FILE_VIDEO_COUNT_LIMIT,
 } from "../constants.ts";
 import {
   getGenerateResponseInstructions,
   greetingAssessment,
   noveltyAssessment,
-  requestFulfillmentAssessment,
+  requestRelatednessAssessment,
 } from "./instructions.ts";
+import { log } from "@bott/logger";
 import { getOutputEventSchema, outputEventStream } from "./output.ts";
 
 type GeminiResponseContext<O extends AnyShape> = {
@@ -54,7 +61,7 @@ type GeminiResponseContext<O extends AnyShape> = {
 export async function* generateEvents<O extends AnyShape>(
   inputEvents: AnyBottEvent[],
   {
-    model = "gemini-2.5-flash-preview-05-20",
+    model = CONFIG_EVENTS_MODEL,
     abortSignal,
     context,
     getEvents,
@@ -65,7 +72,6 @@ export async function* generateEvents<O extends AnyShape>(
   | BottRequestEvent<O>
 > {
   const modelUserId = context.user.id;
-
   const contents: Content[] = [];
   let pointer = inputEvents.length;
   let goingOverSeenEvents = false;
@@ -75,7 +81,12 @@ export async function* generateEvents<O extends AnyShape>(
 
   // We only want the model to respond to the most recent user messages,
   // since the model's last response:
-  let estimatedTokens = 0;
+  const resourceAccumulator = {
+    estimatedTokens: 0,
+    unseenEvents: 0,
+    audioFiles: 0,
+    videoFiles: 0,
+  };
   while (pointer--) {
     const event = {
       ...inputEvents[pointer],
@@ -93,20 +104,59 @@ export async function* generateEvents<O extends AnyShape>(
     // Determine if this event was from the model itself:
     if (event.user?.id === modelUserId) goingOverSeenEvents = true;
 
-    // Prune old, stale assets that bloat the context window:
-    if (
-      goingOverSeenEvents && estimatedTokens > INPUT_FILE_TOKEN_LIMIT
-    ) {
-      delete event.files;
-    } else {
-      for (const asset of event.files ?? []) {
-        estimatedTokens += asset.data.byteLength;
-      }
-    }
-
-    // Remove parent assets from events that the model has already seen:
+    // Remove unnecessary parent files from events:
     if (event.parent) {
       delete event.parent.files;
+    }
+
+    // Prune old, stale files that bloat the context window:
+    if (event.files?.length) {
+      const filesToKeep = [];
+      for (const file of event.files) {
+        let shouldPrune = false;
+
+        if (!file.compressed) {
+          continue;
+        }
+
+        if (
+          resourceAccumulator.estimatedTokens +
+              file.compressed.data.byteLength >
+            INPUT_FILE_TOKEN_LIMIT
+        ) {
+          shouldPrune = true;
+        } else if (
+          file.compressed.type === BottFileType.OPUS &&
+          resourceAccumulator.audioFiles >= INPUT_FILE_AUDIO_COUNT_LIMIT
+        ) {
+          shouldPrune = true;
+        } else if (
+          file.compressed.type === BottFileType.MP4 &&
+          resourceAccumulator.videoFiles >= INPUT_FILE_VIDEO_COUNT_LIMIT
+        ) {
+          shouldPrune = true;
+        }
+
+        if (shouldPrune) {
+          continue;
+        }
+
+        filesToKeep.push(file);
+
+        if (file.compressed.type === BottFileType.OPUS) {
+          resourceAccumulator.audioFiles++;
+        } else if (file.compressed.type === BottFileType.MP4) {
+          resourceAccumulator.videoFiles++;
+        }
+
+        resourceAccumulator.estimatedTokens += file.compressed.data.byteLength;
+      }
+
+      if (filesToKeep.length) {
+        event.files = filesToKeep as BottFile[];
+      } else {
+        delete event.files;
+      }
     }
 
     const content = _transformBottEventToContent({
@@ -115,7 +165,8 @@ export async function* generateEvents<O extends AnyShape>(
     } as BottEvent<object & { seen: boolean }>, modelUserId);
 
     if (!goingOverSeenEvents) {
-      assessmentHistory.push(content);
+      assessmentHistory.unshift(content);
+      resourceAccumulator.unseenEvents++;
     }
 
     contents.unshift(content);
@@ -129,6 +180,10 @@ export async function* generateEvents<O extends AnyShape>(
     return;
   }
 
+  log.debug(
+    `Generating response to ${resourceAccumulator.unseenEvents} events, with ${resourceAccumulator.audioFiles} audio files and ${resourceAccumulator.videoFiles} video files...`,
+  );
+
   const responseGenerator = await gemini.models.generateContentStream({
     model,
     contents,
@@ -136,9 +191,12 @@ export async function* generateEvents<O extends AnyShape>(
       abortSignal,
       candidateCount: 1,
       systemInstruction: {
-        parts: [{
-          text: getGenerateResponseInstructions<O>(requestHandlers ?? []),
-        }],
+        parts: [
+          { text: context.identity },
+          {
+            text: getGenerateResponseInstructions<O>(requestHandlers ?? []),
+          },
+        ],
       },
       responseMimeType: "application/json",
       responseSchema: getOutputEventSchema<O>(requestHandlers ?? []),
@@ -159,11 +217,11 @@ export async function* generateEvents<O extends AnyShape>(
         event.type !== BottEventType.REQUEST
       ) {
         const assessmentContent = [
-          ...assessmentHistory,
           eventAssessmentContent,
+          ...assessmentHistory,
         ];
 
-        // TODO (nit): Combine these into a single call.
+        // TODO (#42): Combine these into a single call.
         const scores = {
           greeting: await _performAssessment(
             assessmentContent,
@@ -171,7 +229,7 @@ export async function* generateEvents<O extends AnyShape>(
           ),
           requestFulfillment: await _performAssessment(
             assessmentContent,
-            requestFulfillmentAssessment,
+            requestRelatednessAssessment,
           ),
           novelty: await _performAssessment(
             assessmentContent,
@@ -184,21 +242,21 @@ export async function* generateEvents<O extends AnyShape>(
         );
 
         if (score < CONFIG_ASSESSMENT_SCORE_THRESHOLD) {
-          console.debug(
-            "[DEBUG] Message recieved poor assessment, skipping:",
+          log.debug(
+            "Message recieved poor assessment, skipping:",
             { content: event.details.content, scores },
           );
 
           continue;
         }
 
-        console.debug("[DEBUG] Message passed assessment:", {
+        log.debug("Message passed assessment:", {
           content: event.details.content,
           scores,
         });
       }
 
-      assessmentHistory.push(eventAssessmentContent);
+      assessmentHistory.unshift(eventAssessmentContent);
     }
 
     const commonFields = {
@@ -232,7 +290,7 @@ const _performAssessment = async (
   assessmentInstructions: string,
 ): Promise<number> => {
   const assessmentResult = await gemini.models.generateContent({
-    model: "gemini-2.0-flash-lite",
+    model: CONFIG_ASSESSMENT_MODEL,
     contents,
     config: {
       candidateCount: 1,
@@ -305,10 +363,14 @@ const _transformBottEventToContent = (
 
   if (event.files) {
     for (const file of event.files) {
+      if (!file.compressed) {
+        continue;
+      }
+
       parts.push({
         inlineData: {
-          mimeType: file.type,
-          data: encodeBase64(file.data),
+          mimeType: file.compressed.type,
+          data: encodeBase64(file.compressed.data!),
         },
       });
     }

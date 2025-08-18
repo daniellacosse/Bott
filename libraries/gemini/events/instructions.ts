@@ -26,9 +26,8 @@ Your primary task is to meticulously analyze the provided chat history (JSON eve
 
 ## Current Capabilities
 
-* You currently can see most websites and images that users send. Keep in mind that the system prunes old input files to keep the token window manageable.
-  * In images you will struggle to see finer details like text. Better to admit this than to make something up.
-* You currently cannot see videos, gifs, PDFs, text files, or audio files directly.
+* You currently can analyze most websites, images, videos, GIFs and audio files that users send. Keep in mind that the system prunes old input files to keep the token window manageable.
+* You currently cannot analyze rich text documents like PDFs/DOCX/CSVs that users post directly.
 
 ### Requests
 
@@ -160,7 +159,6 @@ Your response **MUST** be a JSON array of action objects or an empty JSON array 
 
 You have a suite of special requests you can make when sending events. (See Examples \#9 through \#11.)
 These events can be sent reactively or proactively: e.g., in response to a user message, or as a proactive action based on context.
-Note that requests can take a while. It is typically helpful to send a "message" event(s) as well, letting the user know that the request(s) are being processed.
 
 The requests you can make are currently:
 
@@ -503,13 +501,11 @@ You are an expert evaluator of chat messages. Your task is to assess a given cha
 ## Scoring Criteria
 
 Focus solely on whether the most recent message serves as an appropriate and natural-sounding social opening or greeting.
-
 *   **Score 80-100 (Excellent Greeting):**
     *   The message is a clear, friendly, and appropriate greeting or social opening.
     *   It feels natural and welcoming, setting a positive tone for interaction.
     *   It is concise and serves its primary purpose without unnecessary complexity.
     *   Examples: "Hello!", "Hi there!", "Hey!", "Good morning!"
-
 *   **Score 50-79 (Good Greeting):**
     *   The message functions as a greeting but might be slightly less natural or slightly more verbose than ideal.
     *   It clearly attempts to initiate social contact but might feel a little stiff or include minor, non-essential additions.
@@ -519,13 +515,11 @@ Focus solely on whether the most recent message serves as an appropriate and nat
     *   The message is intended as a greeting but is awkward, overly formal, or includes significant unrelated content that dilutes its purpose.
     *   It might be a very weak or indirect attempt at a social opening.
     *   Examples: "Commencing interaction sequence.", "Acknowledging presence. What is your query?", "Hello. [Followed by a long, unrelated technical explanation]."
-
 *   **Score 1-19 (Poor/No Greeting):**
     *   The message is not a greeting at all.
     *   It is a direct response to a specific query or topic without any social opening.
     *   It is entirely off-topic or nonsensical as a greeting.
     *   Example: Responding to a user's "Hello" with "The capital of France is Paris."
-
 ## Input
 You will receive a series of chat messages, with the most recent message beingthe one to evaluate (the bot's potential response).
 
@@ -533,41 +527,37 @@ You will receive a series of chat messages, with the most recent message beingth
 You **MUST** output only a single integer representing the score (e.g., \`75\`). Do not include any other text, explanation, or formatting.
 `;
 
-export const requestFulfillmentAssessment = `
+export const requestRelatednessAssessment = `
 # Task
-You are an expert evaluator of chat messages. Your task is to assess a given chat message and assign it a score from 1 to 100 based on how well it **directly and appropriately responds to an explicit request or question posed** in the preceding conversation. Your output MUST be a single integer between 1 and 100.
+You are an expert evaluator of chat messages. Your task is to assess a given chat message and assign it a score from 1 to 100 based on how **closely related** it is to an explicit request or question posed in the preceding conversation. The focus is on whether the message acknowledges and stays on the topic of the request, not necessarily on whether it fulfills the request. Your output MUST be a single integer between 1 and 100.
 
 ## Scoring Criteria
 
-Focus solely on whether the most recent message is a direct and relevant answer or action in response to a clear request or question directed at it.
+Focus solely on whether the most recent message is clearly related to the topic of an explicit request or question directed at it. The ability to fulfill the request is not the primary factor for this score.
 
-*   **Score 80-100 (Excellent Direct Fulfillment):**
-    *   The message is a direct, complete, and appropriate answer to an explicit question asked.
-    *   The message directly and fully performs an action explicitly requested.
-    *   **Crucially, the response is concise and focused solely on fulfilling the request, containing no unrelated information or conversational filler.**
-    *   Example: User asks "What is the capital of France?". Response might be: "The capital of France is Paris." (Direct, complete, concise).
+*   **Score 80-100 (Excellent Relatedness):**
+    *   The message directly and clearly pertains to the subject matter of an explicit request or question.
+    *   The message directly discusses, acknowledges, or attempts to address the request, even if it's to state inability, ask for clarification, or provide relevant context *about* the request.
+    *   **Crucially, the response is highly focused on the topic of the request, containing minimal unrelated information.**
+    *   Example: User asks "What is the capital of France?". Bot: "The capital of France is Paris." (Directly answers, thus highly related).
+    *   Example: User asks "Can you order me a pizza?" Bot: "I can't order a pizza for you as I don't have the ability to interact with real-world services." (Directly addresses the request by stating inability, thus highly related).
 
-*   **Score 50-79 (Good Direct Fulfillment):**
-    *   The message is a direct response to an explicit request or question but might be slightly incomplete or miss a minor nuance of the request.
-    *   The message clearly attempts to fulfill the request but may require minor clarification or be slightly indirect.
-    *   **Alternatively, if the request cannot be fulfilled, the message directly and clearly explains valid reasons for non-fulfillment. The explanation itself should be concise and to the point, not evasive or overly verbose.**
-    *   **Alternatively, the message might fully answer/perform the request but includes a small amount of related conversational filler or minor, non-essential information that prevents it from being perfectly concise.**
-    *   Example (incomplete): Provides most of the requested information but omits a small detail.
-    *   Example (fluff): User asks "What is the capital of France?". Response might be: "Ah, a classic question! The capital of France, a beautiful country known for its art and cuisine, is Paris." (Fulfills the request but adds fluff).
-    *   Example (cannot fulfill): User asks "Order me a pizza?". Response might be: "I can't order a pizza for you as I don't have the ability to interact with real-world services or make purchases." (Directly explains inability).
-    *   If fulfillment is complete but accompanied by noticeable, unnecessary fluff, the score will be lower within this range. Significant fluff might push the score into the 'Partial' category.
+*   **Score 50-79 (Good Relatedness):**
+    *   The message is clearly related to an explicit request or question but might also touch upon slightly broader themes or be somewhat less direct in its connection to the core request.
+    *   The message is identifiably about the request's topic but might include some related conversational filler or tangential points that are still connected.
+    *   The message might discuss aspects surrounding the request, or provide partial information related to it.
+    *   Example: User asks "What's the best way to learn Python?" Bot: "Many people find online courses helpful for Python. There are also great books and communities." (Related, offers general advice on the topic).
+    *   Example: User asks "What is the capital of France?" Bot: "Paris is a beautiful city! It's known for the Eiffel Tower and the Louvre. It's also the capital of France." (Answers the question, but with additional related information).
 
-*   **Score 20-49 (Partial or Indirect Fulfillment):**
-    *   The message acknowledges a request or question but does not substantially answer or fulfill it.
-    *   The message is related to a request but is significantly indirect or evasive.
-    *   The message might attempt to answer but is largely overshadowed by irrelevant information or conversational tangents.
-    *   Example: The message says "That's an interesting question" without answering it.
+*   **Score 20-49 (Partial or Tangential Relatedness):**
+    *   The message has a discernible but weak or tangential connection to an explicit request or question.
+    *   The message might briefly mention something related to the request's topic but quickly moves to other subjects or is largely dominated by unrelated content.
+    *   Example: User asks "What's the weather like in London?" Bot: "I'm not sure about London, but it's often rainy in the UK. Speaking of travel, have you considered visiting Scotland?" (Briefly acknowledges a related concept but then pivots away).
 
-*   **Score 1-19 (Poor/No Fulfillment):**
-    *   The message does not address any discernible explicit request or question directed at the bot.
-    *   The message is off-topic relative to any clear request.
-    *   The message might be a general statement, an observation, or an attempt to initiate a new topic when a direct request was pending.
-
+*   **Score 1-19 (Poor/No Relatedness):**
+    *   The message shows no discernible connection to any explicit request or question made.
+    *   The message is entirely off-topic relative to any clear request.
+    *   Example: User asks "What time is it?" Bot: "Blue is my favorite color."
 ## Input
 You will receive a series of chat messages, with the most recent message being the one to evaluate (the bot's potential response).
 
@@ -583,32 +573,27 @@ You are an expert evaluator of chat messages. Your task is to assess a given cha
 ## Scoring Criteria
 
 Focus solely on the novelty and informational value of the most recent message content.
-
 *   **Score 80-100 (High Value - Significant New Information):**
     *   Introduces entirely new, relevant facts, data, or concepts not previously discussed or implied.
     *   Offers a unique, insightful perspective or a novel solution to a problem.
     *   Provides specific, verifiable information that significantly advances understanding or decision-making.
     *   Corrects a critical misunderstanding with new, factual information.
-
 *   **Score 50-79 (Moderate Value - Some New Information):**
     *   Elaborates on an existing point with non-obvious details or examples.
     *   Connects existing ideas in a new or insightful way.
     *   Asks a pertinent, thought-provoking question that opens up new avenues of discussion.
     *   Adds a layer of nuance or specific detail that enriches the conversation but isn't entirely groundbreaking.
-
 *   **Score 20-49 (Low Value - Minimal New Information):**
     *   Slightly rephrases existing information without adding significant new meaning.
     *   Offers a common or predictable observation.
     *   Asks a simple clarifying question that could likely be inferred.
     *   Provides a simple agreement or acknowledgment with minor, almost trivial, elaboration.
-
 *   **Score 1-19 (Very Low Value - No Substantive New Information):**
     *   Purely an agreement/disagreement (e.g., "Yes," "I agree," "No," "I don't think so").
     *   Simple acknowledgment (e.g., "Okay," "Got it," "Thanks").
     *   A social pleasantry or phatic expression (e.g., "lol," "haha," "That's interesting").
     *   A question that has already been clearly answered or is entirely off-topic.
     *   Content that is redundant or echoes what has just been said by others.
-
 ## Input
 You will receive a series of chat messages, with the most recent message being the one to evaluate.
 

@@ -10,6 +10,7 @@
  */
 
 import type { Task } from "./create.ts";
+import { log } from "@bott/logger";
 
 type TaskBucketName = string;
 
@@ -18,7 +19,7 @@ type TaskBucket = {
   current?: Task;
   next?: Task;
   remainingSwaps: number;
-  record: Date[];
+  completions: Date[];
   config: {
     throttle?: {
       windowMs: number;
@@ -30,6 +31,8 @@ type TaskBucket = {
 
 type TaskBucketMap = Map<TaskBucketName, TaskBucket>;
 
+// TODO(#44): instantiate TaskManager with prior runs,
+// persisting rate limit across deploys
 export class TaskManager {
   buckets: TaskBucketMap = new Map();
   private isFlushing = false;
@@ -44,11 +47,11 @@ export class TaskManager {
     if (bucket.config.throttle) {
       const nowMs = Date.now();
 
-      bucket.record = bucket.record.filter((timestamp) =>
+      bucket.completions = bucket.completions.filter((timestamp) =>
         (timestamp.valueOf() + bucket.config.throttle!.windowMs) > nowMs
       );
 
-      if (bucket.record.length >= bucket.config.throttle!.limit) {
+      if (bucket.completions.length >= bucket.config.throttle!.limit) {
         throw new Error("Too many requests");
       }
     }
@@ -80,89 +83,95 @@ export class TaskManager {
         continue;
       }
 
-      const oldTask = bucket.current;
+      const currentTask = bucket.current;
       const newTask = bucket.next;
 
-      if (!oldTask) {
-        bucket.remainingSwaps = bucket.config.maximumSequentialSwaps;
-        console.debug(
-          "[DEBUG] Loading new task:",
+      if (currentTask && bucket.remainingSwaps >= 1) {
+        log.debug(
+          "Replacing current task:",
           bucket.name,
-          newTask.nonce,
+          `${currentTask.nonce} -> ${newTask.nonce}`,
         );
+        currentTask.controller.abort();
+
+        bucket.remainingSwaps--;
+        bucket.current = undefined;
+      }
+
+      if (!bucket.current) {
         bucket.current = newTask;
         bucket.next = undefined;
-      } else {
-        if (bucket.remainingSwaps >= 1) {
-          console.debug(
-            "[DEBUG] Aborting old task:",
-            bucket.name,
-            oldTask.nonce,
-          );
-          oldTask.controller.abort();
-          bucket.remainingSwaps--;
 
-          console.debug(
-            "[DEBUG] Loading new task:",
-            bucket.name,
-            newTask.nonce,
-          );
-          bucket.current = newTask;
-          bucket.next = undefined;
-        } else {
-          console.debug(
-            "[DEBUG] Swap-blocked new task:",
-            bucket.name,
-            newTask.nonce,
-          );
-          continue;
-        }
-      }
+        log.debug(
+          "Starting new task:",
+          `${bucket.name}:${newTask.nonce}`,
+        );
 
-      console.debug(
-        "[DEBUG] Starting new task:",
-        bucket.name,
-        newTask.nonce,
-      );
-
-      bucket.record.push(new Date());
-
-      newTask(newTask.controller.signal)
-        .catch((error: Error) => {
-          console.warn(
-            "[WARN] Task aborted:",
-            bucket.name,
-            newTask.nonce,
-            { error },
-          );
-        })
-        .finally(() => {
-          console.debug(
-            "[DEBUG] Task finished:",
-            bucket.name,
-            newTask.nonce,
-          );
-
-          // Only modify the bucket's state if this task (newTask) is still
-          // the one considered current. This prevents a task that was swapped out
-          // from incorrectly clearing the state of the task that replaced it.
-          if (bucket.current === newTask) {
-            bucket.current = undefined;
+        (async () => {
+          try {
+            await newTask(newTask.controller.signal);
             bucket.remainingSwaps = bucket.config.maximumSequentialSwaps;
+            bucket.completions.push(new Date());
+            log.debug(
+              "Task completed:",
+              `${bucket.name}:${newTask.nonce}`,
+            );
+          } catch (error) {
+            if (
+              (error as Error).name === "AbortError" ||
+              (error as Error).message.includes("AbortError")
+            ) {
+              log.warn(
+                "Task aborted:",
+                `${bucket.name}:${newTask.nonce}`,
+              );
+            } else {
+              log.warn(
+                "Task failed:",
+                `${bucket.name}:${newTask.nonce}`,
+                error,
+              );
+            }
+          } finally {
+            if (bucket.current === newTask) {
+              bucket.current = undefined;
+            }
+
+            this.flushTasks();
           }
-
-          this.flushTasks();
-        });
-
-      // Debug log currently running tasks:
-      const runningTasks = Array.from(this.buckets.values()).filter((b) =>
-        b.current !== undefined
-      ).map((b) => `${b.name}:${b.current!.nonce}`);
-
-      if (runningTasks.length > 0) {
-        console.debug("[DEBUG] Currently running tasks:", runningTasks);
+        })();
       }
     }
+
+    // Display currently running/idle tasks:
+    const runningTasks = [];
+    const idleTasks = [];
+
+    for (const bucket of this.buckets.values()) {
+      if (bucket.current) {
+        let taskString = `${bucket.name}:${bucket.current?.nonce}`;
+
+        if (!bucket.remainingSwaps) {
+          taskString += " (LOCKED)";
+        } else {
+          taskString += ` (swaps: ${bucket.remainingSwaps})`;
+        }
+
+        runningTasks.push(taskString);
+      }
+
+      if (bucket.next) {
+        idleTasks.push(`${bucket.name}:${bucket.next?.nonce}`);
+      }
+    }
+
+    log.debug("Task manager status:", {
+      running: runningTasks,
+      idle: idleTasks,
+      totalCompletions: this.buckets.values().reduce((sum, bucket) => {
+        return sum + bucket.completions.length;
+      }, 0),
+    });
 
     this.isFlushing = false;
   }

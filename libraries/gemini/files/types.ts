@@ -11,8 +11,7 @@
 
 import type { GoogleGenAI } from "npm:@google/genai";
 
-import type { BottOutputFile } from "@bott/model";
-import type { storeOutputFile } from "@bott/storage";
+import type { BottFileData } from "@bott/model";
 
 export type PromptParameters = {
   abortSignal?: AbortSignal;
@@ -21,10 +20,9 @@ export type PromptParameters = {
   instructions?: string;
   gemini?: GoogleGenAI;
   characterLimit?: number;
-  storeOutputFile: typeof storeOutputFile;
 };
 
-export type OutputFileGenerator = (
+export type BottFileDataGenerator = (
   prompt: string,
   params: PromptParameters,
-) => Promise<BottOutputFile>;
+) => Promise<BottFileData>;
