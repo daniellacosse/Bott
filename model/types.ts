@@ -98,6 +98,25 @@ export interface BottFile {
   parent?: BottEvent<AnyShape>;
 }
 
+type NonEmptyArray<T> = [T, ...Array<T>];
+
+/**
+ * Defines the structure for a "Trait" in Bott.
+ * Traits are used to describe characteristics of events or entities,
+ * with a scoring system (e.g., 1-5 scale).
+ */
+export interface BottTrait {
+  name: string;
+  criteria: NonEmptyArray<string>;
+  examples: {
+    1: NonEmptyArray<string>;
+    2?: NonEmptyArray<string>;
+    3?: NonEmptyArray<string>;
+    4?: NonEmptyArray<string>;
+    5: NonEmptyArray<string>;
+  };
+}
+
 /**
  * Enumerates the different types of events that can occur in Bott.
  */

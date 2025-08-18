@@ -15,16 +15,14 @@ import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import {
   type AnyShape,
-  type BottChannel,
   type BottEvent,
   BottEventType,
   type BottFile,
   BottFileType,
   type BottRequestEvent,
-  type BottRequestHandler,
-  type BottUser,
 } from "@bott/model";
-import { addEventData, type getEvents } from "@bott/storage";
+import { log } from "@bott/logger";
+import { addEventData, getEvents } from "@bott/storage";
 
 import gemini from "../client.ts";
 import {
@@ -34,21 +32,10 @@ import {
   INPUT_FILE_TOKEN_LIMIT,
   INPUT_FILE_VIDEO_COUNT_LIMIT,
 } from "../constants.ts";
-import { getGenerateOutputInstructions } from "./instructions.ts";
-import { log } from "@bott/logger";
-import { getOutputEventSchema } from "./output.ts";
-
-type GeminiResponseContext<O extends AnyShape> = {
-  abortSignal: AbortSignal;
-  context: {
-    identity: string;
-    user: BottUser;
-    channel: BottChannel;
-  };
-  getEvents: typeof getEvents;
-  model?: string;
-  requestHandlers?: BottRequestHandler<O, AnyShape>[];
-};
+import {
+  type GeminiEventGenerationContext,
+  getInstructions,
+} from "./instructions.ts";
 
 export async function* generateEvents<O extends AnyShape>(
   inputEvents: BottEvent<
@@ -58,9 +45,11 @@ export async function* generateEvents<O extends AnyShape>(
     model = CONFIG_EVENTS_MODEL,
     abortSignal,
     context,
-    getEvents,
-    requestHandlers,
-  }: GeminiResponseContext<O>,
+  }: {
+    model?: string;
+    abortSignal: AbortSignal;
+    context: GeminiEventGenerationContext<O>;
+  },
 ): AsyncGenerator<
   | BottEvent<{ content: string; scores?: Record<string, number> }>
   | BottRequestEvent<O>
@@ -161,6 +150,8 @@ export async function* generateEvents<O extends AnyShape>(
     return;
   }
 
+  const { systemPrompt, responseSchema } = getInstructions(context);
+
   log.debug(
     `Generating response to ${resourceAccumulator.unseenEvents} events, with ${resourceAccumulator.audioFiles} audio files and ${resourceAccumulator.videoFiles} video files...`,
   );
@@ -172,17 +163,14 @@ export async function* generateEvents<O extends AnyShape>(
       candidateCount: 1,
       systemInstruction: {
         parts: [
-          { text: context.identity },
+          { text: context.identityPrompt },
           {
-            text: getGenerateOutputInstructions(
-              context.user,
-              requestHandlers,
-            ),
+            text: systemPrompt,
           },
         ],
       },
       responseMimeType: "application/json",
-      responseSchema: getOutputEventSchema<O>(requestHandlers ?? []),
+      responseSchema,
     },
   });
 

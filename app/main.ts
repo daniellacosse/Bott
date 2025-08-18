@@ -31,6 +31,17 @@ import {
   GenerateMediaOptions,
 } from "./requestHandlers/generateMedia.ts";
 import { STORAGE_DEPLOY_NONCE_PATH, STORAGE_ROOT } from "./constants.ts";
+import {
+  directedAt,
+  factCheckingNeed,
+  importance,
+  necessity,
+  redundancy,
+  relevance,
+  seriousness,
+  supportNeed,
+  wordiness,
+} from "./traits.ts";
 
 const WORDS_PER_MINUTE = 200;
 const MS_IN_MINUTE = 60 * 1000;
@@ -106,11 +117,25 @@ startDiscordBot({
 
         const thisChannel = event.channel!;
         const context = {
-          identity: getIdentity({
+          identityPrompt: getIdentity({
             user: this.user,
           }),
           user: this.user,
           channel: thisChannel,
+          requestHandlers: { generateMedia },
+          inputTraits: {
+            seriousness,
+            importance,
+            directedAtBott: directedAt(this.user),
+            factCheckingNeed,
+            supportNeed,
+          },
+          outputTraits: {
+            relevance,
+            redundancy,
+            wordiness,
+            necessity,
+          },
         };
 
         // 1. Get list of bot events (responses) from Gemini:
@@ -119,8 +144,6 @@ startDiscordBot({
           {
             abortSignal,
             context,
-            getEvents,
-            requestHandlers: [generateMedia],
           },
         );
 
