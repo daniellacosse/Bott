@@ -181,6 +181,7 @@ export const generateMedia: BottRequestHandler<
     );
   },
   {
+    // TODO: other notes - can only generate one at a time. system forwards the media to the channel directly.
     description:
       `You can use this request to create photos, songs, movies and essays based on a user's message or the conversational context.
       When you decide to make this request, the system will handle the actual media generation based on the parameters you provide.
@@ -202,6 +203,7 @@ export const generateMedia: BottRequestHandler<
       name: "prompt",
       type: BottRequestOptionType.STRING,
       description:
+        // TODO: call for more detail in the prompting.
         "A detailed description or prompt for the media to be generated. For example, 'a futuristic cityscape at sunset' for a photo, or 'a short story about a time-traveling cat' for an essay.",
       required: true,
     }],

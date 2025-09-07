@@ -1,7 +1,10 @@
 import type { BottTrait, BottUser } from "@bott/model";
 
+// TODO: finish
+
 export const seriousness: BottTrait = {
   name: "seriousness",
+  description: "TODO",
   criteria: [],
   examples: {
     1: ["Joking/Sarcastic", "lol nice"],

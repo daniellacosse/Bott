@@ -35,7 +35,7 @@ import {
 import {
   type GeminiEventGenerationContext,
   getInstructions,
-} from "./instructions.ts";
+} from "./instructions/main.ts";
 
 export async function* generateEvents<O extends AnyShape>(
   inputEvents: BottEvent<
@@ -174,7 +174,7 @@ export async function* generateEvents<O extends AnyShape>(
     },
   });
 
-  const result = JSON.parse(
+  const { scoredInputEvents, filteredOutputEvents } = JSON.parse(
     response.candidates?.[0]?.content?.parts
       ?.filter((part: Part) => "text" in part && typeof part.text === "string")
       .map((part: Part) => (part as { text: string }).text)
@@ -182,28 +182,30 @@ export async function* generateEvents<O extends AnyShape>(
   );
 
   // Update scored input events in the database
-  if (result.scoredInputEvents.length > 0) {
+  if (scoredInputEvents.length > 0) {
     try {
-      await addEventData(...result.scoredInputEvents);
+      await addEventData(...scoredInputEvents);
       log.debug(
-        `Updated ${result.scoredInputEvents.length} events with scores`,
+        `Updated ${scoredInputEvents.length} events with scores`,
       );
     } catch (error) {
       log.error(`Failed to update events with scores: ${error}`);
     }
   }
 
+  // TODO: more detailed logging in the generation
   log.debug(
-    `Processed ${result.scoredInputEvents.length} scored input events and ${result.filteredOutputEvents.length} filtered output events`,
+    `Processed ${scoredInputEvents.length} scored input events and ${filteredOutputEvents.length} filtered output events`,
   );
 
   // Yield the filtered output events
-  for (const event of result.filteredOutputEvents) {
+  for (const event of filteredOutputEvents) {
     const commonFields = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
       user: context.user,
       channel: context.channel,
+      // Gemini does not return the full parent event
       parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
     };
 
@@ -254,16 +256,18 @@ const _transformBottEventToContent = (
   };
 
   if (event.parent) {
-    // The caller (generateEvents) should have already handled event.parent.files.
-    // We create a simplified parent reference here.
-    const { files: _files, ...parentDetails } = event.parent;
+    const { ...parentToSerialize } = event.parent;
 
-    if (parentDetails.parent) {
-      // This level of nesting in this context is unnecessary.
-      delete parentDetails.parent;
+    if (parentToSerialize.files) {
+      delete parentToSerialize.files;
     }
 
-    eventToSerialize.parent = parentDetails;
+    if (parentToSerialize.parent) {
+      // This level of nesting in this context is unnecessary.
+      delete parentToSerialize.parent;
+    }
+
+    eventToSerialize.parent = parentToSerialize;
   }
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
