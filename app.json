@@ -4,19 +4,12 @@
     "DISCORD_TOKEN": {
       "description": "The token for your Discord bot. Get this from the Discord Developer Portal.",
       "required": true
-    },
-    "GOOGLE_PROJECT_ID": {
-      "value": "PROJECT_ID"
-    },
-    "GOOGLE_PROJECT_LOCATION": {
-      "value": "LOCATION"
     }
   },
   "options": {
     "port": 8080,
     "cpu": "1",
     "memory": "1.5Gi",
-    "min-instances": 0,
     "max-instances": 1
   }
 }
