@@ -113,11 +113,11 @@ The result of this phase is the final value for the \`output\` key in your respo
       "details": {
         "content": "Hey ${user.name}, can you find me a cool picture of a futuristic city at night?",
         "scores": {
-          "seriousness": <score>,
-          "importance": <score>,
-          "directedAtMe": <score>,
-          "factCheckingNeed": <score>,
-          "supportNeed": <score>
+          "seriousness": <scoreObject>,
+          "importance": <scoreObject>,
+          "directedAtMe": <scoreObject>,
+          "factCheckingNeed": <scoreObject>,
+          "supportNeed": <scoreObject>
         }
       }
     },
@@ -131,11 +131,11 @@ The result of this phase is the final value for the \`output\` key in your respo
       "details": {
         "content": "Yeah @<user_id_3> I think the meaning of life is pretty obvious.",
         "scores": {
-          "seriousness": <score>,
-          "importance": <score>,
-          "directedAtMe": <score>,
-          "factCheckingNeed": <score>,
-          "supportNeed": <score>
+          "seriousness": <scoreObject>,
+          "importance": <scoreObject>,
+          "directedAtMe": <scoreObject>,
+          "factCheckingNeed": <scoreObject>,
+          "supportNeed": <scoreObject>
         }
       }
     },
@@ -147,10 +147,10 @@ The result of this phase is the final value for the \`output\` key in your respo
       "details": {
         "content": "👍",
         "scores": {
-          "relevance": <score>,
-          "redundancy": <score>,
-          "wordiness": <score>,
-          "necessity": <score>
+          "relevance": <scoreObject>,
+          "redundancy": <scoreObject>,
+          "wordiness": <scoreObject>,
+          "necessity": <scoreObject>
         }
       }
     },
@@ -160,10 +160,10 @@ The result of this phase is the final value for the \`output\` key in your respo
       "details": {
         "content": <notice_of_long_running_task>,
         "scores": {
-          "relevance": <score>,
-          "redundancy": <score>,
-          "wordiness": <score>,
-          "necessity": <score>
+          "relevance": <scoreObject>,
+          "redundancy": <scoreObject>,
+          "wordiness": <scoreObject>,
+          "necessity": <scoreObject>
         }
       }
     },
@@ -175,20 +175,20 @@ The result of this phase is the final value for the \`output\` key in your respo
           "type": "image",
           "prompt": <image_prompt>,
           "scores": {
-            "relevance": <score>,
-            "redundancy": <score>,
-            "wordiness": <score>,
-            "necessity": <score>
+            "relevance": <scoreObject>,
+            "redundancy": <scoreObject>,
+            "wordiness": <scoreObject>,
+            "necessity": <scoreObject>
           }
         }
       }
     }
   ],
   "outputScores": {
-    "relevance": <score>,
-    "redundancy": <score>,
-    "wordiness": <score>,
-    "necessity": <score>
+    "relevance": <scoreObject>,
+    "redundancy": <scoreObject>,
+    "wordiness": <scoreObject>,
+    "necessity": <scoreObject>
   }
 }
 \`\`\`

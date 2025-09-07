@@ -181,12 +181,11 @@ export const generateMedia: BottRequestHandler<
     );
   },
   {
-    // TODO: other notes - can only generate one at a time. system forwards the media to the channel directly.
     description:
-      `You can use this request to create photos, songs, movies and essays based on a user's message or the conversational context.
-      When you decide to make this request, the system will handle the actual media generation based on the parameters you provide.
-      IMPORTANT NOTE: Generating an 'essay' is particularly helpful when the situation calls for factual accuracy or nuance. When doing so, be sure to use user's names (e.g. "despoina") and not their user id (e.g. "<@USER_ID_001>").
-      IMPORTANT NOTE: Don't generate text in photos, unless the text is under 20 characters.`,
+      `Use this to create a photo, song, movie, or essay. The system handles the generation and posts the media directly to the channel.
+      IMPORTANT: The system can only generate one of each media type (e.g., one photo and one song) at a time. Because the media is sent directly, it might appear without context. It's good practice to send a companion message to explain what you're doing (e.g., "On it, generating an image for you...").
+      - For 'essays', which are good for factual or nuanced topics, use real names (e.g., "despoina") instead of user IDs (e.g., "<@USER_ID_001>").
+      - For 'photos', avoid including text in the prompt if it's over 20 characters.`,
     options: [{
       name: "type",
       type: BottRequestOptionType.STRING,
@@ -197,14 +196,13 @@ export const generateMedia: BottRequestHandler<
         GeneratedMediaType.SONG,
       ],
       description:
-        "The type of media to generate. Can be a essay, photo, movie, or song.",
+        "The type of media to generate: 'essay', 'photo', 'movie', or 'song'.",
       required: true,
     }, {
       name: "prompt",
       type: BottRequestOptionType.STRING,
       description:
-        // TODO: call for more detail in the prompting.
-        "A detailed description or prompt for the media to be generated. For example, 'a futuristic cityscape at sunset' for a photo, or 'a short story about a time-traveling cat' for an essay.",
+        "A highly detailed prompt for the media. Be excruciatingly precise. Pull in as much relevant context from the conversation as possible to make the generated media specific and relevant.",
       required: true,
     }],
   },

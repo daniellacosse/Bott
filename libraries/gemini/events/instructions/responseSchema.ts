@@ -119,9 +119,21 @@ const generateTraitScoringSchema = (traits: Record<string, BottTrait>) => {
         return {
           ...properties,
           [name]: {
-            type: GeminiStructuredResponseType.NUMBER,
-            enum: ["1", "2", "3", "4", "5"],
+            type: GeminiStructuredResponseType.OBJECT,
             description,
+            properties: {
+              score: {
+                type: GeminiStructuredResponseType.NUMBER,
+                description: "The numeric score from 1 to 5.",
+                enum: ["1", "2", "3", "4", "5"],
+              },
+              rationale: {
+                type: GeminiStructuredResponseType.STRING,
+                description:
+                  "A brief, one-sentence justification for the assigned score.",
+              },
+            },
+            required: ["score"],
           },
         };
       },
