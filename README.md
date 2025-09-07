@@ -68,8 +68,8 @@ Bott is configured via a series of environment variables.
 | `DISCORD_TOKEN`                     | The authentication token for your Discord bot application.                                                                | -                                 |
 | `FILE_SYSTEM_ROOT`                  | The root directory on the local file system for storing input and output files.                                           | `./fs_root`                       |
 | `GOOGLE_ACCESS_TOKEN`               | An access token for authenticating with Google Cloud APIs (for local development).                                        | -                                 |
-| `GOOGLE_PROJECT_ID`                 | The ID of your Google Cloud project.                                     | -                                 |
-| `GOOGLE_PROJECT_LOCATION`           | The GCP region where your Vertex AI resources are located.              | -                                 |
+| `GOOGLE_PROJECT_ID`                 | The ID of your Google Cloud project.                                                                                      | -                                 |
+| `GOOGLE_PROJECT_LOCATION`           | The GCP region where your Vertex AI resources are located.                                                                | -                                 |
 | `LOG_TOPICS`                        | Controls which log topics to display. Comma-separated list of topics: debug, info, warn, error, perf.                     | info,warn,error                   |
 | `PORT`                              | The port of the health check server required for GCP Cloud Run.                                                           | 8080                              |
 
