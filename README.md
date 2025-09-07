@@ -88,20 +88,24 @@ Before deploying, you need to create a GCP project and enable the required APIs:
    - Choose a project name and note the **Project ID** (you'll need this later)
    - Click "Create"
 
-2. **Enable Required APIs**:
-   Navigate to the [APIs & Services](https://console.cloud.google.com/apis/dashboard) page and enable:
+2. **Enable Required APIs**: Navigate to the
+   [APIs & Services](https://console.cloud.google.com/apis/dashboard) page and
+   enable:
    - **Vertex AI API** - Required for Gemini AI models
    - **Cloud Storage API** - Required for temporary file storage
    - **Cloud Run API** - Required for deployment
 
-   You can enable these APIs by searching for them in the API Library or using these direct links:
+   You can enable these APIs by searching for them in the API Library or using
+   these direct links:
    - [Enable Vertex AI API](https://console.cloud.google.com/flows/enableapi?apiid=aiplatform.googleapis.com)
    - [Enable Cloud Storage API](https://console.cloud.google.com/flows/enableapi?apiid=storage-api.googleapis.com)
    - [Enable Cloud Run API](https://console.cloud.google.com/flows/enableapi?apiid=run.googleapis.com)
 
 3. **Choose a Region**:
-   - Select a region for your Vertex AI resources (e.g., `us-central1`, `us-east4`, `europe-west4`)
-   - Note this region as you'll need it for the `GOOGLE_PROJECT_LOCATION` environment variable
+   - Select a region for your Vertex AI resources (e.g., `us-central1`,
+     `us-east4`, `europe-west4`)
+   - Note this region as you'll need it for the `GOOGLE_PROJECT_LOCATION`
+     environment variable
 
 #### 2. Deploy the Service
 
@@ -112,14 +116,18 @@ Click this button to deploy the Bott service:
 During deployment, you'll be prompted to configure environment variables:
 
 **Required Variables:**
-- `DISCORD_TOKEN` - Your Discord bot token from the [Discord Developer Portal](https://discord.com/developers/applications)
+
+- `DISCORD_TOKEN` - Your Discord bot token from the
+  [Discord Developer Portal](https://discord.com/developers/applications)
 - `GOOGLE_PROJECT_ID` - Your GCP Project ID from step 1
 - `GOOGLE_PROJECT_LOCATION` - Your chosen region (e.g., `us-central1`)
 
 **Optional Variables (with sensible defaults):**
+
 - All `CONFIG_*` variables are optional and have reasonable defaults
 - You can customize AI models, rate limits, and other settings as needed
-- See the [configuration table](#configuring-bott) above for all available options
+- See the [configuration table](#configuring-bott) above for all available
+  options
 
 #### 3. Configure Permissions
 
@@ -128,8 +136,8 @@ After deployment, configure the service account permissions:
 1. Navigate to the
    **[IAM & Admin](https://console.cloud.google.com/iam-admin/iam)** page in
    your Google Cloud project.
-2. Find the service account that was created for your new Cloud Run service
-   (it will have a name like `PROJECT-ID@PROJECT-ID.iam.gserviceaccount.com`).
+2. Find the service account that was created for your new Cloud Run service (it
+   will have a name like `PROJECT-ID@PROJECT-ID.iam.gserviceaccount.com`).
 3. Click the **pencil icon** to edit its permissions.
 4. Click **+ ADD ANOTHER ROLE** and add the following roles:
    - `Vertex AI User` - Allows the bot to access Gemini models
@@ -138,7 +146,8 @@ After deployment, configure the service account permissions:
 
 #### 4. Verify Deployment
 
-1. Go to the [Cloud Run console](https://console.cloud.google.com/run) to see your deployed service
+1. Go to the [Cloud Run console](https://console.cloud.google.com/run) to see
+   your deployed service
 2. Click on the service name to view details
 3. Check the "Logs" tab to ensure the service started successfully
 4. The service should show as "Receiving traffic" with a green checkmark
