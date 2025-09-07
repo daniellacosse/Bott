@@ -14,7 +14,7 @@
   },
   "options": {
     "port": 8080,
-    "cpu": 1,
+    "cpu": "1",
     "memory": "1.5Gi",
     "min-instances": 0,
     "max-instances": 1
