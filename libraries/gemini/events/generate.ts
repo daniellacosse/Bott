@@ -37,6 +37,30 @@ import {
   getInstructions,
 } from "./instructions/main.ts";
 
+type GeminiEventGenerationResult = {
+  inputEventScores: BottEvent<
+    { content: string; scores: Record<string, GeminiEventTraitScore> }
+  >[];
+  outputEvents: (
+    | BottEvent<
+      { content: string; scores: Record<string, GeminiEventTraitScore> }
+    >
+    | BottEvent<
+      {
+        name: string;
+        options: AnyShape;
+        scores: Record<string, GeminiEventTraitScore>;
+      }
+    >
+  )[];
+  outputScores?: Record<string, GeminiEventTraitScore>;
+};
+
+type GeminiEventTraitScore = {
+  score: number;
+  rationale?: string;
+};
+
 export async function* generateEvents<O extends AnyShape>(
   inputEvents: BottEvent<
     { content: string; scores?: Record<string, number> }
@@ -174,59 +198,35 @@ export async function* generateEvents<O extends AnyShape>(
     },
   });
 
-  // TODO: clean up typing/names
-  const { inputEventScores, outputEvents, outputScores } = JSON.parse(
+  const result: GeminiEventGenerationResult = JSON.parse(
     response.candidates?.[0]?.content?.parts
       ?.filter((part: Part) => "text" in part && typeof part.text === "string")
       .map((part: Part) => (part as { text: string }).text)
       .join("") ?? "",
-  ) as {
-    inputEventScores: GeminiEventWithScores[];
-    outputEvents: GeminiEventWithScores<AnyShape>[];
-    outputScores: Record<string, GeminiScore>;
-  };
+  );
 
-  log.debug("Gemini processing complete.", {
-    inputEventScores: inputEventScores.map((event) => ({
-      id: event.id,
-      content: event.details.content.substring(0, 100) +
-        (event.details.content.length > 100 ? "…" : ""),
-      scores: event.details.scores,
-    })),
-    outputEvents: outputEvents.map((event) => ({
-      type: event.type,
-      content: (event.details as { content?: string }).content
-        ?.substring(0, 100) +
-        ((event.details as { content?: string }).content?.length ?? 0 > 100
-          ? "…"
-          : ""),
-      request: (event.details as { name?: string }).name,
-      options: (event.details as { options?: O }).options,
-      scores:
-        (event.details as { scores?: Record<string, GeminiScore> }).scores,
-    })),
-    outputScores,
-  });
+  _logDebugGeminiResult(result);
 
-  const transformedInputScores = transformScores(inputEventScores);
-  const transformedOutputEvents = transformScores(outputEvents);
+  const sanitizedInputEvents = _sanitizeEvents(result.inputEventScores);
+  const sanitizedOutputEvents = _sanitizeEvents<
+    { content: string } | { name: string; options: AnyShape }
+  >(result.outputEvents);
 
-  // Update scored input events in the database
-  if (transformedInputScores.length > 0) {
+  if (sanitizedInputEvents.length > 0) {
     try {
-      await addEventData(...transformedInputScores);
+      await addEventData(...sanitizedInputEvents);
       log.debug(
-        `Updated ${transformedInputScores.length} events with scores`,
+        `Added scores to ${sanitizedInputEvents.length} events.`,
       );
     } catch (error) {
       log.error(`Failed to update events with scores: ${error}`);
     }
   }
 
-  // Yield the filtered output events
-  for (const event of transformedOutputEvents) {
+  for (const event of sanitizedOutputEvents) {
     const commonFields = {
       id: crypto.randomUUID(),
+      type: event.type,
       timestamp: new Date(),
       user: context.user,
       channel: context.channel,
@@ -237,20 +237,19 @@ export async function* generateEvents<O extends AnyShape>(
     if (event.type === BottEventType.REQUEST) {
       yield {
         ...commonFields,
-        type: event.type,
+        type: BottEventType.REQUEST,
         details: event.details as {
           name: string;
           options: O;
-          scores?: Record<string, number>;
+          scores: Record<string, number>;
         },
       };
     } else {
       yield {
         ...commonFields,
-        type: event.type,
         details: event.details as {
           content: string;
-          scores?: Record<string, number>;
+          scores: Record<string, number>;
         },
       };
     }
@@ -259,30 +258,100 @@ export async function* generateEvents<O extends AnyShape>(
   return;
 }
 
-type GeminiScore = {
-  score: number;
-  rationale?: string;
+const _truncateMessage = (message: string, maxWordCount = 12) => {
+  const words = message.trim().split(/\s+/);
+
+  return words.slice(0, maxWordCount).join(" ") + "…";
 };
 
-type GeminiEventWithScores<T = { content: string }> = BottEvent<
-  T & {
-    scores: Record<string, GeminiScore>;
-  }
->;
+const _logDebugGeminiResult = (result: GeminiEventGenerationResult) => {
+  let logMessage = "Gemini processing result:\n";
 
-const transformScores = <T>(
-  events: GeminiEventWithScores<T>[],
-): BottEvent<T & { scores: Record<string, number> }>[] => {
-  for (const event of events) {
-    if (event.details?.scores) {
-      const newScores: Record<string, number> = {};
-      for (const trait in event.details.scores) {
-        newScores[trait] = event.details.scores[trait].score;
-      }
-      (event.details.scores as unknown) = newScores;
+  for (const event of result.inputEventScores) {
+    if (!event.details) {
+      continue;
+    }
+
+    logMessage += `[INPUT] Scored event #${event.id}: "${
+      _truncateMessage(event.details.content)
+    }"\n`;
+
+    for (const trait in event.details.scores) {
+      logMessage += `  => [${trait}: ${event.details.scores[trait].score}] ${
+        event.details.scores[trait].rationale ?? ""
+      }\n`;
     }
   }
-  return events as BottEvent<T & { scores: Record<string, number> }>[];
+
+  for (const event of result.outputEvents) {
+    if (!event.details) {
+      continue;
+    }
+
+    if (event.type === BottEventType.REQUEST) {
+      const details = event.details as {
+        name: string;
+        options: AnyShape;
+        scores: Record<string, GeminiEventTraitScore>;
+      };
+      logMessage += `[OUTPUT] Generated request \`${details.name}\`\n`;
+      for (const option in details.options) {
+        logMessage += `  => ${option}: ${details.options[option]}\n`;
+      }
+    } else {
+      const details = event.details as {
+        content: string;
+        scores: Record<string, GeminiEventTraitScore>;
+      };
+      const parentInfo = event.parent
+        ? ` (in reply to #${event.parent.id})`
+        : "";
+      logMessage += `[OUTPUT] Generated ${event.type}${parentInfo}: "${
+        _truncateMessage(details.content)
+      }"\n`;
+    }
+
+    for (const trait in event.details.scores) {
+      logMessage += `  => [${trait}: ${event.details.scores[trait].score}] ${
+        event.details.scores[trait].rationale ?? ""
+      }\n`;
+    }
+  }
+
+  if (result.outputScores) {
+    logMessage += "[OVERALL SCORES]\n";
+    for (const trait in result.outputScores) {
+      logMessage += `  => [${trait}: ${result.outputScores[trait].score}] ${
+        result.outputScores[trait].rationale ?? ""
+      }\n`;
+    }
+  }
+
+  log.debug(logMessage.trim());
+};
+
+const _sanitizeEvents = <T>(
+  events: BottEvent<T & { scores: Record<string, GeminiEventTraitScore> }>[],
+): BottEvent<T & { scores: Record<string, number> }>[] => {
+  const result: BottEvent<T & { scores: Record<string, number> }>[] = [];
+
+  for (const event of events) {
+    const newEvent = {
+      ...event,
+      details: {
+        ...event.details,
+        scores: {} as Record<string, number>,
+      },
+    };
+
+    for (const trait in event.details.scores) {
+      newEvent.details.scores[trait] = event.details.scores[trait].score;
+    }
+
+    result.push(newEvent);
+  }
+
+  return result;
 };
 
 const _transformBottEventToContent = (
