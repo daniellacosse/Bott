@@ -17,8 +17,10 @@ import { CONFIG_SONG_MODEL } from "../constants.ts";
 import type { BottFileDataGenerator } from "./types.ts";
 
 const GOOGLE_PROJECT_LOCATION = Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
+  Deno.env.get("GCP_LOCATION") ??
   "us-central1";
 const GOOGLE_PROJECT_ID = Deno.env.get("GOOGLE_PROJECT_ID") ??
+  Deno.env.get("GCP_PROJECT") ??
   "PROJECT_MISSING";
 const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN") ??
   "TOKEN_MISSING";
