@@ -1,10 +1,12 @@
 <img width="360" alt="Screenshot 2025-04-26 at 12 19 21" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
 
-# 🤖 `@Bott`
+# `@Bott`
 
 ![in development](https://img.shields.io/badge/in%20development-blue)
 ![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
 [![discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
+
+<img width="240" src="avatar.png" />
 
 A Discord bot, powered by Gemini.
 
