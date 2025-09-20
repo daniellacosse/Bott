@@ -10,11 +10,11 @@
  */
 
 import {
+  type BottAction,
+  type BottActionCallEvent,
+  BottActionOptionType,
   BottEventType,
   type BottFileData,
-  type BottRequestEvent,
-  type BottRequestHandler,
-  BottRequestOptionType,
   type BottResponseEvent,
 } from "@bott/model";
 import { createTask } from "@bott/task";
@@ -32,7 +32,7 @@ import {
   RATE_LIMIT_MUSIC,
   RATE_LIMIT_VIDEOS,
   RATE_LIMIT_WINDOW_MS,
-} from "../constants.ts";
+} from "../env.ts";
 
 // Constants for AI prompt processing
 const MAX_AI_PROMPT_LENGTH = 10000;
@@ -63,11 +63,11 @@ export type GenerateMediaOptions = {
   prompt: string;
 };
 
-export const generateMedia: BottRequestHandler<
+export const generateMedia: BottAction<
   GenerateMediaOptions
 > = Object.assign(
   function generateMedia(
-    requestEvent: BottRequestEvent<{
+    requestEvent: BottActionCallEvent<{
       type: GeneratedMediaType;
       prompt: string;
     }>,
@@ -188,7 +188,7 @@ export const generateMedia: BottRequestHandler<
       - For 'photos', avoid including text in the prompt if it's over 20 characters.`,
     options: [{
       name: "type",
-      type: BottRequestOptionType.STRING,
+      type: BottActionOptionType.STRING,
       allowedValues: [
         GeneratedMediaType.ESSAY,
         GeneratedMediaType.PHOTO,
@@ -200,7 +200,7 @@ export const generateMedia: BottRequestHandler<
       required: true,
     }, {
       name: "prompt",
-      type: BottRequestOptionType.STRING,
+      type: BottActionOptionType.STRING,
       description:
         "A highly detailed prompt for the media. Be excruciatingly precise. Pull in as much relevant context from the conversation as possible to make the generated media specific and relevant.",
       required: true,

@@ -15,11 +15,12 @@ import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 import {
   type AnyShape,
+  type BottActionCallEvent,
   type BottEvent,
   BottEventType,
   type BottFile,
   BottFileType,
-  type BottRequestEvent,
+  type BottGlobalSettings,
 } from "@bott/model";
 import { log } from "@bott/logger";
 import { addEventData, getEvents } from "@bott/storage";
@@ -32,10 +33,7 @@ import {
   INPUT_FILE_TOKEN_LIMIT,
   INPUT_FILE_VIDEO_COUNT_LIMIT,
 } from "../constants.ts";
-import {
-  type GeminiEventGenerationContext,
-  getInstructions,
-} from "./instructions/main.ts";
+import { getInstructions } from "./instructions/main.ts";
 
 type GeminiEventGenerationResult = {
   inputEventScores: BottEvent<
@@ -68,15 +66,17 @@ export async function* generateEvents<O extends AnyShape>(
   {
     model = CONFIG_EVENTS_MODEL,
     abortSignal,
+    settings,
     context,
   }: {
     model?: string;
     abortSignal: AbortSignal;
-    context: GeminiEventGenerationContext<O>;
+    settings: BottGlobalSettings;
+    context; // TODO
   },
 ): AsyncGenerator<
   | BottEvent<{ content: string; scores?: Record<string, number> }>
-  | BottRequestEvent<O>
+  | BottActionCallEvent<O>
 > {
   const modelUserId = context.user.id;
   const contents: Content[] = [];
@@ -96,8 +96,8 @@ export async function* generateEvents<O extends AnyShape>(
     };
 
     if (
-      event.type === BottEventType.REQUEST ||
-      event.type === BottEventType.RESPONSE
+      event.type === BottEventType.ACTION_CALL ||
+      event.type === BottEventType.ACTION_RESULT
     ) {
       // Skip these events for now.
       continue;
@@ -234,10 +234,10 @@ export async function* generateEvents<O extends AnyShape>(
       parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
     };
 
-    if (event.type === BottEventType.REQUEST) {
+    if (event.type === BottEventType.ACTION_CALL) {
       yield {
         ...commonFields,
-        type: BottEventType.REQUEST,
+        type: BottEventType.ACTION_CALL,
         details: event.details as {
           name: string;
           options: O;
@@ -288,7 +288,7 @@ const _logDebugGeminiResult = (result: GeminiEventGenerationResult) => {
       continue;
     }
 
-    if (event.type === BottEventType.REQUEST) {
+    if (event.type === BottEventType.ACTION_CALL) {
       const details = event.details as {
         name: string;
         options: AnyShape;

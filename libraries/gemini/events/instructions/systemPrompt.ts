@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { AnyShape, BottRequestHandler, BottTrait } from "@bott/model";
+import type { AnyShape, BottAction, BottTrait } from "@bott/model";
 import type { GeminiEventGenerationContext } from "./types.ts";
 
 export const getSystemPrompt = <O extends AnyShape>({
@@ -229,7 +229,7 @@ const generateTraitCriteriaMarkdown = (traits: Record<string, BottTrait>) => {
 };
 
 const generateRequestHandlerMarkdown = <O extends AnyShape>(
-  handlers: Record<string, BottRequestHandler<O, AnyShape>>,
+  handlers: Record<string, BottAction<O, AnyShape>>,
 ) => {
   const result = [];
 

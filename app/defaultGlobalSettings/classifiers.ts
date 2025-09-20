@@ -9,26 +9,24 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottTrait, BottUser } from "@bott/model";
+import type { BottEventClassifier, BottUser } from "@bott/model";
 
 // TODO: refine
 
-export const seriousness: BottTrait = {
+export const seriousness: BottEventClassifier = {
   name: "seriousness",
   definition:
     "How serious or formal the message is. A high score indicates a professional or urgent tone, while a low score suggests a casual or joking manner.",
-  criteria: [],
   examples: {
     1: ["<A joking or sarcastic comment>", "'lol nice'"],
     5: ["<A very serious comment>", "<A detailed bug report>"],
   },
 };
 
-export const importance: BottTrait = {
+export const importance: BottEventClassifier = {
   name: "importance",
   definition:
     "The urgency and impact of the message. A high score means it requires immediate attention, while a low score indicates it's trivial or can be handled later.",
-  criteria: [],
   examples: {
     1: ["<A trivial 'good morning' message>"],
     5: [
@@ -37,11 +35,10 @@ export const importance: BottTrait = {
   },
 };
 
-export const directedAt = (user: BottUser): BottTrait => ({
+export const directedAt = (user: BottUser): BottEventClassifier => ({
   name: `directedAt${user.name}`,
   definition:
     `Whether the message is directly addressed to me (${user.name}). A high score indicates a direct command or question.`,
-  criteria: [],
   examples: {
     1: ["<A message between two other users>"],
     5: [
@@ -50,11 +47,10 @@ export const directedAt = (user: BottUser): BottTrait => ({
   },
 });
 
-export const factCheckingNeed: BottTrait = {
+export const factCheckingNeed: BottEventClassifier = {
   name: "factCheckingNeed",
   definition:
     "Whether the message contains claims that should be verified. A high score indicates the presence of specific, verifiable facts.",
-  criteria: [],
   examples: {
     1: ["<A subjective opinion like 'I love this new design!'>"],
     5: [
@@ -63,11 +59,10 @@ export const factCheckingNeed: BottTrait = {
   },
 };
 
-export const supportNeed: BottTrait = {
+export const supportNeed: BottEventClassifier = {
   name: "supportNeed",
   definition:
     "Whether the user is asking for help or assistance. A high score indicates a direct request for support.",
-  criteria: [],
   examples: {
     1: ["<An informational message sharing a link>"],
     5: [
@@ -76,44 +71,40 @@ export const supportNeed: BottTrait = {
   },
 };
 
-export const relevance: BottTrait = {
+export const relevance: BottEventClassifier = {
   name: "relevance",
   definition:
     "How well the response relates to the user's message and the recent conversation.",
-  criteria: [],
   examples: {
     1: ["<An off-topic or irrelevant response>"],
     5: ["<A response that directly addresses the user's message>"],
   },
 };
 
-export const redundancy: BottTrait = {
+export const redundancy: BottEventClassifier = {
   name: "redundancy",
   definition:
     "Does this add new information or perspective compared to the conversation so far AND compared to the other events in this response?",
-  criteria: [],
   examples: {
     1: ["<A response that repeats information already stated>"],
     5: ["<A response that provides new information or a fresh perspective>"],
   },
 };
 
-export const wordiness: BottTrait = {
+export const wordiness: BottEventClassifier = {
   name: "wordiness",
   definition:
     "How effectively the message communicates its point without unnecessary words.",
-  criteria: [],
   examples: {
     1: ["<A verbose or rambling message>"],
     5: ["<A concise and clear message>"],
   },
 };
 
-export const necessity: BottTrait = {
+export const necessity: BottEventClassifier = {
   name: "necessity",
   definition:
     "How critical is this specific event? Is it filler, or does it serve a clear purpose (e.g., answering a question, acknowledging a request, providing a required update)?",
-  criteria: [],
   examples: {
     1: ["<An unnecessary or filler message>"],
     5: ["<An essential message that answers a question or fulfills a request>"],

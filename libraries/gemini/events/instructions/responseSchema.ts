@@ -11,9 +11,9 @@
 
 import {
   type AnyShape,
+  type BottAction,
+  BottActionOptionType,
   BottEventType,
-  type BottRequestHandler,
-  BottRequestOptionType,
   type BottTrait,
 } from "@bott/model";
 import type { GeminiEventGenerationContext } from "./types.ts";
@@ -84,7 +84,7 @@ export const getResponseSchema = <O extends AnyShape>({
               BottEventType.MESSAGE,
               BottEventType.REPLY,
               BottEventType.REACTION,
-              BottEventType.REQUEST,
+              BottEventType.ACTION_CALL,
             ],
             description: "The type of event to generate.",
           },
@@ -175,7 +175,7 @@ const generateTraitScoringSchema = (traits: Record<string, BottTrait>) => {
 };
 
 const generateRequestHandlerSchema = <O extends AnyShape>(
-  handlers: Record<string, BottRequestHandler<O, AnyShape>>,
+  handlers: Record<string, BottAction<O, AnyShape>>,
 ) => {
   if (Object.keys(handlers).length === 0) {
     return;
@@ -184,7 +184,7 @@ const generateRequestHandlerSchema = <O extends AnyShape>(
   let options;
 
   if (
-    Object.values(handlers).some((handler: BottRequestHandler<O, AnyShape>) =>
+    Object.values(handlers).some((handler: BottAction<O, AnyShape>) =>
       "options" in handler
     )
   ) {
@@ -201,13 +201,13 @@ const generateRequestHandlerSchema = <O extends AnyShape>(
           let type: GeminiStructuredResponseType;
 
           switch (option.type) {
-            case BottRequestOptionType.INTEGER:
+            case BottActionOptionType.INTEGER:
               type = GeminiStructuredResponseType.NUMBER;
               break;
-            case BottRequestOptionType.BOOLEAN:
+            case BottActionOptionType.BOOLEAN:
               type = GeminiStructuredResponseType.BOOLEAN;
               break;
-            case BottRequestOptionType.STRING:
+            case BottActionOptionType.STRING:
             default:
               type = GeminiStructuredResponseType.STRING;
               break;

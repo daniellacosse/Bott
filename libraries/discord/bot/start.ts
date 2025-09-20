@@ -22,10 +22,10 @@ import {
 
 import {
   type AnyShape,
+  type BottAction,
+  type BottActionResultEvent,
   type BottEvent,
   BottEventType,
-  type BottRequestHandler,
-  type BottResponseEvent,
 } from "@bott/model";
 
 import { createErrorEmbed } from "../message/embed/error.ts";
@@ -48,7 +48,7 @@ const REQUIRED_INTENTS = [
 type DiscordBotOptions<
   O extends Record<string, unknown> = Record<string, unknown>,
 > = {
-  requestHandlerCommands?: BottRequestHandler<O, AnyShape>[];
+  requestHandlerCommands?: BottAction<O, AnyShape>[];
   event?: (this: DiscordBotContext, event: BottEvent) => void;
   identityToken: string;
   mount?: (this: DiscordBotContext) => void;
@@ -191,7 +191,7 @@ export async function startDiscordBot<
 
     await interaction.deferReply();
 
-    let responseEvent: BottResponseEvent;
+    let responseEvent: BottActionResultEvent;
     try {
       responseEvent = await resolveCommandResponseEvent<O>(
         command,

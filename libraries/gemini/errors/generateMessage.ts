@@ -11,10 +11,10 @@
 
 import {
   type AnyShape,
+  type BottActionCallEvent,
   type BottChannel,
   type BottEvent,
   BottEventType,
-  type BottRequestEvent,
   type BottUser,
 } from "@bott/model";
 
@@ -25,7 +25,7 @@ import instructions from "./instructions.ts";
 export async function generateErrorMessage<O extends AnyShape>(
   // deno-lint-ignore no-explicit-any
   error: any,
-  requestEvent: BottRequestEvent<O>,
+  requestEvent: BottActionCallEvent<O>,
   context: { user: BottUser; channel: BottChannel; identity: string },
 ): Promise<BottEvent> {
   const model = CONFIG_ERROR_MODEL;

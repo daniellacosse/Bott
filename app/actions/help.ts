@@ -9,14 +9,10 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import {
-  type AnyShape,
-  BottEventType,
-  type BottRequestHandler,
-} from "@bott/model";
+import { type AnyShape, type BottAction, BottEventType } from "@bott/model";
 import { createInfoEmbed } from "@bott/discord";
 
-export const help: BottRequestHandler<AnyShape, AnyShape> = Object.assign(
+export const help: BottAction<AnyShape, AnyShape> = Object.assign(
   function help() {
     return {
       id: crypto.randomUUID(),

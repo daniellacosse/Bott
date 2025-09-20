@@ -10,9 +10,9 @@
  */
 
 import {
+  type BottActionCallEvent,
   type BottChannel,
   BottEventType,
-  type BottRequestEvent,
 } from "@bott/model";
 import { addEventData } from "@bott/storage";
 import {
@@ -28,7 +28,7 @@ export function resolveCommandRequestEvent<
   O extends Record<string, unknown> = Record<string, unknown>,
 >(
   interaction: ChatInputCommandInteraction,
-): BottRequestEvent<O> {
+): BottActionCallEvent<O> {
   let channel: BottChannel | undefined = undefined;
 
   if (
@@ -49,7 +49,7 @@ export function resolveCommandRequestEvent<
 
   const event = {
     id: crypto.randomUUID(),
-    type: BottEventType.REQUEST as const,
+    type: BottEventType.ACTION_CALL as const,
     details: {
       name: interaction.commandName,
       options: extractResolvedOptions(

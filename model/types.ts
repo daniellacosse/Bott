@@ -98,26 +98,6 @@ export interface BottFile {
   parent?: BottEvent<AnyShape>;
 }
 
-type NonEmptyArray<T> = [T, ...Array<T>];
-
-/**
- * Defines the structure for a "Trait" in Bott.
- * Traits are used to describe characteristics of events or entities,
- * with a scoring system (e.g., 1-5 scale).
- */
-export interface BottTrait {
-  name: string;
-  definition?: string;
-  criteria?: string[];
-  examples: {
-    1: NonEmptyArray<string>;
-    2?: NonEmptyArray<string>;
-    3?: NonEmptyArray<string>;
-    4?: NonEmptyArray<string>;
-    5: NonEmptyArray<string>;
-  };
-}
-
 /**
  * Enumerates the different types of events that can occur in Bott.
  */
@@ -129,9 +109,9 @@ export enum BottEventType {
   /** A reaction (e.g., emoji) to a previous message. */
   REACTION = "reaction",
   /** An event representing a request for Bott to perform an action (e.g., a command). */
-  REQUEST = "request",
+  ACTION_CALL = "request",
   /** An event representing Bott's response to a request. */
-  RESPONSE = "response",
+  ACTION_RESULT = "response",
 }
 
 /**
@@ -163,19 +143,76 @@ export interface BottEvent<
  */
 export type AnyBottEvent = BottEvent<AnyShape>;
 
+type NonEmptyArray<T> = [T, ...Array<T>];
+
+/**
+ * Defines the structure for a "Classifier" in Bott.
+ * Classifiers are used to describe characteristics of events or entities,
+ * with a scoring system (e.g., 1-5 scale).
+ */
+export interface BottEventClassifier {
+  name: string;
+  definition: string;
+  examples: {
+    1: NonEmptyArray<string>;
+    2?: NonEmptyArray<string>;
+    3?: NonEmptyArray<string>;
+    4?: NonEmptyArray<string>;
+    5: NonEmptyArray<string>;
+  };
+}
+
+export enum BottEventRuleType {
+  /** A rule for removing an input event from consideration. */
+  FILTER_INPUT = "filter_input",
+
+  /** A rule for removing an output event from being sent. */
+  FILTER_OUTPUT = "filter_output",
+}
+
+/**
+ * Defines the structure for a "Rule" in Bott.
+ * Rules are conditions or actions that Bott must take based on classifier results.
+ */
+export interface BottEventRule {
+  type: BottEventRuleType;
+  definition: string;
+  requiredClassifiers?: Set<BottEventClassifier>;
+}
+
+/**
+ * Defines the signature for a handler function that processes `BottActionCallEvent`s.
+ * @template O - Shape of the options for the incoming request.
+ * @template D - Shape of the details for the outgoing response, defaults to `{ content: string }`.
+ */
+export type BottAction<
+  O extends AnyShape,
+  D extends AnyShape = { content: string },
+> = {
+  (
+    request: BottActionCallEvent<O>,
+  ):
+    | BottActionResultEvent<D>
+    | Promise<BottActionResultEvent<D>>;
+  /** Optional description of what the request handler does. */
+  description?: string;
+  /** Optional array of options that this handler accepts. */
+  options?: BottActionOption[];
+};
+
 /**
  * Represents a specific type of `BottEvent` for requests (e.g., slash commands).
  * @template O - Shape of the `options` object for the request.
  */
-export type BottRequestEvent<O extends AnyShape> = BottEvent<
+export type BottActionCallEvent<O extends AnyShape> = BottEvent<
   { name: string; options: O },
-  BottEventType.REQUEST
+  BottEventType.ACTION_CALL
 >;
 
 /**
  * Enumerates the types for options in a `BottRequest`.
  */
-export enum BottRequestOptionType {
+export enum BottActionOptionType {
   STRING = "string",
   INTEGER = "integer",
   BOOLEAN = "boolean",
@@ -184,9 +221,9 @@ export enum BottRequestOptionType {
 /**
  * Defines the structure for an option within a `BottRequest`.
  */
-export type BottRequestOption = {
+export type BottActionOption = {
   name: string;
-  type: BottRequestOptionType;
+  type: BottActionOptionType;
   allowedValues?: string[];
   /** Optional description of the option. */
   description?: string;
@@ -198,28 +235,18 @@ export type BottRequestOption = {
  * Represents a specific type of `BottEvent` for responses to requests.
  * @template D - Shape of the `details` object for the response, defaults to `{ content: string }`.
  */
-export type BottResponseEvent<D extends AnyShape = { content: string }> =
+export type BottActionResultEvent<D extends AnyShape = { content: string }> =
   BottEvent<
     D,
-    BottEventType.RESPONSE
+    BottEventType.ACTION_RESULT
   >;
 
 /**
- * Defines the signature for a handler function that processes `BottRequestEvent`s.
- * @template O - Shape of the options for the incoming request.
- * @template D - Shape of the details for the outgoing response, defaults to `{ content: string }`.
+ * Defines the structure for global settings in Bott.
+ * These settings apply across all spaces and channels unless overridden.
  */
-export type BottRequestHandler<
-  O extends AnyShape,
-  D extends AnyShape = { content: string },
-> = {
-  (
-    request: BottRequestEvent<O>,
-  ):
-    | BottResponseEvent<D>
-    | Promise<BottResponseEvent<D>>;
-  /** Optional description of what the request handler does. */
-  description?: string;
-  /** Optional array of options that this handler accepts. */
-  options?: BottRequestOption[];
-};
+export interface BottGlobalSettings {
+  identity: string;
+  rules: Set<BottEventRule>;
+  classifiers: Set<BottEventClassifier>;
+}

@@ -11,7 +11,7 @@
 
 import { delay } from "jsr:@std/async";
 
-import { type AnyShape, BottEventType, BottRequestEvent } from "@bott/model";
+import { type AnyShape, BottActionCallEvent, BottEventType } from "@bott/model";
 import {
   addEventData,
   getEventIdsForChannel,
@@ -22,15 +22,15 @@ import { createTask } from "@bott/task";
 import { startDiscordBot } from "@bott/discord";
 import { generateErrorMessage, generateEvents } from "@bott/gemini";
 import { log } from "@bott/logger";
-
 import { taskManager } from "./tasks.ts";
-import { getIdentity } from "./identity.ts";
-import { help } from "./requestHandlers/help.ts";
+
+import { getDefaultIdentity } from "./defaultGlobalSettings/identity.ts";
+import { help } from "./actions/help.ts";
 import {
   generateMedia,
   GenerateMediaOptions,
-} from "./requestHandlers/generateMedia.ts";
-import { STORAGE_DEPLOY_NONCE_PATH, STORAGE_ROOT } from "./constants.ts";
+} from "./actions/generateMedia.ts";
+import { STORAGE_DEPLOY_NONCE_PATH, STORAGE_ROOT } from "./env.ts";
 import {
   directedAt,
   factCheckingNeed,
@@ -41,7 +41,7 @@ import {
   seriousness,
   supportNeed,
   wordiness,
-} from "./traits.ts";
+} from "./defaultGlobalSettings/classifiers.ts";
 
 const WORDS_PER_MINUTE = 200;
 const MS_IN_MINUTE = 60 * 1000;
@@ -117,7 +117,7 @@ startDiscordBot({
 
         const thisChannel = event.channel!;
         const context = {
-          identityPrompt: getIdentity({
+          identityPrompt: getDefaultIdentity({
             user: this.user,
           }),
           user: this.user,
@@ -158,15 +158,17 @@ startDiscordBot({
           }
 
           switch (genEvent.type) {
-            case BottEventType.REQUEST: {
+            case BottEventType.ACTION_CALL: {
               let responsePromise;
 
-              switch ((genEvent as BottRequestEvent<AnyShape>).details.name) {
+              switch (
+                (genEvent as BottActionCallEvent<AnyShape>).details.name
+              ) {
                 // We only have the "generateMedia" handler for now.
                 case "generateMedia":
                 default:
                   responsePromise = generateMedia(
-                    genEvent as BottRequestEvent<GenerateMediaOptions>,
+                    genEvent as BottActionCallEvent<GenerateMediaOptions>,
                   );
                   break;
               }
@@ -200,7 +202,7 @@ startDiscordBot({
                   this.send(
                     await generateErrorMessage(
                       error,
-                      genEvent as BottRequestEvent<AnyShape>,
+                      genEvent as BottActionCallEvent<AnyShape>,
                       context,
                     ),
                   );

@@ -11,7 +11,7 @@
 
 import type { BottUser } from "@bott/model";
 
-export const getIdentity = (
+export const getDefaultIdentity = (
   { user }: { user: BottUser },
 ) => `
 # Identity

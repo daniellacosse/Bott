@@ -13,8 +13,8 @@ import { SlashCommandBuilder } from "npm:discord.js";
 
 import {
   type AnyShape,
-  type BottRequestHandler,
-  BottRequestOptionType,
+  type BottAction,
+  BottActionOptionType,
 } from "@bott/model";
 
 const COMMAND_DESCRIPTION_LIMIT = 100;
@@ -25,7 +25,7 @@ export function getCommandJson<
   name,
   description,
   options,
-}: BottRequestHandler<O, AnyShape>) {
+}: BottAction<O, AnyShape>) {
   const builder = new SlashCommandBuilder().setName(name);
 
   if (description) {
@@ -52,13 +52,13 @@ export function getCommandJson<
       };
 
       switch (type) {
-        case BottRequestOptionType.STRING:
+        case BottActionOptionType.STRING:
           builder.addStringOption(buildOption);
           break;
-        case BottRequestOptionType.INTEGER:
+        case BottActionOptionType.INTEGER:
           builder.addIntegerOption(buildOption);
           break;
-        case BottRequestOptionType.BOOLEAN:
+        case BottActionOptionType.BOOLEAN:
           builder.addBooleanOption(buildOption);
           break;
       }

@@ -15,8 +15,6 @@ import type { AnyShape } from "@bott/model";
 import { getSystemPrompt } from "./systemPrompt.ts";
 import { getResponseSchema } from "./responseSchema.ts";
 
-export * from "./types.ts";
-
 export const getInstructions = <O extends AnyShape>(
   context: GeminiEventGenerationContext<O>,
 ) => ({
