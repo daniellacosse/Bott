@@ -57,7 +57,7 @@ For each event in the input array that does **not** already have a \`details.sco
 ### Scoring Classifiers
 
 ${
-  generateEventClassifierMarkdown(
+  getEventClassifierMarkdown(
     reduceClassifiersForRuleType(
       context.settings,
       BottEventRuleType.FILTER_INPUT,
@@ -72,7 +72,7 @@ ${
 Based on your analysis in Phase 1 and your core \`Identity\` and \`Engagement Rules\`, generate a list of potential outgoing events. This is your brainstorming phase.
 
 ${
-  generateRuleMarkdown(
+  getRuleMarkdown(
     reduceRulesForType(context.settings, BottEventRuleType.FILTER_INPUT),
   )
 }
@@ -86,7 +86,7 @@ ${
 
 ### Available Actions
 
-${generateActionMarkdown(context.actions)}
+${getActionMarkdown(context.actions)}
 
 ---
 
@@ -107,7 +107,7 @@ This is a critical self-evaluation step. Be objective and critically score **eac
 ### Scoring Classifiers
 
 ${
-  generateEventClassifierMarkdown(
+  getEventClassifierMarkdown(
     reduceClassifiersForRuleType(
       context.settings,
       BottEventRuleType.FILTER_OUTPUT,
@@ -122,7 +122,7 @@ ${
 Apply the following rules **strictly and in order** to the list of scored events from Phase 4. This is the final quality gate.
 
 ${
-  generateRuleMarkdown(
+  getRuleMarkdown(
     reduceRulesForType(context.settings, BottEventRuleType.FILTER_OUTPUT),
   )
 }
@@ -227,7 +227,7 @@ The result of this phase is the final value for the \`output\` key in your respo
 \`\`\`
 `;
 
-const generateEventClassifierMarkdown = (
+export const getEventClassifierMarkdown = (
   classifiers: Record<string, BottEventClassifier>,
 ) => {
   const result = [];
@@ -254,7 +254,7 @@ const generateEventClassifierMarkdown = (
   return result.join("\n");
 };
 
-const generateRuleMarkdown = (
+export const getRuleMarkdown = (
   rules: Record<string, BottEventRule>,
 ) => {
   return [
@@ -267,7 +267,7 @@ const generateRuleMarkdown = (
     .join("\n");
 };
 
-const generateActionMarkdown = <O extends AnyShape>(
+export const getActionMarkdown = <O extends AnyShape>(
   handlers: Record<string, BottAction<O, AnyShape>>,
 ) => {
   const result = [];
@@ -283,7 +283,7 @@ const generateActionMarkdown = <O extends AnyShape>(
 
     if (handler.options) {
       entry += "| Option | Description | Type | Allowed Values | Required |\n";
-      entry += "|---|---|---|---|\n";
+      entry += "|---|---|---|---|---|\n";
 
       for (
         const { name, type, description, allowedValues, required } of handler

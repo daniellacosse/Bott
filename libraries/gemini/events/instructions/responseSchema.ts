@@ -145,7 +145,7 @@ export const getResponseSchema = <O extends AnyShape>(
   required: ["inputEventScores", "outputEvents"],
 });
 
-const getEventClassifierSchema = (
+export const getEventClassifierSchema = (
   classifiers: Record<string, BottEventClassifier>,
 ) => {
   if (Object.keys(classifiers).length === 0) {
@@ -196,7 +196,7 @@ const getEventClassifierSchema = (
   };
 };
 
-const getActionSchema = <O extends AnyShape>(
+export const getActionSchema = <O extends AnyShape>(
   handlers: Record<string, BottAction<O, AnyShape>>,
 ) => {
   if (Object.keys(handlers).length === 0) {
