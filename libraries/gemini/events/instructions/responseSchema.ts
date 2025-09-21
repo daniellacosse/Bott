@@ -15,6 +15,7 @@ import {
   BottActionOptionType,
   type BottChannel,
   type BottEventClassifier,
+  BottEventRuleType,
   BottEventType,
   type BottGlobalSettings,
   type BottUser,
@@ -24,6 +25,7 @@ import {
   type Schema as GeminiStructuredResponseSchema,
   Type as GeminiStructuredResponseType,
 } from "npm:@google/genai";
+import { reduceClassifiersForRuleType } from "./reduce.ts";
 
 export const getResponseSchema = <O extends AnyShape>(
   context: {
@@ -69,7 +71,10 @@ export const getResponseSchema = <O extends AnyShape>(
                 type: GeminiStructuredResponseType.STRING,
                 description: "The textual content of the message.",
               },
-              scores: generateEventClassifierSchema({/* TODO */}),
+              scores: getEventClassifierSchema(reduceClassifiersForRuleType(
+                context.settings,
+                BottEventRuleType.FILTER_INPUT,
+              )),
             },
           },
         },
@@ -102,11 +107,16 @@ export const getResponseSchema = <O extends AnyShape>(
                   content: {
                     type: GeminiStructuredResponseType.STRING,
                   },
-                  scores: generateEventClassifierSchema({/* TODO */}),
+                  scores: getEventClassifierSchema(
+                    reduceClassifiersForRuleType(
+                      context.settings,
+                      BottEventRuleType.FILTER_OUTPUT,
+                    ),
+                  ),
                 },
                 required: ["content", "scores"],
               },
-              generateActionSchema<O>(context.actions),
+              getActionSchema<O>(context.actions),
             ],
           },
           parent: {
@@ -125,12 +135,17 @@ export const getResponseSchema = <O extends AnyShape>(
         required: ["type", "details"],
       },
     },
-    outputScores: generateEventClassifierSchema({/* TODO */}),
+    outputScores: getEventClassifierSchema(
+      reduceClassifiersForRuleType(
+        context.settings,
+        BottEventRuleType.FILTER_OUTPUT,
+      ),
+    ),
   },
   required: ["inputEventScores", "outputEvents"],
 });
 
-const generateEventClassifierSchema = (
+const getEventClassifierSchema = (
   classifiers: Record<string, BottEventClassifier>,
 ) => {
   if (Object.keys(classifiers).length === 0) {
@@ -181,7 +196,7 @@ const generateEventClassifierSchema = (
   };
 };
 
-const generateActionSchema = <O extends AnyShape>(
+const getActionSchema = <O extends AnyShape>(
   handlers: Record<string, BottAction<O, AnyShape>>,
 ) => {
   if (Object.keys(handlers).length === 0) {

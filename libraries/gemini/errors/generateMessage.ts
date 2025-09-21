@@ -15,7 +15,7 @@ import {
   type BottChannel,
   type BottEvent,
   BottEventType,
-  BottGlobalSettings,
+  type BottGlobalSettings,
   type BottUser,
 } from "@bott/model";
 

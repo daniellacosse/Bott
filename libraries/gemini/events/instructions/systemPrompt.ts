@@ -19,6 +19,7 @@ import {
   type BottGlobalSettings,
   type BottUser,
 } from "@bott/model";
+import { reduceClassifiersForRuleType, reduceRulesForType } from "./reduce.ts";
 
 export const getSystemPrompt = <O extends AnyShape>(
   context: {
@@ -57,20 +58,9 @@ For each event in the input array that does **not** already have a \`details.sco
 
 ${
   generateEventClassifierMarkdown(
-    Object.entries(context.settings.rules).reduce(
-      (acc, [, rule]) => {
-        if (
-          rule.type === BottEventRuleType.FILTER_INPUT &&
-          rule.requiredClassifiers &&
-          Object.keys(rule.requiredClassifiers).every((key) =>
-            key in context.settings.classifiers
-          )
-        ) {
-          acc = { ...acc, ...rule.requiredClassifiers };
-        }
-        return acc;
-      },
-      {} as Record<string, BottEventClassifier>,
+    reduceClassifiersForRuleType(
+      context.settings,
+      BottEventRuleType.FILTER_INPUT,
     ),
   )
 }
@@ -83,21 +73,7 @@ Based on your analysis in Phase 1 and your core \`Identity\` and \`Engagement Ru
 
 ${
   generateRuleMarkdown(
-    Object.entries(context.settings.rules).reduce(
-      (acc, [, rule]) => {
-        if (
-          rule.type === BottEventRuleType.FILTER_INPUT &&
-          Object.keys(rule.requiredClassifiers ?? {}).every((key) =>
-            key in context.settings.classifiers
-          )
-        ) {
-          acc[rule.name] = rule;
-        }
-
-        return acc;
-      },
-      {} as Record<string, BottEventRule>,
-    ),
+    reduceRulesForType(context.settings, BottEventRuleType.FILTER_INPUT),
   )
 }
 
@@ -132,20 +108,9 @@ This is a critical self-evaluation step. Be objective and critically score **eac
 
 ${
   generateEventClassifierMarkdown(
-    Object.entries(context.settings.rules).reduce(
-      (acc, [, rule]) => {
-        if (
-          rule.type === BottEventRuleType.FILTER_OUTPUT &&
-          rule.requiredClassifiers &&
-          Object.keys(rule.requiredClassifiers).every((key) =>
-            key in context.settings.classifiers
-          )
-        ) {
-          acc = { ...acc, ...rule.requiredClassifiers };
-        }
-        return acc;
-      },
-      {} as Record<string, BottEventClassifier>,
+    reduceClassifiersForRuleType(
+      context.settings,
+      BottEventRuleType.FILTER_OUTPUT,
     ),
   )
 }
@@ -158,21 +123,7 @@ Apply the following rules **strictly and in order** to the list of scored events
 
 ${
   generateRuleMarkdown(
-    Object.entries(context.settings.rules).reduce(
-      (acc, [, rule]) => {
-        if (
-          rule.type === BottEventRuleType.FILTER_OUTPUT &&
-          Object.keys(rule.requiredClassifiers ?? {}).every((key) =>
-            key in context.settings.classifiers
-          )
-        ) {
-          acc[rule.name] = rule;
-        }
-
-        return acc;
-      },
-      {} as Record<string, BottEventRule>,
-    ),
+    reduceRulesForType(context.settings, BottEventRuleType.FILTER_OUTPUT),
   )
 }
 
