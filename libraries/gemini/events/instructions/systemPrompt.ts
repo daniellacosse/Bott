@@ -230,67 +230,60 @@ The result of this phase is the final value for the \`output\` key in your respo
 export const getEventClassifierMarkdown = (
   classifiers: Record<string, BottEventClassifier>,
 ) => {
-  const result = [];
+  return Object.values(classifiers)
+    .map(({ name, definition, examples: exampleRecord }) => {
+      const parts = [`#### \`${name}\``];
 
-  for (
-    const [name, { examples: exampleRecord, definition }] of Object.entries(
-      classifiers,
-    )
-  ) {
-    let header = `**\`${name}\`**`;
+      if (definition) {
+        parts.push(definition);
+      }
 
-    if (definition) {
-      header += `: ${definition}`;
-    }
+      for (const [score, examples] of Object.entries(exampleRecord)) {
+        parts.push(`\n**Examples of a \`${name}\` score of ${score}:**`);
+        parts.push(
+          ...examples.map((example: string) => `* "${example}"`),
+        );
+      }
 
-    const examples = Object.entries(exampleRecord).flatMap(
-      ([value, examples]) =>
-        examples.map((example) => `  * ${example} => Score: ${value}`),
-    );
-
-    result.push(`* ${header}\n${examples.join("\n")}`);
-  }
-
-  return result.join("\n");
+      return parts.join("\n");
+    })
+    .join("\n\n");
 };
 
 export const getRuleMarkdown = (
   rules: Record<string, BottEventRule>,
 ) => {
-  return [
-    ...new Set(
-      Object.values(rules).flatMap((rule) => rule.definition ?? []),
-    ),
-  ]
-    .sort()
-    .map((definition) => `* ${definition}`)
+  return Object.values(rules)
+    .map(({ definition }) => `* ${definition}`)
     .join("\n");
 };
 
 export const getActionMarkdown = <O extends AnyShape>(
-  handlers: Record<string, BottAction<O, AnyShape>>,
+  actions: Record<string, BottAction<O, AnyShape>>,
 ) => {
   const result = [];
 
-  for (const [name, handler] of Object.entries(handlers)) {
-    let entry = `**\`${name}\`**`;
+  for (const [name, action] of Object.entries(actions)) {
+    let entry = `#### \`${name}\``;
 
-    if (handler.description) {
-      entry += `: ${handler.description}`;
+    if (action.description) {
+      entry += `\n${action.description}`;
     }
 
     entry += "\n";
 
-    if (handler.options) {
+    if (action.options) {
       entry += "| Option | Description | Type | Allowed Values | Required |\n";
       entry += "|---|---|---|---|---|\n";
 
       for (
-        const { name, type, description, allowedValues, required } of handler
+        const { name, type, description, allowedValues, required } of action
           .options
       ) {
-        entry += `| \`${name}\` | \`${description ?? "-"}\` | ${type} | ${
-          allowedValues ? allowedValues.join(", ") : "*"
+        entry += `| \`${name}\` | ${description ?? "-"} | ${type} | ${
+          allowedValues
+            ? allowedValues.map((value) => `\`${value}\``).join(", ")
+            : "*"
         } | ${required ? "Yes" : "No"} |\n`;
       }
     }

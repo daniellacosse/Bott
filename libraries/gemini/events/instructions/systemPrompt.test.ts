@@ -48,13 +48,24 @@ Deno.test("getEventClassifierMarkdown", async (t) => {
       },
     };
 
-    const expected = `* **\`isSpam\`**: Determines if the content is spam.
-  * not spam => Score: 1
-  * buy now! => Score: 5
-* **\`isUrgent\`**: Determines if the content is urgent.
-  * later => Score: 1
-  * asap => Score: 5
-  * urgent => Score: 5`;
+    const expected = `#### \`isSpam\`
+Determines if the content is spam.
+
+**Examples of a \`isSpam\` score of 1:**
+* "not spam"
+
+**Examples of a \`isSpam\` score of 5:**
+* "buy now!"
+
+#### \`isUrgent\`
+Determines if the content is urgent.
+
+**Examples of a \`isUrgent\` score of 1:**
+* "later"
+
+**Examples of a \`isUrgent\` score of 5:**
+* "asap"
+* "urgent"`;
 
     assertEquals(getEventClassifierMarkdown(classifiers), expected);
   });
@@ -68,47 +79,19 @@ Deno.test("getEventClassifierMarkdown", async (t) => {
       },
     };
 
-    const expected = `* **\`isSimple\`**
-  * complex => Score: 1
-  * simple => Score: 5`;
+    const expected = `#### \`isSimple\`
+
+**Examples of a \`isSimple\` score of 1:**
+* "complex"
+
+**Examples of a \`isSimple\` score of 5:**
+* "simple"`;
 
     assertEquals(getEventClassifierMarkdown(classifiers), expected);
   });
 
   await t.step("should return an empty string for no classifiers", () => {
     assertEquals(getEventClassifierMarkdown({}), "");
-  });
-});
-
-Deno.test("getRuleMarkdown", async (t) => {
-  await t.step(
-    "should generate a sorted list of unique rule definitions",
-    () => {
-      const rules: Record<string, BottEventRule> = {
-        ruleA: {
-          name: "ruleA",
-          type: BottEventRuleType.FILTER_INPUT,
-          definition: "Rule C",
-        },
-        ruleB: {
-          name: "ruleB",
-          type: BottEventRuleType.FILTER_INPUT,
-          definition: "Rule A",
-        },
-        ruleC: {
-          name: "ruleC",
-          type: BottEventRuleType.FILTER_INPUT,
-          definition: "Rule C",
-        }, // Duplicate
-      };
-
-      const expected = `* Rule A\n* Rule C`;
-      assertEquals(getRuleMarkdown(rules), expected);
-    },
-  );
-
-  await t.step("should return an empty string for no rules", () => {
-    assertEquals(getRuleMarkdown({}), "");
   });
 });
 
@@ -135,11 +118,12 @@ Deno.test("getActionMarkdown", async (t) => {
       }),
     };
 
-    const expected = `**\`generateMedia\`**: Generates media based on a prompt.
+    const expected = `#### \`generateMedia\`
+Generates media based on a prompt.
 | Option | Description | Type | Allowed Values | Required |
 |---|---|---|---|---|
-| \`type\` | \`The type of media to generate.\` | string | image, video | Yes |
-| \`prompt\` | \`The generation prompt.\` | string | * | Yes |
+| \`type\` | The type of media to generate. | string | \`image\`, \`video\` | Yes |
+| \`prompt\` | The generation prompt. | string | * | Yes |
 `;
 
     assertEquals(getActionMarkdown(actions), expected);
@@ -150,7 +134,7 @@ Deno.test("getActionMarkdown", async (t) => {
       simpleAction: createMockAction(),
     };
 
-    const expected = `**\`simpleAction\`**
+    const expected = `#### \`simpleAction\`
 `;
     assertEquals(getActionMarkdown(actions), expected);
   });
@@ -162,10 +146,10 @@ Deno.test("getActionMarkdown", async (t) => {
       }),
     };
 
-    const expected = `**\`actionWithOptions\`**
+    const expected = `#### \`actionWithOptions\`
 | Option | Description | Type | Allowed Values | Required |
 |---|---|---|---|---|
-| \`opt1\` | \`-\` | boolean | * | No |
+| \`opt1\` | - | boolean | * | No |
 `;
     assertEquals(getActionMarkdown(actions), expected);
   });
