@@ -1,6 +1,6 @@
 <img width="320" alt="origin_of_bott" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
 
-# 🤖 `@Bott`
+# 🤖 `@Bott` [IN DEVELOPMENT]
 
 ![in development](https://img.shields.io/badge/in%20development-red)
 ![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
