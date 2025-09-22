@@ -1,8 +1,8 @@
-<img width="360" alt="Screenshot 2025-04-26 at 12 19 21" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
+<img width="320" alt="origin_of_bott" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
 
 # 🤖 `@Bott`
 
-![in development](https://img.shields.io/badge/in%20development-blue)
+![in development](https://img.shields.io/badge/in%20development-red)
 ![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
 [![discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
@@ -17,6 +17,8 @@ A Discord bot, powered by Gemini.
   - Experimental support for MP4s, GIFs, WAVs and MP3 files.
 - Generates photos, movies, songs and essays as requested.
 - Translates technical errors into user-friendly language, when appropriate.
+
+<img width="320" src="assets/concept.png" alt="concept" />
 
 ## Development
 
