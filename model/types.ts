@@ -178,7 +178,7 @@ export interface BottEventRule {
   name: string;
   type: BottEventRuleType;
   definition: string;
-  requiredClassifiers?: Record<string, BottEventClassifier>;
+  requiredClassifiers?: string[];
 }
 
 /**

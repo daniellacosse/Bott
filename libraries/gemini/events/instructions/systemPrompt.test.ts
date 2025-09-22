@@ -17,21 +17,16 @@ import {
   BottActionOptionType,
   type BottActionResultEvent,
   type BottEventClassifier,
-  type BottEventRule,
-  BottEventRuleType,
 } from "@bott/model";
 import {
   getActionMarkdown,
   getEventClassifierMarkdown,
-  getRuleMarkdown,
 } from "./systemPrompt.ts";
 
 const createMockAction = (
   props: { description?: string; options?: BottActionOption[] } = {},
 ): BottAction<AnyShape, AnyShape> =>
   Object.assign(() => ({} as BottActionResultEvent<AnyShape>), props);
-
-// TODO: make these outputs better
 
 Deno.test("getEventClassifierMarkdown", async (t) => {
   await t.step("should generate markdown for classifiers", () => {
