@@ -41,31 +41,25 @@ const mockSettings: BottGlobalSettings = {
       name: "filterSpam",
       type: BottEventRuleType.FOCUS_INPUT,
       definition: "isSpam > 3",
-      requiredClassifiers: { isSpam: mockClassifier1 },
+      requiredClassifiers: ["isSpam"],
     },
     anotherFilter: {
       name: "anotherFilter",
       type: BottEventRuleType.FOCUS_INPUT,
       definition: "isUrgent > 4",
-      requiredClassifiers: { isUrgent: mockClassifier2 },
+      requiredClassifiers: ["isUrgent"],
     },
     outputRule: {
       name: "outputRule",
       type: BottEventRuleType.FILTER_OUTPUT,
       definition: "isSpam > 1",
-      requiredClassifiers: { isSpam: mockClassifier1 },
+      requiredClassifiers: ["isSpam"],
     },
     missingClassifierRule: {
       name: "missingClassifierRule",
       type: BottEventRuleType.FOCUS_INPUT,
       definition: "isMissing > 1",
-      requiredClassifiers: {
-        isMissing: {
-          name: "isMissing",
-          definition: "A classifier not in global settings",
-          examples: { 1: ["a"], 5: ["b"] },
-        },
-      },
+      requiredClassifiers: ["isMissing"],
     },
   },
 };

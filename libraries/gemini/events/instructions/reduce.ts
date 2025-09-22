@@ -25,11 +25,11 @@ export const reduceClassifiersForRuleType = (
       if (
         rule.type === ruleType &&
         rule.requiredClassifiers &&
-        Object.keys(rule.requiredClassifiers).every((key) =>
-          key in settings.classifiers
-        )
+        rule.requiredClassifiers.every((key) => key in settings.classifiers)
       ) {
-        acc = { ...acc, ...rule.requiredClassifiers };
+        for (const key of rule.requiredClassifiers) {
+          acc[key] = settings.classifiers[key];
+        }
       }
       return acc;
     },
@@ -44,9 +44,7 @@ export const reduceRulesForType = (
     (acc, [, rule]) => {
       if (
         rule.type === ruleType &&
-        Object.keys(rule.requiredClassifiers ?? {}).every((key) =>
-          key in settings.classifiers
-        )
+        rule.requiredClassifiers?.every((key) => key in settings.classifiers)
       ) {
         acc[rule.name] = rule;
       }
