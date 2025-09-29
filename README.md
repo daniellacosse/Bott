@@ -6,7 +6,7 @@
 ![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
 [![discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
-A Discord bot, powered by Gemini.
+A Discord bot, powered by Gemini. Currently in development: see the [alpha release milestone](https://github.com/daniellacosse-code/Bott/milestone/2).
 
 ## Features
 
