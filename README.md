@@ -19,6 +19,21 @@ A Discord bot, powered by Gemini. Currently in development: see the
 - Generates photos, movies, songs and essays as requested.
 - Translates technical errors into user-friendly language, when appropriate.
 
+### Message Formatting
+
+Bott normalizes platform-specific message formats (e.g., Discord) into a
+human-readable internal format for better AI model comprehension. Currently
+supported:
+
+- **User Mentions**: Platform IDs (e.g., `<@123456789>`) are converted to
+  display names (e.g., `@MoofyBoy`) for AI processing, then converted back for
+  delivery.
+- **Special Mentions**: Platform-specific mentions like `@everyone` are
+  preserved as-is.
+
+This approach makes messages easier for AI models to understand while remaining
+platform-agnostic for future chat platform integrations.
+
 <img width="320" src="assets/concept.png" alt="concept" />
 
 ## Development

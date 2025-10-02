@@ -25,7 +25,8 @@ create table if not exists channels (
 
 create table if not exists users (
   id varchar(36) primary key not null,
-  name text not null
+  name text not null,
+  display_name text
 );
 
 create table if not exists events (

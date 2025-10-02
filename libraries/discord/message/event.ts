@@ -21,7 +21,7 @@ import { addEventData, getEvents } from "@bott/storage";
 import { log } from "@bott/logger";
 
 import { getMarkdownLinks } from "./markdown.ts";
-import { formatIncomingMentions } from "./mentions.ts";
+import { extractMentionedUsers, formatIncomingContent } from "./format.ts";
 
 export const resolveBottEventFromMessage = async (
   message: Message<true>,
@@ -32,16 +32,14 @@ export const resolveBottEventFromMessage = async (
     return possibleEvent;
   }
 
-  // Format user mentions for LLM processing
   const rawContent = (message.content || message.embeds.at(0)?.description) ??
     "";
-  const formattedContent = await formatIncomingMentions(rawContent, message);
 
   const event: BottEvent = {
     id: message.id,
     type: BottEventType.MESSAGE,
     details: {
-      content: formattedContent,
+      content: rawContent,
     },
     timestamp: new Date(message.createdTimestamp),
     channel: {
@@ -55,9 +53,19 @@ export const resolveBottEventFromMessage = async (
   };
 
   if (message.author) {
+    // Try to get display name from guild member (nickname or username)
+    let displayName = message.author.username;
+    try {
+      const member = await message.guild.members.fetch(message.author.id);
+      displayName = member.displayName;
+    } catch {
+      // Use username as fallback
+    }
+
     event.user = {
       id: message.author.id,
       name: message.author.username,
+      displayName,
     };
   }
 
@@ -80,6 +88,30 @@ export const resolveBottEventFromMessage = async (
 
     event.parent = parentMessage;
   }
+
+  // Collect all mentioned users from message mentions
+  const mentionedUsersMap = new Map(
+    message.mentions.users.map((user) => {
+      // Try to get display name from guild member
+      let displayName = user.username;
+      try {
+        const member = message.guild.members.cache.get(user.id);
+        if (member) {
+          displayName = member.displayName;
+        }
+      } catch {
+        // Use username as fallback
+      }
+      return [user.id, {
+        id: user.id,
+        name: user.username,
+        displayName,
+      }];
+    }),
+  );
+
+  // Format user mentions for LLM processing using the collected users
+  event.details.content = formatIncomingContent(rawContent, mentionedUsersMap);
 
   const urls = [
     ...message.attachments.values().map(({ url }) => url),

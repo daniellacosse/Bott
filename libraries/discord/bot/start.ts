@@ -145,9 +145,19 @@ export async function startDiscordBot<
 
     const reactor = reaction.users.cache.first();
     if (reactor) {
+      // Try to get display name from guild member
+      let displayName = reactor.username;
+      try {
+        const member = await currentChannel.guild.members.fetch(reactor.id);
+        displayName = member.displayName;
+      } catch {
+        // Use username as fallback
+      }
+
       event.user = {
         id: reactor.id,
         name: reactor.username,
+        displayName,
       };
     }
 

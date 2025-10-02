@@ -107,13 +107,16 @@ const getAddUsersSql = (...users: BottUser[]) => {
     return;
   }
 
-  const values = users.map((user) => sql`(${user.id}, ${user.name})`);
+  const values = users.map((user) =>
+    sql`(${user.id}, ${user.name}, ${user.displayName ?? user.name})`
+  );
 
   return sql`
-    insert into users (id, name)
+    insert into users (id, name, display_name)
     values ${values}
     on conflict(id) do update set
-      name = excluded.name
+      name = excluded.name,
+      display_name = excluded.display_name
   `;
 };
 

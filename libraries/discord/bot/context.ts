@@ -25,7 +25,7 @@ import {
 } from "@bott/model";
 
 import { resolveBottEventFromMessage } from "../message/event.ts";
-import { formatOutgoingMentions } from "../message/mentions.ts";
+import { formatOutgoingContent } from "../message/format.ts";
 
 export type DiscordBotContext = {
   user: BottUser;
@@ -55,6 +55,7 @@ export const callWithContext = <
       user: {
         id: client.user!.id,
         name: client.user!.username,
+        displayName: client.user!.username,
       },
       startTyping: () => {
         return channel?.sendTyping();
@@ -76,9 +77,9 @@ export const callWithContext = <
           );
         }
 
-        // Format outgoing mentions for Discord
+        // Format outgoing content for Discord
         const content = channel
-          ? await formatOutgoingMentions(event.details.content, channel)
+          ? await formatOutgoingContent(event.details.content, channel)
           : event.details.content;
 
         let messageResult;
