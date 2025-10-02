@@ -51,7 +51,8 @@ cp .env.example .env.development
 
 ### Configuring Bott
 
-Bott is configured via a series of environment variables.
+<details>
+<summary>Bott is configured via a series of environment variables.</summary>
 
 | Name                                | Description                                                                                                               | Default                           |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
@@ -76,78 +77,85 @@ Bott is configured via a series of environment variables.
 | `LOG_TOPICS`                        | Controls which log topics to display. Comma-separated list of topics: debug, info, warn, error, perf.                     | info,warn,error                   |
 | `PORT`                              | The port of the health check server required for GCP Cloud Run.                                                           | 8080                              |
 
-### Deploying Bott [PENDING TEST]
+</details>
 
-Deploying Bott to Google Cloud Run involves three main steps: setting up your
-GCP project, deploying the service, and configuring the necessary permissions.
+### Deploying Bott
 
-#### 1. Set Up Your Google Cloud Project
+Deploying Bott to Google Cloud Run can be done entirely from your command line
+using the `gcloud` CLI.
 
-Before deploying, you need to create a GCP project if you don't already have one
-and enable the required APIs:
+1. **Install Google Cloud SDK**: First, ensure you have the Google Cloud SDK
+   installed. (e.g. via `brew install google-cloud-sdk`)
 
-1. **Create a Google Cloud Project**:
-   - Go to the [Google Cloud Console](https://console.cloud.google.com/)
-   - Open the Project picker and select "New Project"
-   - Choose a project name and note the **Project ID** (you'll need this later)
-   - Click "Create"
+```sh
+which gcloud
+```
 
-2. **Enable the Required APIs** using these direct links:
-   - [Enable Vertex AI API](https://console.cloud.google.com/flows/enableapi?apiid=aiplatform.googleapis.com) -
-     for interacting with Gemini.
-   - [Enable Cloud Storage API](https://console.cloud.google.com/flows/enableapi?apiid=storage.googleapis.com) -
-     for storing the data and files that Bott relies on.
-   - [Enable Cloud Run API](https://console.cloud.google.com/flows/enableapi?apiid=run.googleapis.com) -
-     for deploying the app.
+2. **Authenticate and Set Project**: Log in to your Google Cloud account and set
+   your active project.
 
-#### 2. Deploy the Service
+```sh
+gcloud auth login
+gcloud config set project <YOUR_PROJECT_ID>
+```
 
-Click this button to deploy the Bott service:
+> [!TIP]
+> If you don't have a project, you can create one with
+> `gcloud projects create <YOUR_PROJECT_ID>`.
 
-[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/daniellacosse-code/Bott.git)
+3. **Enable Required APIs**: Enable the necessary APIs for Vertex AI, Cloud
+   Storage, and Cloud Run.
 
-During deployment, you'll be prompted to configure the environment variables:
+```sh
+gcloud services enable \
+  aiplatform.googleapis.com \
+  storage.googleapis.com \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  cloudbuild.googleapis.com
+```
 
-**Required Variables:**
+4. **Configure Service Account Permissions**: Find the default service account.
 
-- `DISCORD_TOKEN` - Your Discord bot token from the
-  [Discord Developer Portal](https://discord.com/developers/applications)
-- `GOOGLE_PROJECT_ID` - Your GCP Project ID from step 1
-- `GOOGLE_PROJECT_LOCATION` - Your preferred region (e.g., `us-central1`)
+```sh
+gcloud builds get-default-service-account
+```
 
-**Optional Variables (with sensible defaults):**
+Then, add the `Vertex AI User` and `Storage Object Admin` roles.
 
-- All `CONFIG_*` variables are optional and have reasonable defaults
-- You can customize AI models, rate limits, and other settings as needed
-- See the [configuration table](#configuring-bott) above for all available
-  options
+```sh
+gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
+  --member="serviceAccount:<YOUR_SERVICE_ACCOUNT>" \
+  --role="roles/aiplatform.user"
 
-#### 3. Configure Permissions
+gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
+  --member="serviceAccount:<YOUR_SERVICE_ACCOUNT>" \
+  --role="roles/storage.objectAdmin"
+```
 
-After deployment, configure the service account permissions:
+5. **Create a `.env.production` file**: As [above](#instructions), create an
+   `.env.production` file from the provided `.env.example` file and fill it out.
 
-1. Navigate to the
-   **[IAM & Admin](https://console.cloud.google.com/iam-admin/iam)** page in
-   your Google Cloud project.
-2. Find the service account that was created for your new Cloud Run service (it
-   will have a name like `PROJECT-ID@PROJECT-ID.iam.gserviceaccount.com`).
-3. Click the **pencil icon** to edit its permissions.
-4. Click **+ ADD ANOTHER ROLE** and add the following roles:
-   - `Vertex AI User` - Allows the bot to access Gemini models
-   - `Storage Object Admin` - Allows the bot to read/write temporary files
-5. Click **SAVE**.
+```sh
+cp .env.example .env.production
+```
 
-#### 4. Verify Deployment
+6. **Deploy the Service**: Deploy the application to Cloud Run from the source
+   repository. You will be prompted to set the region.
 
-1. Go to the [Cloud Run console](https://console.cloud.google.com/run) to see
-   your deployed service
-2. Click on the service name to view details
-3. Check the "Logs" tab to ensure the service started successfully
-4. The service should show as "Receiving traffic" with a green checkmark
+```sh
+gcloud run deploy bott-service \
+  --source . \
+  --allow-unauthenticated \
+  --region <YOUR_REGION> \
+  --env-file .env.production
+```
 
-Bott should now be running correctly. You may need to trigger a new revision
-deployment from the Cloud Run console for the permission changes to take effect
-immediately.
+9. **Verify Deployment**: Bott should now be running correctly.
+
+```sh
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=bott-service" --limit 50
+```
 
 ### High-level Architecture
 
@@ -180,7 +188,7 @@ graph TD
   App -- "BottEvent" --> BottDiscord
   BottDiscord -- "System Message" --> Discord
 
-  style App fill:darkblue;
+  style App fill:#5555DD;
 ```
 
 ---
