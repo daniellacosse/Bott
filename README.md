@@ -73,7 +73,7 @@ Bott is configured via a series of environment variables.
 | `LOG_TOPICS`                        | Controls which log topics to display. Comma-separated list of topics: debug, info, warn, error, perf.                     | info,warn,error                   |
 | `PORT`                              | The port of the health check server required for GCP Cloud Run.                                                           | 8080                              |
 
-### Deploying Bott
+### Deploying Bott [PENDING TEST]
 
 Deploying Bott to Google Cloud Run involves three main steps: setting up your
 GCP project, deploying the service, and configuring the necessary permissions.
@@ -113,7 +113,7 @@ Click this button to deploy the Bott service:
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/daniellacosse-code/Bott.git)
 
-During deployment, you'll be prompted to configure environment variables:
+During deployment, you'll be prompted to configure the environment variables:
 
 **Required Variables:**
 
