@@ -285,6 +285,33 @@ export async function* generateEvents<O extends AnyShape>(
   return;
 }
 
+/**
+ * Formats an ISO timestamp as a human-readable relative time string.
+ * Examples: "just now", "2 minutes ago", "3 hours ago", "5 days ago"
+ * @internal Exported for testing purposes only
+ */
+export const _formatTimestampAsRelative = (
+  timestamp: Date | string,
+): string => {
+  const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSeconds < 60) {
+    return "just now";
+  } else if (diffMinutes < 60) {
+    return diffMinutes === 1 ? "1 minute ago" : `${diffMinutes} minutes ago`;
+  } else if (diffHours < 24) {
+    return diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`;
+  } else {
+    return diffDays === 1 ? "1 day ago" : `${diffDays} days ago`;
+  }
+};
+
 const _performAssessment = async (
   contents: Content[],
   assessmentInstructions: string,
@@ -324,7 +351,7 @@ const _transformBottEventToContent = (
     id: event.id,
     type: event.type,
     details: event.details, // Assuming details are already JSON-serializable
-    timestamp: event.timestamp,
+    timestamp: _formatTimestampAsRelative(event.timestamp),
     user: event.user ? { id: event.user.id, name: event.user.name } : undefined,
     channel: event.channel
       ? {
@@ -350,6 +377,13 @@ const _transformBottEventToContent = (
     if (parentDetails.parent) {
       // This level of nesting in this context is unnecessary.
       delete parentDetails.parent;
+    }
+
+    // Format parent timestamp as relative time as well
+    if (parentDetails.timestamp) {
+      parentDetails.timestamp = _formatTimestampAsRelative(
+        parentDetails.timestamp,
+      );
     }
 
     eventToSerialize.parent = parentDetails;
