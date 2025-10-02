@@ -379,14 +379,11 @@ const _transformBottEventToContent = (
       delete parentDetails.parent;
     }
 
-    // Format parent timestamp as relative time as well
-    if (parentDetails.timestamp) {
-      parentDetails.timestamp = _formatTimestampAsRelative(
-        parentDetails.timestamp,
-      );
-    }
-
-    eventToSerialize.parent = parentDetails;
+    // Create an intermediary object with formatted timestamp
+    eventToSerialize.parent = {
+      ...parentDetails,
+      timestamp: _formatTimestampAsRelative(parentDetails.timestamp),
+    };
   }
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
