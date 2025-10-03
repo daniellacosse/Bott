@@ -11,6 +11,7 @@
     "jsr:@std/path@^1.0.8": "1.0.8",
     "jsr:@std/testing@*": "1.0.11",
     "npm:@extractus/article-extractor@*": "8.0.19",
+    "npm:@faker-js/faker@*": "10.0.0",
     "npm:@google/genai@*": "1.1.0_@modelcontextprotocol+sdk@1.12.1__express@5.1.0__zod@3.25.34_zod@3.25.34",
     "npm:@types/mdast@*": "4.0.4",
     "npm:@types/node@*": "22.15.15",
@@ -117,6 +118,9 @@
         "linkedom",
         "sanitize-html"
       ]
+    },
+    "@faker-js/faker@10.0.0": {
+      "integrity": "sha512-UollFEUkVXutsaP+Vndjxar40Gs5JL2HeLcl8xO1QAjJgOdhc3OmBFWyEylS+RddWaaBiAzH+5/17PLQJwDiLw=="
     },
     "@google/genai@1.1.0_@modelcontextprotocol+sdk@1.12.1__express@5.1.0__zod@3.25.34_zod@3.25.34": {
       "integrity": "sha512-7JydliYhv6eGmfoy6YlOD8PRw6nd8fqjK+gMNATYV6UJ5hbSfP9j5EiGPmHhTi15SmlMnW5s/OiPPJIX4aJ3JA==",
