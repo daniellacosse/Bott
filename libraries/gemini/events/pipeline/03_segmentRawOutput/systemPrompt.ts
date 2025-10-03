@@ -1,3 +1,17 @@
+/**
+ * @license
+ * This file is part of Bott.
+ *
+ * This project is dual-licensed:
+ * - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+ * - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+ *
+ * Copyright (C) 2025 DanielLaCos.se
+ */
+
+export const getSystemPrompt = () => {
+};
+
 // For each \`message\` or \`reply\` event you generated, ensure its contents are split into a sequence of smaller, conversational messages.
 
 // * **Rule:** Keep each message to a single idea or sentence.

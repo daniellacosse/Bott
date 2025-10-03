@@ -9,50 +9,19 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import {
-  type AnyShape,
-  type BottAction,
-  type BottActionCallEvent,
-  type BottChannel,
-  type BottEvent,
-  BottEventType,
-  type BottGlobalSettings,
-  type BottUser,
+import type {
+  AnyShape,
+  BottAction,
+  BottActionCallEvent,
+  BottChannel,
+  BottEvent,
+  BottGlobalSettings,
+  BottUser,
 } from "@bott/model";
 import { log } from "@bott/logger";
-import { addEventData, getEvents } from "@bott/storage";
+import { addEventData } from "@bott/storage";
 
-import {
-  curateIncomingEvents,
-  curateOutgoingEvents,
-  generateOutgoingEvents,
-  scoreOutgoingEvents,
-  segmentOutgoingEvents,
-} from "./pipeline/main.ts";
-
-type GeminiEventGenerationResult = {
-  inputEventScores: BottEvent<
-    { content: string; scores: Record<string, GeminiEventTraitScore> }
-  >[];
-  outputEvents: (
-    | BottEvent<
-      { content: string; scores: Record<string, GeminiEventTraitScore> }
-    >
-    | BottEvent<
-      {
-        name: string;
-        options: AnyShape;
-        scores: Record<string, GeminiEventTraitScore>;
-      }
-    >
-  )[];
-  outputScores?: Record<string, GeminiEventTraitScore>;
-};
-
-type GeminiEventTraitScore = {
-  score: number;
-  rationale?: string;
-};
+import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
 
 export async function* generateEvents<O extends AnyShape>(
   inputEvents: BottEvent<AnyShape>[],
@@ -67,124 +36,102 @@ export async function* generateEvents<O extends AnyShape>(
   | BottEvent<{ content: string; scores?: Record<string, number> }>
   | BottActionCallEvent<O>
 > {
-  const curatedEvents = await curateIncomingEvents(inputEvents, context);
+  let pipelineContext: EventPipelineContext = {
+    data: {
+      input: inputEvents,
+      output: [],
+    },
+    ...context,
+  };
 
-  if (!curatedEvents.length) {
-    return;
+  for (const processor of pipeline) {
+    pipelineContext = await processor(pipelineContext);
   }
 
+  _debugLogPipelineData(pipelineContext.data);
+
   try {
-    await addEventData(...curatedEvents);
+    // Update the newly scored events
+    await addEventData(...pipelineContext.data.input);
   } catch {
     // TODO
   }
 
-  const initialOutput = await generateOutgoingEvents(curatedEvents, context);
-  const segementedOutput = await segmentOutgoingEvents(initialOutput, context);
-  const scoredOutput = await scoreOutgoingEvents(segementedOutput, context);
-  const finalOutput = await curateOutgoingEvents(scoredOutput, context);
-
-  _debugLogFinalOutput(finalOutput);
-
-  for (const event of finalOutput) {
-    const commonFields = {
-      id: crypto.randomUUID(),
-      type: event.type,
-      timestamp: new Date(),
-      user: context.user,
-      channel: context.channel,
-      // Gemini does not return the full parent event
-      parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
-    };
-
-    if (event.type === BottEventType.ACTION_CALL) {
-      yield {
-        ...commonFields,
-        type: BottEventType.ACTION_CALL,
-        details: event.details as {
-          name: string;
-          options: O;
-          scores: Record<string, number>;
-        },
-      };
-    } else {
-      yield {
-        ...commonFields,
-        details: event.details as {
-          content: string;
-          scores: Record<string, number>;
-        },
-      };
-    }
+  for (const event of pipelineContext.data.output) {
+    // TODO
+    yield event as any;
   }
 
   return;
 }
 
-const _debugLogFinalOutput = (result: GeminiEventGenerationResult) => {
-  let logMessage = "Gemini processing result:\n";
+// TODO
+const _debugLogPipelineData = (result: any) => {
+  log.debug(JSON.stringify(result, null, 2));
 
-  for (const event of result.inputEventScores) {
-    if (!event.details) {
-      continue;
-    }
+  // let logMessage = "Gemini processing result:\n";
 
-    logMessage += `[INPUT] Scored event #${event.id}: "${
-      _truncateMessage(event.details.content)
-    }"\n`;
+  // for (const event of result.inputEventScores) {
+  //   if (!event.details) {
+  //     continue;
+  //   }
 
-    for (const trait in event.details.scores) {
-      logMessage += `  => [${trait}: ${event.details.scores[trait].score}] ${
-        event.details.scores[trait].rationale ?? ""
-      }\n`;
-    }
-  }
+  //   logMessage += `[INPUT] Scored event #${event.id}: "${
+  //     _truncateMessage(event.details.content)
+  //   }"\n`;
 
-  for (const event of result.outputEvents) {
-    if (!event.details) {
-      continue;
-    }
+  //   for (const trait in event.details.scores) {
+  //     logMessage += `  => [${trait}: ${event.details.scores[trait].score}] ${
+  //       event.details.scores[trait].rationale ?? ""
+  //     }\n`;
+  //   }
+  // }
 
-    if (event.type === BottEventType.ACTION_CALL) {
-      const details = event.details as {
-        name: string;
-        options: AnyShape;
-        scores: Record<string, GeminiEventTraitScore>;
-      };
-      logMessage += `[OUTPUT] Generated request \`${details.name}\`\n`;
-      for (const option in details.options) {
-        logMessage += `  => ${option}: ${details.options[option]}\n`;
-      }
-    } else {
-      const details = event.details as {
-        content: string;
-        scores: Record<string, GeminiEventTraitScore>;
-      };
-      const parentInfo = event.parent
-        ? ` (in reply to #${event.parent.id})`
-        : "";
-      logMessage += `[OUTPUT] Generated ${event.type}${parentInfo}: "${
-        _truncateMessage(details.content)
-      }"\n`;
-    }
+  // for (const event of result.outputEvents) {
+  //   if (!event.details) {
+  //     continue;
+  //   }
 
-    for (const trait in event.details.scores) {
-      logMessage += `  => [${trait}: ${event.details.scores[trait].score}] ${
-        event.details.scores[trait].rationale ?? ""
-      }\n`;
-    }
-  }
+  //   if (event.type === BottEventType.ACTION_CALL) {
+  //     const details = event.details as {
+  //       name: string;
+  //       options: AnyShape;
+  //       scores: Record<string, GeminiEventTraitScore>;
+  //     };
+  //     logMessage += `[OUTPUT] Generated request \`${details.name}\`\n`;
+  //     for (const option in details.options) {
+  //       logMessage += `  => ${option}: ${details.options[option]}\n`;
+  //     }
+  //   } else {
+  //     const details = event.details as {
+  //       content: string;
+  //       scores: Record<string, GeminiEventTraitScore>;
+  //     };
+  //     const parentInfo = event.parent
+  //       ? ` (in reply to #${event.parent.id})`
+  //       : "";
+  //     logMessage += `[OUTPUT] Generated ${event.type}${parentInfo}: "${
+  //       _truncateMessage(details.content)
+  //     }"\n`;
+  //   }
 
-  if (result.outputScores) {
-    logMessage += "[OVERALL SCORES]\n";
-    for (const trait in result.outputScores) {
-      logMessage += `  => [${trait}: ${result.outputScores[trait].score}] ${
-        result.outputScores[trait].rationale ?? ""
-      }\n`;
-    }
-  }
+  //   for (const trait in event.details.scores) {
+  //     logMessage += `  => [${trait}: ${event.details.scores[trait].score}] ${
+  //       event.details.scores[trait].rationale ?? ""
+  //     }\n`;
+  //   }
+  // }
 
-  log.debug(logMessage.trim());
+  // if (result.outputScores) {
+  //   logMessage += "[OVERALL SCORES]\n";
+  //   for (const trait in result.outputScores) {
+  //     logMessage += `  => [${trait}: ${result.outputScores[trait].score}] ${
+  //       result.outputScores[trait].rationale ?? ""
+  //     }\n`;
+  //   }
+  // }
+
+  // log.debug(logMessage.trim());
 };
 
 const _truncateMessage = (message: string, maxWordCount = 12) => {
