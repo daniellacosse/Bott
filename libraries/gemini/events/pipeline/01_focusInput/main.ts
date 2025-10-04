@@ -14,14 +14,15 @@ import { type Schema, Type } from "npm:@google/genai";
 
 import { BottEventRuleType } from "@bott/model";
 
-import systemPromptTemplate from "./systemPrompt.md.hbs";
-import type { EventPipelineProcessor } from "../types.ts";
-import { queryGemini } from "../../utilities/queryGemini.ts";
 import { CLASSIFIER_MODEL } from "../../../constants.ts";
+import { queryGemini } from "../../utilities/queryGemini.ts";
 import {
   reduceClassifiersForRuleType,
   reduceRulesForType,
 } from "../../utilities/reduceRules.ts";
+import type { EventPipelineProcessor } from "../types.ts";
+
+import systemPromptTemplate from "./systemPrompt.md.hbs";
 
 export const focusInput: EventPipelineProcessor = async (context) => {
   const input = structuredClone(context.data.input);

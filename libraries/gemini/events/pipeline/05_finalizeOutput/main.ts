@@ -9,15 +9,16 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { AnyShape, BottEvent } from "@bott/model";
+import type { BottEvent } from "@bott/model";
 
-import systemPrompt from "./systemPrompt.md";
 import { getEventSchema } from "../../utilities/getSchema.ts";
 import { queryGemini } from "../../utilities/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
+import systemPrompt from "./systemPrompt.md";
+
 export const finalizeOutput: EventPipelineProcessor = async (context) => {
-  context.data.output = await queryGemini<BottEvent<AnyShape>[]>(
+  context.data.output = await queryGemini<BottEvent[]>(
     context.data.output,
     systemPrompt,
     getEventSchema(context),

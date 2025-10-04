@@ -120,7 +120,7 @@ export enum BottEventType {
  * @template T - The specific `BottEventType`, defaults to `BottEventType`.
  */
 export interface BottEvent<
-  D extends AnyShape = { content: string },
+  D extends AnyShape = AnyShape,
   T extends BottEventType = BottEventType,
 > {
   id: string;
@@ -188,8 +188,8 @@ export interface BottEventRule {
  * @template D - Shape of the details for the outgoing response, defaults to `{ content: string }`.
  */
 export type BottAction<
-  O extends AnyShape,
-  D extends AnyShape = { content: string },
+  O extends AnyShape = AnyShape,
+  D extends AnyShape = AnyShape,
 > = {
   (
     request: BottActionCallEvent<O>,

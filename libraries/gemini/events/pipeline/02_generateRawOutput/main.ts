@@ -11,11 +11,13 @@
 
 import { Handlebars } from "https://deno.land/x/handlebars/mod.ts";
 
-import type { EventPipelineProcessor } from "../types.ts";
-import systemPromptTemplate from "./systemPrompt.md.hbs";
+import type { BottEvent } from "@bott/model";
+
 import { getEventSchema } from "../../utilities/getSchema.ts";
 import { queryGemini } from "../../utilities/queryGemini.ts";
-import type { AnyShape, BottEvent } from "@bott/model";
+import type { EventPipelineProcessor } from "../types.ts";
+
+import systemPromptTemplate from "./systemPrompt.md.hbs";
 
 export const generateRawOutput: EventPipelineProcessor = async function (
   context,
@@ -25,7 +27,7 @@ export const generateRawOutput: EventPipelineProcessor = async function (
     { context },
   );
 
-  context.data.output = await queryGemini<BottEvent<AnyShape>[]>(
+  context.data.output = await queryGemini<BottEvent[]>(
     context.data.input,
     systemPrompt,
     getEventSchema(context),

@@ -11,7 +11,6 @@
 
 import { BottFileType } from "@bott/model";
 import type {
-  AnyShape,
   BottAction,
   BottChannel,
   BottEvent,
@@ -33,16 +32,16 @@ import {
 } from "../constants.ts";
 
 export async function* generateEvents(
-  inputEvents: BottEvent<AnyShape>[],
+  inputEvents: BottEvent[],
   context: {
     abortSignal: AbortSignal;
     user: BottUser;
     channel: BottChannel;
-    actions: Record<string, BottAction<AnyShape, AnyShape>>;
+    actions: Record<string, BottAction>;
     settings: BottGlobalSettings;
   },
-): AsyncGenerator<BottEvent<AnyShape>> {
-  const prunedInput: BottEvent<AnyShape>[] = [];
+): AsyncGenerator<BottEvent> {
+  const prunedInput: BottEvent[] = [];
   const now = Date.now();
   const timeCutoff = now - INPUT_EVENT_TIME_LIMIT_MS;
 
@@ -71,27 +70,32 @@ export async function* generateEvents(
 
         const newTotalTokens = resourceAccumulator.tokens +
           file.compressed.data.byteLength;
+
         if (newTotalTokens > INPUT_FILE_TOKEN_LIMIT) continue;
 
         const isAudio = file.compressed.type === BottFileType.MP3 ||
           file.compressed.type === BottFileType.OPUS ||
           file.compressed.type === BottFileType.WAV;
+
         if (
           isAudio &&
           resourceAccumulator.audioFiles >= INPUT_FILE_AUDIO_COUNT_LIMIT
         ) continue;
 
         const isVideo = file.compressed.type === BottFileType.MP4;
+
         if (
           isVideo &&
           resourceAccumulator.videoFiles >= INPUT_FILE_VIDEO_COUNT_LIMIT
         ) continue;
 
         filesToKeep.push(file);
+
         resourceAccumulator.tokens = newTotalTokens;
         if (isAudio) resourceAccumulator.audioFiles++;
         if (isVideo) resourceAccumulator.videoFiles++;
       }
+
       event.files = filesToKeep.length > 0 ? filesToKeep : undefined;
     }
 
