@@ -20,3 +20,12 @@ Deno.test("Logger exports expected methods", () => {
   assertEquals(typeof log.error, "function");
   assertEquals(typeof log.perf, "function");
 });
+
+Deno.test("Logger methods can be called without errors", () => {
+  // These should not throw errors
+  log.debug("test debug");
+  log.info("test info", { key: "value" });
+  log.warn("test warn");
+  log.error("test error");
+  log.perf("test perf");
+});

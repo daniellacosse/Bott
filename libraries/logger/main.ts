@@ -55,36 +55,59 @@ type Logger = {
   perf(...args: unknown[]): void;
 };
 
+// Helper function to format log arguments similar to console methods
+function formatArgs(...args: unknown[]): string {
+  return args.map((arg) => {
+    if (typeof arg === "string") {
+      return arg;
+    }
+    if (arg === null) {
+      return "null";
+    }
+    if (arg === undefined) {
+      return "undefined";
+    }
+    if (typeof arg === "object") {
+      try {
+        return JSON.stringify(arg);
+      } catch {
+        return String(arg);
+      }
+    }
+    return String(arg);
+  }).join(" ");
+}
+
 // Export a logger object that maintains the same API
 export const log: Logger = {
   debug(...args: unknown[]): void {
     if (allowedTopics.has("debug")) {
-      logger.debug(() => args.map((arg) => String(arg)).join(" "));
+      logger.debug(formatArgs(...args));
     }
   },
 
   info(...args: unknown[]): void {
     if (allowedTopics.has("info")) {
-      logger.info(() => args.map((arg) => String(arg)).join(" "));
+      logger.info(formatArgs(...args));
     }
   },
 
   warn(...args: unknown[]): void {
     if (allowedTopics.has("warn")) {
-      logger.warn(() => args.map((arg) => String(arg)).join(" "));
+      logger.warn(formatArgs(...args));
     }
   },
 
   error(...args: unknown[]): void {
     if (allowedTopics.has("error")) {
-      logger.error(() => args.map((arg) => String(arg)).join(" "));
+      logger.error(formatArgs(...args));
     }
   },
 
   perf(...args: unknown[]): void {
     if (allowedTopics.has("perf")) {
       // Use INFO level for perf logs
-      logger.info(() => args.map((arg) => String(arg)).join(" "));
+      logger.info(formatArgs(...args));
     }
   },
 };
