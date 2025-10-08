@@ -9,6 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { ConsoleHandler, getLogger, type LevelName, setup } from "@std/log";
+
+// Parse LOG_TOPICS environment variable
 const allowedTopics = new Set(
   (Deno.env.get("LOG_TOPICS") || "info,warn,error")
     .toLowerCase()
@@ -16,6 +19,33 @@ const allowedTopics = new Set(
     .map((topic) => topic.trim())
     .filter((topic) => topic.length > 0),
 );
+
+// Determine minimum log level from allowed topics
+let minLevel: LevelName = "NOTSET";
+if (allowedTopics.has("debug")) {
+  minLevel = "DEBUG";
+} else if (allowedTopics.has("info")) {
+  minLevel = "INFO";
+} else if (allowedTopics.has("warn")) {
+  minLevel = "WARN";
+} else if (allowedTopics.has("error")) {
+  minLevel = "ERROR";
+}
+
+// Setup logger with console handler
+setup({
+  handlers: {
+    console: new ConsoleHandler(minLevel),
+  },
+  loggers: {
+    default: {
+      level: minLevel,
+      handlers: ["console"],
+    },
+  },
+});
+
+const logger = getLogger();
 
 type Logger = {
   debug(...args: unknown[]): void;
@@ -25,35 +55,36 @@ type Logger = {
   perf(...args: unknown[]): void;
 };
 
-// Export a simple logger object
+// Export a logger object that maintains the same API
 export const log: Logger = {
   debug(...args: unknown[]): void {
     if (allowedTopics.has("debug")) {
-      console.debug(...args);
+      logger.debug(() => args.map((arg) => String(arg)).join(" "));
     }
   },
 
   info(...args: unknown[]): void {
     if (allowedTopics.has("info")) {
-      console.info(...args);
+      logger.info(() => args.map((arg) => String(arg)).join(" "));
     }
   },
 
   warn(...args: unknown[]): void {
     if (allowedTopics.has("warn")) {
-      console.warn(...args);
+      logger.warn(() => args.map((arg) => String(arg)).join(" "));
     }
   },
 
   error(...args: unknown[]): void {
     if (allowedTopics.has("error")) {
-      console.error(...args);
+      logger.error(() => args.map((arg) => String(arg)).join(" "));
     }
   },
 
   perf(...args: unknown[]): void {
     if (allowedTopics.has("perf")) {
-      console.log(...args);
+      // Use INFO level for perf logs
+      logger.info(() => args.map((arg) => String(arg)).join(" "));
     }
   },
 };
