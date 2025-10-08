@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { ConsoleHandler, getLogger, type LevelName, setup } from "@std/log";
+import { ConsoleHandler, getLogger, setup } from "@std/log";
 
 // Parse LOG_TOPICS environment variable
 const allowedTopics = new Set(
@@ -20,26 +20,14 @@ const allowedTopics = new Set(
     .filter((topic) => topic.length > 0),
 );
 
-// Determine minimum log level from allowed topics
-let minLevel: LevelName = "NOTSET";
-if (allowedTopics.has("debug")) {
-  minLevel = "DEBUG";
-} else if (allowedTopics.has("info")) {
-  minLevel = "INFO";
-} else if (allowedTopics.has("warn")) {
-  minLevel = "WARN";
-} else if (allowedTopics.has("error")) {
-  minLevel = "ERROR";
-}
-
-// Setup logger with console handler
+// Setup logger with console handler - allow all levels, filtering is done in wrapper
 setup({
   handlers: {
-    console: new ConsoleHandler(minLevel),
+    console: new ConsoleHandler("DEBUG"),
   },
   loggers: {
     default: {
-      level: minLevel,
+      level: "DEBUG",
       handlers: ["console"],
     },
   },
