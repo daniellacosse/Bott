@@ -2,7 +2,7 @@
   "name": "@bott/logger",
   "exports": "./main.ts",
   "imports": {
-    "@std/log": "jsr:@std/log@^0.225.3",
-    "@std/assert": "jsr:@std/assert@^1.0.10"
+    "@std/log": "jsr:@std/log@0.225.3",
+    "@std/assert": "jsr:@std/assert@1.0.10"
   }
 }

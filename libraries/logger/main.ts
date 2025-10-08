@@ -21,17 +21,21 @@ const allowedTopics = new Set(
 );
 
 // Setup logger with console handler - allow all levels, filtering is done in wrapper
-setup({
-  handlers: {
-    console: new ConsoleHandler("DEBUG"),
-  },
-  loggers: {
-    default: {
-      level: "DEBUG",
-      handlers: ["console"],
+try {
+  setup({
+    handlers: {
+      console: new ConsoleHandler("DEBUG"),
     },
-  },
-});
+    loggers: {
+      default: {
+        level: "DEBUG",
+        handlers: ["console"],
+      },
+    },
+  });
+} catch {
+  // Setup may have already been called, that's ok
+}
 
 const logger = getLogger();
 
