@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { join } from "jsr:@std/path";
+import { join } from "@std/path";
 import { DatabaseSync } from "node:sqlite";
 
 const dbClientSchema = Deno.readTextFileSync(

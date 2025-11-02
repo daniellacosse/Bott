@@ -9,10 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { assert, assertEquals, assertRejects } from "jsr:@std/assert";
-import { delay } from "jsr:@std/async/delay";
+import { assert, assertEquals, assertRejects } from "@std/assert";
+import { delay } from "@std/async/delay";
 import { TaskManager } from "./manager.ts";
 import { createTask, type Task } from "./create.ts";
+import { testHandler } from "@bott/logger";
 
 // Helper function to create a versatile test task
 const createTestTask = (
@@ -338,15 +339,8 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
   const bucketName = "test-bucket-error";
   const maxSwaps = 1;
 
-  const originalConsoleWarn = console.warn;
-  let warnCalled = false;
-  let warnMessage = "";
-  // deno-lint-ignore no-explicit-any
-  console.warn = (...args: any[]) => {
-    warnCalled = true;
-    warnMessage = args.map((obj) => JSON.stringify(obj)).join(" ");
-    originalConsoleWarn(...args);
-  };
+  // Clear any previous test logs
+  testHandler.clear();
 
   manager.add({
     name: bucketName,
@@ -368,17 +362,15 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
   );
   assertEquals(bucket.remainingSwaps, maxSwaps, "Swaps reset after failure");
 
-  assert(warnCalled, "console.warn should have been called");
-  assert(
-    warnMessage.includes("Task failed:"),
-    "Warn message prefix incorrect",
+  // Verify the warning was logged using the test handler
+  const warningLogs = testHandler.logs.filter((log) =>
+    log.msg.includes("Task failed:")
   );
+  assert(warningLogs.length > 0, "Warning should have been logged");
   assert(
-    warnMessage.includes(bucketName),
-    "Warn message should contain bucket name",
+    warningLogs[0].msg.includes(bucketName),
+    "Warning message should contain bucket name",
   );
-
-  console.warn = originalConsoleWarn; // Restore console.warn
 });
 
 Deno.test("TaskManager - push should throw if bucket does not exist", async () => {

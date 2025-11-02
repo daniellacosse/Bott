@@ -22,7 +22,7 @@ import {
 import {
   type Schema as GeminiStructuredResponseSchema,
   Type as GeminiStructuredResponseType,
-} from "npm:@google/genai";
+} from "@google/genai";
 
 export const getEventSchema = <O extends AnyShape>(
   context: {

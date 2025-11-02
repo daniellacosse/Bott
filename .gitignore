@@ -3,3 +3,6 @@
 
 .signatures/
 fs_root/
+
+# for agents
+deno.zip 

@@ -4,6 +4,104 @@
     "DISCORD_TOKEN": {
       "description": "The token for your Discord bot. Get this from the Discord Developer Portal.",
       "required": true
+    },
+    "GOOGLE_PROJECT_ID": {
+      "description": "Your Google Cloud Project ID we're deploying to - make sure to have the Vertex AI and Cloud Storage APIs enabled.",
+      "required": true
+    },
+    "GOOGLE_PROJECT_LOCATION": {
+      "description": "The GCP region where your Vertex AI resources are located (probably us-central1).",
+      "required": true
+    },
+    "CONFIG_ASSESSMENT_MODEL": {
+      "description": "The AI model used for quality assessment of potential bot responses.",
+      "value": "gemini-2.5-flash-lite",
+      "required": false
+    },
+    "CONFIG_ASSESSMENT_SCORE_THRESHOLD": {
+      "description": "The minimum score (1-100) a potential response must achieve in quality assessments to be sent.",
+      "value": "70",
+      "required": false
+    },
+    "CONFIG_ERROR_MODEL": {
+      "description": "The AI model used for generating user-friendly error messages.",
+      "value": "gemini-2.5-flash",
+      "required": false
+    },
+    "CONFIG_ESSAY_MODEL": {
+      "description": "The AI model used for generating essays and long-form text content.",
+      "value": "gemini-2.5-pro",
+      "required": false
+    },
+    "CONFIG_EVENTS_MODEL": {
+      "description": "The AI model used for generating responses to chat events and user messages.",
+      "value": "gemini-2.5-flash",
+      "required": false
+    },
+    "CONFIG_INPUT_EVENT_LIMIT": {
+      "description": "The maximum number of past chat events to include in the context for the AI model.",
+      "value": "2000",
+      "required": false
+    },
+    "CONFIG_INPUT_FILE_TOKEN_LIMIT": {
+      "description": "The maximum number of tokens to use for analyzing the content of input files (images, websites).",
+      "value": "500000",
+      "required": false
+    },
+    "CONFIG_INPUT_FILE_AUDIO_COUNT_LIMIT": {
+      "description": "The maximum number of audio files to process in a single request.",
+      "value": "1",
+      "required": false
+    },
+    "CONFIG_INPUT_FILE_VIDEO_COUNT_LIMIT": {
+      "description": "The maximum number of video files to process in a single request.",
+      "value": "10",
+      "required": false
+    },
+    "CONFIG_MOVIE_MODEL": {
+      "description": "The AI model used for generating video content.",
+      "value": "veo-3.0-generate-preview",
+      "required": false
+    },
+    "CONFIG_PHOTO_MODEL": {
+      "description": "The AI model used for generating images.",
+      "value": "imagen-4.0-generate-preview-06-06",
+      "required": false
+    },
+    "CONFIG_RATE_LIMIT_IMAGES": {
+      "description": "The maximum number of images Bott can generate per month.",
+      "value": "100",
+      "required": false
+    },
+    "CONFIG_RATE_LIMIT_MUSIC": {
+      "description": "The maximum number of songs Bott can generate per month.",
+      "value": "25",
+      "required": false
+    },
+    "CONFIG_RATE_LIMIT_VIDEOS": {
+      "description": "The maximum number of videos Bott can generate per month.",
+      "value": "10",
+      "required": false
+    },
+    "CONFIG_SONG_MODEL": {
+      "description": "The AI model used for generating music and audio content.",
+      "value": "lyria-002",
+      "required": false
+    },
+    "FILE_SYSTEM_ROOT": {
+      "description": "The root directory on the local file system for storing input and output files.",
+      "value": "./fs_root",
+      "required": false
+    },
+    "LOG_TOPICS": {
+      "description": "Controls which log topics to display. Comma-separated list of topics: debug, info, warn, error, perf.",
+      "value": "info,warn,error",
+      "required": false
+    },
+    "PORT": {
+      "description": "The port of the health check server required for GCP Cloud Run.",
+      "value": "8080",
+      "required": false
     }
   },
   "options": {

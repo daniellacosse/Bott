@@ -11,7 +11,7 @@
 
 // TODO: flesh out
 
-import { faker } from "npm:@faker-js/faker";
+import { faker } from "@faker-js/faker";
 import {
   type AnyShape,
   type BottChannel,

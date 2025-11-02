@@ -9,6 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { BaseHandler, ConsoleHandler, getLogger, setup } from "@std/log";
+
+// Parse LOG_TOPICS environment variable
 const allowedTopics = new Set(
   (Deno.env.get("LOG_TOPICS") || "info,warn,error")
     .toLowerCase()
@@ -16,6 +19,56 @@ const allowedTopics = new Set(
     .map((topic) => topic.trim())
     .filter((topic) => topic.length > 0),
 );
+
+// Simple log record for testing (we can't use LogRecord directly as it has private fields)
+export interface TestLogRecord {
+  msg: string;
+  datetime: Date;
+}
+
+// Test handler for capturing logs during testing
+// Note: We can't expose ConsoleHandler directly because @std/log handlers don't
+// expose their output. This custom handler captures log records for test assertions.
+// It accepts all log levels since filtering is already done in the wrapper functions.
+class TestHandler extends BaseHandler {
+  public logs: TestLogRecord[] = [];
+
+  override log(msg: string): void {
+    // Store the raw message for testing
+    this.logs.push({
+      msg,
+      datetime: new Date(),
+    });
+  }
+
+  clear(): void {
+    this.logs = [];
+  }
+}
+
+// Global test handler instance that can be accessed for testing
+// Using "NOTSET" level (lowest) since filtering is done in wrapper, not at handler level
+export const testHandler: TestHandler = new TestHandler("NOTSET");
+
+// Setup logger - allow all levels at handler/logger level since filtering is done in wrapper
+try {
+  setup({
+    handlers: {
+      console: new ConsoleHandler("DEBUG"),
+      test: testHandler,
+    },
+    loggers: {
+      default: {
+        level: "DEBUG", // Allow all levels; filtering based on LOG_TOPICS happens in wrapper
+        handlers: ["console", "test"],
+      },
+    },
+  });
+} catch {
+  // Setup may have already been called, that's ok
+}
+
+const logger = getLogger();
 
 type Logger = {
   debug(...args: unknown[]): void;
@@ -25,35 +78,59 @@ type Logger = {
   perf(...args: unknown[]): void;
 };
 
-// Export a simple logger object
+// Helper function to format log arguments similar to console methods
+function formatArgs(...args: unknown[]): string {
+  return args.map((arg) => {
+    if (typeof arg === "string") {
+      return arg;
+    }
+    if (arg === null) {
+      return "null";
+    }
+    if (arg === undefined) {
+      return "undefined";
+    }
+    if (typeof arg === "object") {
+      try {
+        return JSON.stringify(arg);
+      } catch {
+        return String(arg);
+      }
+    }
+    return String(arg);
+  }).join(" ");
+}
+
+// Export a logger object that maintains the same API
 export const log: Logger = {
   debug(...args: unknown[]): void {
     if (allowedTopics.has("debug")) {
-      console.debug("[DEBUG]", ...args);
+      logger.debug(formatArgs(...args));
     }
   },
 
   info(...args: unknown[]): void {
     if (allowedTopics.has("info")) {
-      console.info("[INFO]", ...args);
+      logger.info(formatArgs(...args));
     }
   },
 
   warn(...args: unknown[]): void {
     if (allowedTopics.has("warn")) {
-      console.warn("[WARN]", ...args);
+      logger.warn(formatArgs(...args));
     }
   },
 
   error(...args: unknown[]): void {
     if (allowedTopics.has("error")) {
-      console.error("[ERROR]", ...args);
+      logger.error(formatArgs(...args));
     }
   },
 
   perf(...args: unknown[]): void {
     if (allowedTopics.has("perf")) {
-      console.log("[PERF]", ...args);
+      // Use INFO level for perf logs
+      logger.info(formatArgs(...args));
     }
   },
 };

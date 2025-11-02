@@ -9,16 +9,16 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { encodeBase64 } from "jsr:@std/encoding/base64";
+import { encodeBase64 } from "@std/encoding/base64";
 
 import type { EventPipelineContext } from "../pipeline/types.ts";
 
 import gemini from "../../client.ts";
 import { EVENT_MODEL } from "../../constants.ts";
-import type { GenerateContentConfig, Schema } from "npm:@google/genai";
+import type { GenerateContentConfig, Schema } from "@google/genai";
 import type { BottEvent } from "@bott/model";
 
-import type { Content, Part } from "npm:@google/genai";
+import type { Content, Part } from "@google/genai";
 import type { AnyShape } from "@bott/model";
 
 export const queryGemini = async <O>(
@@ -68,6 +68,33 @@ export const queryGemini = async <O>(
   );
 };
 
+/**
+ * Formats an ISO timestamp as a human-readable relative time string.
+ * Examples: "just now", "2 minutes ago", "3 hours ago", "5 days ago"
+ * @internal Exported for testing purposes only
+ */
+export const _formatTimestampAsRelative = (
+  timestamp: Date | string,
+): string => {
+  const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSeconds < 60) {
+    return "just now";
+  } else if (diffMinutes < 60) {
+    return diffMinutes === 1 ? "1 minute ago" : `${diffMinutes} minutes ago`;
+  } else if (diffHours < 24) {
+    return diffHours === 1 ? "1 hour ago" : `${diffHours} hours ago`;
+  } else {
+    return diffDays === 1 ? "1 day ago" : `${diffDays} days ago`;
+  }
+};
+
 const _transformBottEventToContent = (
   event: BottEvent<AnyShape>,
   modelUserId: string,
@@ -78,7 +105,7 @@ const _transformBottEventToContent = (
     id: event.id,
     type: event.type,
     details: event.details, // Assuming details are already JSON-serializable
-    timestamp: event.timestamp,
+    timestamp: _formatTimestampAsRelative(event.timestamp),
     user: event.user ? { id: event.user.id, name: event.user.name } : undefined,
     channel: event.channel
       ? {
@@ -97,18 +124,20 @@ const _transformBottEventToContent = (
   };
 
   if (event.parent) {
-    const { ...parentToSerialize } = event.parent;
+    // The caller (generateEvents) should have already handled event.parent.files.
+    // We create a simplified parent reference here.
+    const { files: _files, ...parentDetails } = event.parent;
 
-    if (parentToSerialize.files) {
-      delete parentToSerialize.files;
-    }
-
-    if (parentToSerialize.parent) {
+    if (parentDetails.parent) {
       // This level of nesting in this context is unnecessary.
-      delete parentToSerialize.parent;
+      delete parentDetails.parent;
     }
 
-    eventToSerialize.parent = parentToSerialize;
+    // Create an intermediary object with formatted timestamp
+    eventToSerialize.parent = {
+      ...parentDetails,
+      timestamp: _formatTimestampAsRelative(parentDetails.timestamp),
+    };
   }
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];

@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { delay } from "jsr:@std/async";
+import { delay } from "@std/async";
 
 import { type AnyShape, BottActionCallEvent, BottEventType } from "@bott/model";
 import {

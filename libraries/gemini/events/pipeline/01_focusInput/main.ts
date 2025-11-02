@@ -9,8 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { type Schema, Type } from "npm:@google/genai";
-import Handlebars from "npm:handlebars";
+import { type Schema, Type } from "@google/genai";
+import Handlebars from "handlebars";
 
 import { BottEventRuleType } from "@bott/model";
 import { log } from "@bott/logger";

@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { SlashCommandBuilder } from "npm:discord.js";
+import { SlashCommandBuilder } from "discord.js";
 
 import {
   type AnyShape,

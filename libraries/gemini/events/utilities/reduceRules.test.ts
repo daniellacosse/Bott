@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { assertEquals, assertFalse } from "jsr:@std/assert";
+import { assertEquals, assertFalse } from "@std/assert";
 
 import {
   type BottEventClassifier,
@@ -45,24 +45,28 @@ const mockSettings: BottGlobalSettings = {
       type: BottEventRuleType.FOCUS_INPUT,
       definition: "isSpam > 3",
       requiredClassifiers: ["isSpam"],
+      validator: () => true,
     },
     anotherFilter: {
       name: "anotherFilter",
       type: BottEventRuleType.FOCUS_INPUT,
       definition: "isUrgent > 4",
       requiredClassifiers: ["isUrgent"],
+      validator: () => true,
     },
     outputRule: {
       name: "outputRule",
       type: BottEventRuleType.FILTER_OUTPUT,
       definition: "isSpam > 1",
       requiredClassifiers: ["isSpam"],
+      validator: () => true,
     },
     missingClassifierRule: {
       name: "missingClassifierRule",
       type: BottEventRuleType.FOCUS_INPUT,
       definition: "isMissing > 1",
       requiredClassifiers: ["isMissing"],
+      validator: () => true,
     },
   },
 };

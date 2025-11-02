@@ -9,9 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { fromMarkdown } from "npm:mdast-util-from-markdown";
-import { visit } from "npm:unist-util-visit";
-import type { Code, Image, InlineCode, Link, Text } from "npm:@types/mdast";
+import { fromMarkdown } from "mdast-util-from-markdown";
+import { visit } from "unist-util-visit";
+import type { Code, Image, InlineCode, Link, Text } from "mdast";
 
 export function getMarkdownLinks(markdown: string): string[] {
   const tree = fromMarkdown(markdown);

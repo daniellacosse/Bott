@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { assertEquals } from "jsr:@std/assert/equals";
+import { assertEquals } from "@std/assert/equals";
 import { getMarkdownLinks } from "./markdown.ts";
 
 Deno.test("getMarkdownLinks - empty string", () => {

@@ -1,0 +1,46 @@
+{
+  "fmt": {
+    "indentWidth": 2,
+    "lineWidth": 80,
+    "proseWrap": "always",
+    "semiColons": true,
+    "singleQuote": false
+  },
+  "imports": {
+    "@extractus/article-extractor": "npm:@extractus/article-extractor@^8.0.19",
+    "@google/genai": "npm:@google/genai@^1.1.0",
+    "@std/assert": "jsr:@std/assert@^1.0.12",
+    "@std/assert/equals": "jsr:@std/assert@^1.0.12/equals",
+    "@std/async": "jsr:@std/async@^1.0.12",
+    "@std/async/delay": "jsr:@std/async@^1.0.12/delay",
+    "@std/encoding": "jsr:@std/encoding@^1.0.9",
+    "@std/encoding/base64": "jsr:@std/encoding@^1.0.9/base64",
+    "@std/log": "jsr:@std/log@^0.224",
+    "@std/path": "jsr:@std/path@^1.0.8",
+    "@faker-js/faker": "npm:@faker-js/faker",
+    "handlebars": "npm:handlebars",
+    "discord.js": "npm:discord.js@^14.19.3",
+    "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2.0.2",
+    "mdast": "npm:mdast@^3",
+    "turndown": "npm:turndown@^7.2.0",
+    "unist-util-visit": "npm:unist-util-visit@^5.0.0"
+  },
+  "tasks": {
+    "build": "docker build -t bott .",
+    "reset": "rm -rf ./fs_root",
+    "setup": "brew bundle && gcloud auth login",
+    "start:dev": "deno run --allow-all --env-file=.env.development ./app/main.ts",
+    // TODO: "prod" should run the container
+    "start:prod": "deno run --allow-all ./app/main.ts",
+    "start": "deno task build && docker run --rm --env-file .env.development -p 8080:8080 bott"
+  },
+  "workspace": [
+    "./model",
+    "./libraries/logger",
+    "./libraries/storage",
+    "./libraries/task",
+    "./libraries/gemini",
+    "./libraries/discord",
+    "./app"
+  ]
+}

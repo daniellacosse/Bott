@@ -9,8 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { PersonGeneration, SafetyFilterLevel } from "npm:@google/genai";
-import { decodeBase64 } from "jsr:@std/encoding";
+import { PersonGeneration, SafetyFilterLevel } from "@google/genai";
+import { decodeBase64 } from "@std/encoding";
 
 import { BottFileType } from "@bott/model";
 import { PHOTO_MODEL } from "../constants.ts";

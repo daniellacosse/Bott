@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import Handlebars from "npm:handlebars";
+import Handlebars from "handlebars";
 
 import { type BottEvent, BottEventType } from "@bott/model";
 
