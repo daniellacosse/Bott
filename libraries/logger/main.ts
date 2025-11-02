@@ -27,6 +27,9 @@ const allowedTopics = new Set(
 );
 
 // Test handler for capturing logs during testing
+// Note: We can't expose ConsoleHandler directly because @std/log handlers don't
+// expose their output. This custom handler captures log records for test assertions.
+// It accepts all log levels since filtering is already done in the wrapper functions.
 class TestHandler extends BaseHandler {
   public logs: LogRecord[] = [];
 
@@ -48,9 +51,10 @@ class TestHandler extends BaseHandler {
 }
 
 // Global test handler instance that can be accessed for testing
-export const testHandler = new TestHandler("DEBUG");
+// Using "NOTSET" level (lowest) since filtering is done in wrapper, not at handler level
+export const testHandler = new TestHandler("NOTSET");
 
-// Setup logger with console handler - allow all levels, filtering is done in wrapper
+// Setup logger - allow all levels at handler/logger level since filtering is done in wrapper
 try {
   setup({
     handlers: {
@@ -59,7 +63,7 @@ try {
     },
     loggers: {
       default: {
-        level: "DEBUG",
+        level: "DEBUG", // Allow all levels; filtering based on LOG_TOPICS happens in wrapper
         handlers: ["console", "test"],
       },
     },
