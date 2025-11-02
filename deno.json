@@ -16,6 +16,7 @@
     "@std/path": "jsr:@std/path@^1.0.8",
     "@extractus/article-extractor": "npm:@extractus/article-extractor@^8.0.19",
     "@google/genai": "npm:@google/genai@^1.1.0",
+    "@types/mdast": "npm:@types/mdast@^4.0.4",
     "discord.js": "npm:discord.js@^14.19.3",
     "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2.0.2",
     "turndown": "npm:turndown@^7.2.0",
