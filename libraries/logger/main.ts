@@ -9,13 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import {
-  BaseHandler,
-  ConsoleHandler,
-  getLogger,
-  type LogRecord,
-  setup,
-} from "@std/log";
+import { BaseHandler, ConsoleHandler, getLogger, setup } from "@std/log";
 
 // Parse LOG_TOPICS environment variable
 const allowedTopics = new Set(
@@ -26,22 +20,24 @@ const allowedTopics = new Set(
     .filter((topic) => topic.length > 0),
 );
 
+// Simple log record for testing (we can't use LogRecord directly as it has private fields)
+export interface TestLogRecord {
+  msg: string;
+  datetime: Date;
+}
+
 // Test handler for capturing logs during testing
 // Note: We can't expose ConsoleHandler directly because @std/log handlers don't
 // expose their output. This custom handler captures log records for test assertions.
 // It accepts all log levels since filtering is already done in the wrapper functions.
 class TestHandler extends BaseHandler {
-  public logs: LogRecord[] = [];
+  public logs: TestLogRecord[] = [];
 
   override log(msg: string): void {
     // Store the raw message for testing
     this.logs.push({
       msg,
-      args: [],
       datetime: new Date(),
-      level: 0,
-      levelName: "NOTSET",
-      loggerName: "default",
     });
   }
 
@@ -52,7 +48,7 @@ class TestHandler extends BaseHandler {
 
 // Global test handler instance that can be accessed for testing
 // Using "NOTSET" level (lowest) since filtering is done in wrapper, not at handler level
-export const testHandler = new TestHandler("NOTSET");
+export const testHandler: TestHandler = new TestHandler("NOTSET");
 
 // Setup logger - allow all levels at handler/logger level since filtering is done in wrapper
 try {
