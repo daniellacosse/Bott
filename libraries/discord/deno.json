@@ -1,12 +1,4 @@
 {
   "name": "@bott/discord",
-  "exports": "./main.ts",
-  "imports": {
-    "@std/assert": "jsr:@std/assert@^1.0.12",
-    "@std/assert/equals": "jsr:@std/assert@^1.0.12/equals",
-    "@types/mdast": "npm:@types/mdast@^4.0.4",
-    "discord.js": "npm:discord.js@^14.19.3",
-    "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2.0.2",
-    "unist-util-visit": "npm:unist-util-visit@^5.0.0"
-  }
+  "exports": "./main.ts"
 }
