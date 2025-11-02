@@ -11,7 +11,7 @@
 
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { visit } from "unist-util-visit";
-import type { Code, Image, InlineCode, Link, Text } from "@types/mdast";
+import type { Code, Image, InlineCode, Link, Text } from "mdast";
 
 export function getMarkdownLinks(markdown: string): string[] {
   const tree = fromMarkdown(markdown);
