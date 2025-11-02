@@ -95,7 +95,7 @@ export const _formatTimestampAsRelative = (
   }
 };
 
-const _transformBottEventToContent = (
+export const _transformBottEventToContent = (
   event: BottEvent<AnyShape>,
   modelUserId: string,
 ): Content => {
