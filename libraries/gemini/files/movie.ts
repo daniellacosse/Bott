@@ -9,11 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import {
-  type GenerateVideosOperation,
-  PersonGeneration,
-} from "npm:@google/genai";
-import { decodeBase64 } from "jsr:@std/encoding";
+import { type GenerateVideosOperation, PersonGeneration } from "@google/genai";
+import { decodeBase64 } from "@std/encoding";
 
 import { BottFileType } from "@bott/model";
 import { CONFIG_MOVIE_MODEL } from "../constants.ts";

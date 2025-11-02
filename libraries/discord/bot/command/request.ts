@@ -21,7 +21,7 @@ import {
   type ChatInputCommandInteraction,
   type CommandInteractionOption,
   type GuildTextBasedChannel,
-} from "npm:discord.js";
+} from "discord.js";
 import { log } from "@bott/logger";
 
 export function resolveCommandRequestEvent<

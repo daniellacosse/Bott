@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { EmbedBuilder } from "npm:discord.js";
+import { EmbedBuilder } from "discord.js";
 import { EmbedColor } from "./colors.ts";
 
 const DESCRIPTION_LENGTH_LIMIT = 4096;

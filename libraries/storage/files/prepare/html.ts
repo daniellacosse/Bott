@@ -9,8 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { extractFromHtml } from "npm:@extractus/article-extractor";
-import TurndownService from "npm:turndown";
+import { extractFromHtml } from "@extractus/article-extractor";
+import TurndownService from "turndown";
 import { BottFileType } from "@bott/model";
 
 import { STORAGE_FILE_SIZE_CAUTION } from "../../start.ts";

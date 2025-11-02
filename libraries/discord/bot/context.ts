@@ -14,7 +14,7 @@ import {
   AttachmentBuilder,
   type Client,
   type GuildTextBasedChannel,
-} from "npm:discord.js";
+} from "discord.js";
 
 import {
   type AnyBottEvent,

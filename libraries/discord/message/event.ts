@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { Message } from "npm:discord.js";
+import type { Message } from "discord.js";
 
 import {
   type AnyBottEvent,

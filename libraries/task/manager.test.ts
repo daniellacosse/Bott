@@ -9,8 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { assert, assertEquals, assertRejects } from "jsr:@std/assert";
-import { delay } from "jsr:@std/async/delay";
+import { assert, assertEquals, assertRejects } from "@std/assert";
+import { delay } from "@std/async/delay";
 import { TaskManager } from "./manager.ts";
 import { createTask, type Task } from "./create.ts";
 

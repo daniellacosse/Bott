@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { decodeBase64 } from "jsr:@std/encoding";
+import { decodeBase64 } from "@std/encoding";
 
 import { BottFileType } from "@bott/model";
 import { CONFIG_SONG_MODEL } from "../constants.ts";

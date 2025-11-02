@@ -1,4 +1,9 @@
 {
   "name": "@bott/task",
-  "exports": "./main.ts"
+  "exports": "./main.ts",
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.12",
+    "@std/async": "jsr:@std/async@^1.0.12",
+    "@std/async/delay": "jsr:@std/async@^1.0.12/delay"
+  }
 }

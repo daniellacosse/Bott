@@ -6,6 +6,22 @@
     "semiColons": true,
     "singleQuote": false
   },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.12",
+    "@std/assert/equals": "jsr:@std/assert@^1.0.12/equals",
+    "@std/async": "jsr:@std/async@^1.0.12",
+    "@std/async/delay": "jsr:@std/async@^1.0.12/delay",
+    "@std/encoding": "jsr:@std/encoding@^1.0.9",
+    "@std/encoding/base64": "jsr:@std/encoding@^1.0.9/base64",
+    "@std/path": "jsr:@std/path@^1.0.8",
+    "@extractus/article-extractor": "npm:@extractus/article-extractor@^8.0.19",
+    "@google/genai": "npm:@google/genai@^1.1.0",
+    "@types/mdast": "npm:@types/mdast@^4.0.4",
+    "discord.js": "npm:discord.js@^14.19.3",
+    "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2.0.2",
+    "turndown": "npm:turndown@^7.2.0",
+    "unist-util-visit": "npm:unist-util-visit@^5.0.0"
+  },
   "tasks": {
     "build": "docker build -t bott .",
     "reset": "rm -rf ./fs_root",

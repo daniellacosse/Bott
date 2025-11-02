@@ -9,11 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type {
-  Client,
-  EmbedBuilder,
-  GuildTextBasedChannel,
-} from "npm:discord.js";
+import type { Client, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 import type {
   AnyShape,
   BottRequestEvent,

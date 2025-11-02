@@ -19,12 +19,12 @@ import {
 } from "@bott/model";
 import { log } from "@bott/logger";
 
-import { Type as GeminiStructuredResponseType } from "npm:@google/genai";
+import { Type as GeminiStructuredResponseType } from "@google/genai";
 import type {
   GenerateContentResponse,
   Part,
   Schema as GeminiStructuredResponseSchema,
-} from "npm:@google/genai";
+} from "@google/genai";
 
 export type GeminiOutputEvent<O extends AnyShape> = Omit<
   | BottEvent

@@ -18,7 +18,7 @@ import {
   type Message,
   REST,
   Routes,
-} from "npm:discord.js";
+} from "discord.js";
 
 import {
   type AnyShape,

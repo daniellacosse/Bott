@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { GoogleGenAI } from "npm:@google/genai";
+import type { GoogleGenAI } from "@google/genai";
 
 import type { BottFileData } from "@bott/model";
 

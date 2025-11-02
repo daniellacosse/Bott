@@ -9,9 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { Content, Part } from "npm:@google/genai";
+import type { Content, Part } from "@google/genai";
 
-import { encodeBase64 } from "jsr:@std/encoding/base64";
+import { encodeBase64 } from "@std/encoding/base64";
 
 import {
   type AnyBottEvent,
