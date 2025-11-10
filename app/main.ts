@@ -11,7 +11,12 @@
 
 import { delay } from "@std/async";
 
-import { type AnyShape, BottActionCallEvent, BottEventType } from "@bott/model";
+import {
+  type AnyShape,
+  type BottAction,
+  BottActionCallEvent,
+  BottEventType,
+} from "@bott/model";
 import {
   addEventData,
   getEventIdsForChannel,
@@ -114,16 +119,17 @@ startDiscordBot({
         const context = {
           user: this.user,
           channel: thisChannel,
-          actions,
+          // TODO(#63): Unify action infrastructure - fix generics
+          actions: actions as unknown as Record<string, BottAction>,
           settings,
         };
 
         // 1. Get list of bot events (responses) from Gemini:
-        const eventGenerator = generateEvents<GenerateMediaOptions>(
+        const eventGenerator = generateEvents(
           eventHistoryResult,
           {
+            ...context,
             abortSignal,
-            context,
           },
         );
 
@@ -192,7 +198,8 @@ startDiscordBot({
             }
             case BottEventType.MESSAGE:
             case BottEventType.REPLY: {
-              const words = genEvent.details.content.split(/\s+/).length;
+              const words =
+                (genEvent.details.content as string).split(/\s+/).length;
               const delayMs = (words / WORDS_PER_MINUTE) * MS_IN_MINUTE;
               const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
               await delay(cappedDelayMs, { signal: abortSignal });

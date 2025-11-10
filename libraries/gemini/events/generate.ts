@@ -18,6 +18,7 @@ import type {
   BottUser,
 } from "@bott/model";
 import { addEventData } from "@bott/storage";
+import { log } from "@bott/logger";
 
 import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
 
@@ -112,17 +113,21 @@ export async function* generateEvents(
 
   for (const processor of pipeline) {
     try {
+      const start = performance.now();
+      log.perf(`${processor.name}: start`);
       pipelineContext = await processor(pipelineContext);
-    } catch {
-      // TODO
+      log.perf(`${processor.name}: end (${performance.now() - start}ms)`);
+    } catch (error) {
+      log.error((error as Error).message, (error as Error).stack);
+      break;
     }
   }
 
   try {
     // Update the newly scored events
     await addEventData(...pipelineContext.data.input);
-  } catch {
-    // TODO
+  } catch (error) {
+    log.warn(error);
   }
 
   for (const event of pipelineContext.data.output) {

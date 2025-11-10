@@ -131,7 +131,7 @@ In a `BottEvent` of `type: "actionCall"`, the `details.name` and `details.option
 
 | Option          | Description | Type            | Allowed Values                                                                                                                            | Required |
 | --------------- | ----------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-<% for (const option of action.options) { %>
+<% for (const option of Object.values(action.options ?? {})) { %>
 | `<%= option.name %>` | <%= option.description ?? '-' %> | `<%= option.type %>` | <% if (!option.allowedValues || option.allowedValues.length === 0) { %>*any*<% } else { %><% for (const [i, value] of option.allowedValues.entries()) { %>`<%= value %>`<%= i < option.allowedValues.length - 1 ? ', ' : '' %><% } %><% } %> | <%= option.required ? 'Yes' : 'No' %> |
 <% } %>
 <% } %>

@@ -29,6 +29,9 @@ export const INPUT_EVENT_TIME_LIMIT_MS = Number(
   Deno.env.get("CONFIG_INPUT_EVENT_TIME_LIMIT_MS") ?? 24 * 60 * 60 * 1000,
 );
 
+export const ERROR_MODEL = Deno.env.get("CONFIG_ERROR_MODEL") ??
+  "gemini-2.5-flash";
+
 export const EVENT_MODEL = Deno.env.get("CONFIG_EVENTS_MODEL") ??
   "gemini-2.5-flash";
 
