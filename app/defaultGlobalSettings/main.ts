@@ -12,10 +12,7 @@
 import { BottGlobalSettings, BottUser } from "@bott/model";
 
 import { getDefaultIdentity } from "./identity.ts";
-import * as _classifiers from "./classifiers.ts";
 import * as reasons from "./reasons.ts";
-
-const { directedAt, ...classifiers } = _classifiers;
 
 export const getDefaultGlobalSettings = (
   context: { user: BottUser },

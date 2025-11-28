@@ -200,7 +200,7 @@ export function createMockContext(): EventPipelineContext {
     examples: { 1: ["<a blatant lie>"], 5: ["<a profound truth>"] },
   };
 
-  const focusRule: BottReason = {
+  const inputRule: BottReason = {
     name: "onlyLookAtInterestingThings",
     definition: "Only look at events that are interesting.",
     validator: (event) => {
@@ -209,7 +209,7 @@ export function createMockContext(): EventPipelineContext {
     classifiers: [classifier],
   };
 
-  const filterRule: BottReason = {
+  const outputRule: BottReason = {
     name: "onlySayCorrectThings",
     definition: "Only say things that are correct.",
     validator: (event) => {
@@ -262,8 +262,8 @@ export function createMockContext(): EventPipelineContext {
     settings: {
       identity: "I am a test bot.",
       reasons: {
-        input: [focusRule],
-        output: [filterRule],
+        input: [inputRule],
+        output: [outputRule],
       },
     },
   };
