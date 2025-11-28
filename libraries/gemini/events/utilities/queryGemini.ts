@@ -98,44 +98,27 @@ export const _transformBottEventToContent = (
   event: BottEvent,
   modelUserId: string,
 ): Content => {
-  // Explicitly construct the object to be stringified to avoid circular references,
-  // (Especially from event.files[...].parent pointing back to the event itself.)
-  const eventToSerialize: Record<string, unknown> = {
-    id: event.id,
-    type: event.type,
-    details: event.details, // Assuming details are already JSON-serializable
-    timestamp: _formatTimestampAsRelative(
-      event.timestamp ? event.timestamp : new Date(),
-    ),
-    user: event.user ? { id: event.user.id, name: event.user.name } : undefined,
-    channel: event.channel
-      ? {
-        id: event.channel.id,
-        name: event.channel.name,
-        description: event.channel.description,
-        space: event.channel.space
-          ? {
-            id: event.channel.space.id,
-            name: event.channel.space.name,
-            description: event.channel.space.description,
-          }
-          : undefined,
-      }
-      : undefined,
-  };
+  // TODO: better typing
+  const eventToSerialize = structuredClone(event) as unknown as Record<
+    string,
+    unknown
+  >;
+
+  delete eventToSerialize.files;
+
+  eventToSerialize.timestamp = _formatTimestampAsRelative(
+    event.timestamp ? event.timestamp : new Date(),
+  );
 
   if (event.parent) {
-    const eventDetails = structuredClone(event.parent);
+    const parent = eventToSerialize.parent as Record<string, unknown>;
 
-    delete eventDetails.files;
-    delete eventDetails.parent;
+    delete parent.files;
+    delete parent.parent;
 
-    eventToSerialize.parent = {
-      ...eventDetails,
-      timestamp: _formatTimestampAsRelative(
-        eventDetails.timestamp ? eventDetails.timestamp : new Date(),
-      ),
-    };
+    parent.timestamp = _formatTimestampAsRelative(
+      event.parent.timestamp ? event.parent.timestamp : new Date(),
+    );
   }
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
