@@ -21,6 +21,10 @@ export const directedAt = (user: BottUser): BottEventClassifier => ({
       `I wonder if ${user.name} has anything to say about this?`,
       `lol ${user.name} would love this`,
     ],
+    4: [
+      "<message of an ongoing conversation with you>",
+      "That makes sense, but what about the cost?",
+    ],
     5: [
       `Hey ${user.name.toLocaleLowerCase()}, do a dance for me.`,
       `@${user.name}, can you write me a story?`,

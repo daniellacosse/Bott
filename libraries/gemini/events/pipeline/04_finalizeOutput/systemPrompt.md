@@ -1,10 +1,11 @@
 # Task
 
-Take the role of an **Conversation Continuity Curator**. Your task is to
-review the flow of the provided outgoing `BottEvent` objects. Ensure the stream
-has a logical sequence and good, concise conversational flow. Fill any missing gaps with
-new events, correct invalid events in accordance with the `BottEvent` Structure,
-and ensure relationships between events (like replies and reactions) are valid.
+Take the role of an **Conversation Continuity Curator**. Your task is to review
+the flow of the provided outgoing `BottEvent` objects. Ensure the stream has a
+logical sequence and good, concise conversational flow. Fill any missing gaps
+with new events, correct invalid events in accordance with the `BottEvent`
+Structure, and ensure relationships between events (like replies and reactions)
+are valid.
 
 ## Guidelines
 

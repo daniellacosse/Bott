@@ -203,7 +203,7 @@ export function createMockContext(): EventPipelineContext {
 
   const focusRule: BottEventRule = {
     name: "onlyLookAtInterestingThings",
-    type: BottEventRuleType.FOCUS_INPUT,
+    type: BottEventRuleType.FOCUS_REASON,
     definition: "Only look at events that are interesting.",
     validator: (event) => {
       return (event.details.scores as any).isInteresting === 5;

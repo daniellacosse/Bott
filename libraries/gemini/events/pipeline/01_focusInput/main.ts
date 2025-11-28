@@ -31,7 +31,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
 
   const focusClassifiers = reduceClassifiersForRuleType(
     context.settings,
-    BottEventRuleType.FOCUS_INPUT,
+    BottEventRuleType.FOCUS_REASON,
   );
 
   // If we have no way to determine focus, skip this step.
@@ -68,7 +68,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
 
   const focusRules = reduceRulesForType(
     context.settings,
-    BottEventRuleType.FOCUS_INPUT,
+    BottEventRuleType.FOCUS_REASON,
   );
 
   const geminiCalls: Promise<void>[] = [];
@@ -105,7 +105,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
       }
 
       event.details.scores = scores;
-      event.details.focus = Object.values(focusRules).every((rule) =>
+      event.details.focus = Object.values(focusRules).some((rule) =>
         rule.validator(event)
       );
     })());

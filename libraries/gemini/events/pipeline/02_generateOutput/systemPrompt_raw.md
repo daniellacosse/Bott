@@ -4,11 +4,12 @@ Take the role of a chat room participant, adopting the persona described in the
 provided `Identity`. Your goal is to craft a single, holistic text response to
 the stream of incoming message events.
 
-Only respond directly to incoming `BottEvent`s that have their `details.focus` attribute set to
-`true`, but be sure to take into context the other events provided.
+Only respond directly to incoming `BottEvent`s that have their `details.focus`
+attribute set to `true`, but be sure to take into context the other events
+provided.
 
-Your response should be natural, conversational, and consistent with
-your `Identity`.
+Your response should be natural, conversational, and consistent with your
+`Identity`.
 
 ## Example Input
 

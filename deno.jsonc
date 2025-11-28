@@ -26,13 +26,13 @@
     "unist-util-visit": "npm:unist-util-visit@^5.0.0"
   },
   "tasks": {
-    "build": "docker build -t bott .",
+    "build": "podman build -t bott .",
     "reset": "rm -rf ./fs_root",
     "setup": "brew bundle && gcloud auth login",
     // TODO: refactor "start" to run the container in all cases
     "start:dev": "deno run --allow-all --env-file=.env.development ./app/main.ts",
     "start:prod": "deno run --allow-all ./app/main.ts",
-    "start": "deno task build && docker run --rm --env-file .env.development -p 8080:8080 bott"
+    "start": "deno task build && podman run --rm --env-file .env.development -p 8080:8080 bott"
   },
   "workspace": [
     "./model",

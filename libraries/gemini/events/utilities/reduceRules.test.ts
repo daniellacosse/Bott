@@ -42,14 +42,14 @@ const mockSettings: BottGlobalSettings = {
   rules: {
     filterSpam: {
       name: "filterSpam",
-      type: BottEventRuleType.FOCUS_INPUT,
+      type: BottEventRuleType.FOCUS_REASON,
       definition: "isSpam > 3",
       requiredClassifiers: ["isSpam"],
       validator: () => true,
     },
     anotherFilter: {
       name: "anotherFilter",
-      type: BottEventRuleType.FOCUS_INPUT,
+      type: BottEventRuleType.FOCUS_REASON,
       definition: "isUrgent > 4",
       requiredClassifiers: ["isUrgent"],
       validator: () => true,
@@ -63,7 +63,7 @@ const mockSettings: BottGlobalSettings = {
     },
     missingClassifierRule: {
       name: "missingClassifierRule",
-      type: BottEventRuleType.FOCUS_INPUT,
+      type: BottEventRuleType.FOCUS_REASON,
       definition: "isMissing > 1",
       requiredClassifiers: ["isMissing"],
       validator: () => true,
@@ -77,7 +77,7 @@ Deno.test("reduceClassifiersForRuleType", async (t) => {
     () => {
       const result = reduceClassifiersForRuleType(
         mockSettings,
-        BottEventRuleType.FOCUS_INPUT,
+        BottEventRuleType.FOCUS_REASON,
       );
 
       assertEquals(Object.keys(result).length, 2);
@@ -106,7 +106,7 @@ Deno.test("reduceClassifiersForRuleType", async (t) => {
     () => {
       const result = reduceClassifiersForRuleType(
         mockSettings,
-        BottEventRuleType.FOCUS_INPUT,
+        BottEventRuleType.FOCUS_REASON,
       );
 
       // The 'missingClassifierRule' should be ignored
@@ -120,7 +120,7 @@ Deno.test("reduceRulesForType", async (t) => {
   await t.step("should return a map of rules for a given rule type", () => {
     const result = reduceRulesForType(
       mockSettings,
-      BottEventRuleType.FOCUS_INPUT,
+      BottEventRuleType.FOCUS_REASON,
     );
 
     assertEquals(Object.keys(result).length, 2);
@@ -134,7 +134,7 @@ Deno.test("reduceRulesForType", async (t) => {
     () => {
       const result = reduceRulesForType(
         mockSettings,
-        BottEventRuleType.FOCUS_INPUT,
+        BottEventRuleType.FOCUS_REASON,
       );
 
       assertEquals(Object.keys(result).length, 2);

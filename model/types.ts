@@ -163,8 +163,8 @@ export interface BottEventClassifier {
 }
 
 export enum BottEventRuleType {
-  /** A rule for removing an input event from consideration. */
-  FOCUS_INPUT = "focusInput",
+  /** A rule for focusing on events that match a reason. */
+  FOCUS_REASON = "focusReason",
 
   /** A rule for removing an output event from being sent. */
   FILTER_OUTPUT = "filterOutput",

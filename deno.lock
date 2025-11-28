@@ -1,11 +1,13 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/assert@^1.0.12": "1.0.12",
     "jsr:@std/async@^1.0.12": "1.0.12",
     "jsr:@std/encoding@^1.0.9": "1.0.10",
     "jsr:@std/fmt@^1.0.5": "1.0.8",
     "jsr:@std/fs@^1.0.11": "1.0.19",
     "jsr:@std/internal@^1.0.10": "1.0.12",
+    "jsr:@std/internal@^1.0.6": "1.0.12",
     "jsr:@std/io@~0.225.2": "0.225.2",
     "jsr:@std/log@0.224": "0.224.14",
     "jsr:@std/path@^1.0.8": "1.1.2",
@@ -20,6 +22,12 @@
     "npm:unist-util-visit@5": "5.0.0"
   },
   "jsr": {
+    "@std/assert@1.0.12": {
+      "integrity": "08009f0926dda9cbd8bef3a35d3b6a4b964b0ab5c3e140a4e0351fbf34af5b9a",
+      "dependencies": [
+        "jsr:@std/internal@^1.0.6"
+      ]
+    },
     "@std/async@1.0.12": {
       "integrity": "d1bfcec459e8012846fe4e38dfc4241ab23240ecda3d8d6dfcf6d81a632e803d"
     },
@@ -49,7 +57,7 @@
     "@std/path@1.1.2": {
       "integrity": "c0b13b97dfe06546d5e16bf3966b1cadf92e1cc83e56ba5476ad8b498d9e3038",
       "dependencies": [
-        "jsr:@std/internal"
+        "jsr:@std/internal@^1.0.10"
       ]
     }
   },
