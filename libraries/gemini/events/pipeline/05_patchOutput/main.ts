@@ -10,7 +10,6 @@
  */
 
 import type { BottEvent } from "@bott/model";
-
 import { getEventSchema } from "../../utilities/getSchema.ts";
 import { queryGemini } from "../../utilities/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
@@ -19,7 +18,7 @@ const systemPrompt = await Deno.readTextFile(
   new URL("./systemPrompt.md", import.meta.url),
 );
 
-export const finalizeOutput: EventPipelineProcessor = async (context) => {
+export const patchOutput: EventPipelineProcessor = async (context) => {
   if (!context.data.output.length) {
     return context;
   }
@@ -30,6 +29,7 @@ export const finalizeOutput: EventPipelineProcessor = async (context) => {
       systemPrompt,
       responseSchema: getEventSchema(context),
       context,
+      useIdentity: false,
     },
   );
 
