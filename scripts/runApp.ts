@@ -12,27 +12,25 @@
 /**
  * Runs the Bott application in a container with the specified environment.
  *
- * Usage: deno task runApp <environment> [--skip-build]
+ * Usage: deno task runApp <environment>
  * Example: deno task runApp test
- * Example: deno task runApp test --skip-build
  *
  * This will:
- * 1. Build the container image (unless --skip-build is passed)
+ * 1. Build the container image (if Dockerfile has changed since last build)
  * 2. Run it with .env.<environment> file
  * 3. Mount the local volume for the "test" environment
  */
 
-const skipBuild = Deno.args.includes("--skip-build");
 const envName = Deno.args.find((arg) => !arg.startsWith("--"));
 
 if (!envName) {
-  console.error("Usage: deno task runApp <environment> [--skip-build]");
+  console.error("Usage: deno task runApp <environment>");
   console.error("Example: deno task runApp test");
-  console.error("Example: deno task runApp test --skip-build");
   Deno.exit(1);
 }
 
 const envFile = `.env.${envName}`;
+const buildHashFile = ".build-hash";
 
 // Check if env file exists and read PORT value
 let port = "8080"; // default
@@ -47,9 +45,38 @@ try {
   Deno.exit(1);
 }
 
-// Build the container (unless --skip-build is passed)
-if (!skipBuild) {
-  console.log("Building container...");
+// Compute hash of Dockerfile to detect changes
+async function computeDockerfileHash(): Promise<string> {
+  const dockerfile = await Deno.readTextFile("Dockerfile");
+  const encoder = new TextEncoder();
+  const data = encoder.encode(dockerfile);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Check if build is needed by comparing Dockerfile hash
+async function isBuildNeeded(): Promise<boolean> {
+  try {
+    const currentHash = await computeDockerfileHash();
+    const storedHash = await Deno.readTextFile(buildHashFile);
+    return currentHash !== storedHash.trim();
+  } catch {
+    // If hash file doesn't exist or can't be read, build is needed
+    return true;
+  }
+}
+
+// Save the Dockerfile hash after successful build
+async function saveBuildHash(): Promise<void> {
+  const hash = await computeDockerfileHash();
+  await Deno.writeTextFile(buildHashFile, hash);
+}
+
+// Build the container if Dockerfile has changed
+const buildNeeded = await isBuildNeeded();
+if (buildNeeded) {
+  console.log("Dockerfile changed, building container...");
   const buildProcess = new Deno.Command("podman", {
     args: ["build", "-t", "bott", "."],
     stdout: "inherit",
@@ -61,8 +88,9 @@ if (!skipBuild) {
     console.error("Failed to build container");
     Deno.exit(1);
   }
+  await saveBuildHash();
 } else {
-  console.log("Skipping build...");
+  console.log("Dockerfile unchanged, skipping build...");
 }
 
 // Prepare run arguments

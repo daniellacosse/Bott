@@ -3,6 +3,7 @@
 
 .signatures/
 fs_root/
+.build-hash
 
 # for agents
 deno.zip 
