@@ -22,7 +22,6 @@ export const getDefaultGlobalSettings = (
     input: [
       reasons.whenAddressed(context.user),
       reasons.checkFacts,
-      reasons.ensureImportance,
     ],
     output: [
       reasons.ensureImportance,
