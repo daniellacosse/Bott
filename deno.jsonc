@@ -26,20 +26,10 @@
     "unist-util-visit": "npm:unist-util-visit@^5.0.0"
   },
   "tasks": {
-    "build": "podman build -t bott .",
     "reset": "rm -rf ./fs_root",
     "setup": "brew bundle && gcloud auth login",
-    // Test: local development with .env.test, runs in container with volume mount
-    "app:test": "deno task build && podman run --rm --env-file .env.test -v $(pwd):/workspace:Z -p 8080:8080 bott",
-    // Staging: container for Bott running at DanielLaCos.se
-    "app:staging": "deno task build && podman run --rm --env-file .env.staging -p 8080:8080 bott",
-    // Production: container for public deployment (TBA)
-    "app:production": "deno task build && podman run --rm --env-file .env.production -p 8080:8080 bott",
-    // Direct Deno execution (no container) for faster iteration
-    "start:dev": "deno run --allow-all --env-file=.env.test ./app/main.ts",
-    "start:prod": "deno run --allow-all ./app/main.ts",
-    // Test runner in container
-    "test": "podman run --rm -v $(pwd):/workspace:Z -w /workspace bott deno test --allow-all"
+    // Run the app in a container: deno task runApp <test|staging|production>
+    "runApp": "deno run --allow-all ./scripts/runApp.ts"
   },
   "workspace": [
     "./model",

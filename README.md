@@ -1,6 +1,6 @@
 <img width="320" alt="origin_of_bott" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
 
-# 🤖 `@BottStaging` [IN DEVELOPMENT]
+# 🤖 `@Bott` [IN DEVELOPMENT]
 
 ![in development](https://img.shields.io/badge/in%20development-red)
 ![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
@@ -8,14 +8,6 @@
 
 A Discord bot, powered by Gemini. Currently in development: see the
 [alpha release milestone](https://github.com/daniellacosse-code/Bott/milestone/2).
-
-## Environments
-
-| Environment | Discord Bot    | Description                                     |
-| ----------- | -------------- | ----------------------------------------------- |
-| Test        | `@BottTest`    | Local development with volume-mounted container |
-| Staging     | `@BottStaging` | Running at DanielLaCos.se                       |
-| Production  | TBA            | Public deployment (TBA)                         |
 
 ## Features
 
@@ -55,7 +47,7 @@ cp .env.example .env.test
 3. Get your GCP information and add it to `.env.test`.
 4. Get your Discord information and add it to `.env.test`.
 5. Set up the environment with `deno task setup`.
-6. Start the bot with `deno task app:test`.
+6. Start the bot with `deno task runApp test`.
 
 ### Configuring Bott
 
