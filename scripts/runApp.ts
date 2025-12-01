@@ -31,9 +31,14 @@ if (!envName) {
 
 const envFile = `.env.${envName}`;
 
-// Check if env file exists
+// Check if env file exists and read PORT value
+let port = "8080"; // default
 try {
-  await Deno.stat(envFile);
+  const envContent = await Deno.readTextFile(envFile);
+  const portMatch = envContent.match(/^PORT=(\d+)/m);
+  if (portMatch) {
+    port = portMatch[1];
+  }
 } catch {
   console.error(`Environment file not found: ${envFile}`);
   Deno.exit(1);
@@ -66,10 +71,10 @@ if (envName === "test") {
   runArgs.push("-v", `${Deno.cwd()}:/workspace:Z`);
 }
 
-runArgs.push("-p", "8080:8080", "bott");
+runArgs.push("-p", `${port}:${port}`, "bott");
 
 // Run the container
-console.log(`Running container with ${envFile}...`);
+console.log(`Running container with ${envFile} on port ${port}...`);
 const runProcess = new Deno.Command("podman", {
   args: runArgs,
   stdout: "inherit",
