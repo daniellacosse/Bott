@@ -11,7 +11,7 @@
 
 import { assertEquals } from "@std/assert/equals";
 
-import { _formatTimestampAsRelative } from "./generate.ts";
+import { _formatTimestampAsRelative } from "./queryGemini.ts";
 
 Deno.test("_formatTimestampAsRelative - just now", () => {
   const now = new Date();

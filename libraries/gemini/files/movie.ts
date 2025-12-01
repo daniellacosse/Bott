@@ -13,7 +13,7 @@ import { type GenerateVideosOperation, PersonGeneration } from "@google/genai";
 import { decodeBase64 } from "@std/encoding";
 
 import { BottFileType } from "@bott/model";
-import { CONFIG_MOVIE_MODEL } from "../constants.ts";
+import { MOVIE_MODEL } from "../constants.ts";
 
 import _gemini from "../client.ts";
 import type { BottFileDataGenerator } from "./types.ts";
@@ -21,7 +21,7 @@ import type { BottFileDataGenerator } from "./types.ts";
 export const generateMovieData: BottFileDataGenerator = async (
   prompt: string,
   {
-    model = CONFIG_MOVIE_MODEL,
+    model = MOVIE_MODEL,
     gemini = _gemini,
     abortSignal,
   },

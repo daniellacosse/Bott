@@ -22,10 +22,10 @@ import {
 
 import {
   type AnyShape,
+  type BottAction,
+  type BottActionResultEvent,
   type BottEvent,
   BottEventType,
-  type BottRequestHandler,
-  type BottResponseEvent,
 } from "@bott/model";
 
 import { createErrorEmbed } from "../message/embed/error.ts";
@@ -48,7 +48,7 @@ const REQUIRED_INTENTS = [
 type DiscordBotOptions<
   O extends Record<string, unknown> = Record<string, unknown>,
 > = {
-  requestHandlerCommands?: BottRequestHandler<O, AnyShape>[];
+  actions?: Record<string, BottAction<O, AnyShape>>;
   event?: (this: DiscordBotContext, event: BottEvent) => void;
   identityToken: string;
   mount?: (this: DiscordBotContext) => void;
@@ -58,7 +58,7 @@ export async function startDiscordBot<
   O extends Record<string, unknown> = Record<string, unknown>,
 >({
   identityToken: token,
-  requestHandlerCommands: commands,
+  actions: commands,
   event: handleEvent,
   mount: handleMount,
 }: DiscordBotOptions<O>) {
@@ -107,11 +107,6 @@ export async function startDiscordBot<
       message as Message<true>,
     )) as BottEvent;
 
-    log.debug(
-      "Message event:",
-      { id: event.id, preview: event.details?.content.slice(0, 100) },
-    );
-
     if (handleEvent) {
       callWithContext(handleEvent, {
         client,
@@ -157,11 +152,6 @@ export async function startDiscordBot<
       );
     }
 
-    log.debug("Reaction event:", {
-      id: event.id,
-      details: event.details,
-    });
-
     if (handleEvent) {
       callWithContext(handleEvent, {
         client,
@@ -181,7 +171,7 @@ export async function startDiscordBot<
       return;
     }
 
-    const command = commands.find(({ name }) =>
+    const command = Object.values(commands).find(({ name }) =>
       interaction.commandName === name
     );
 
@@ -191,9 +181,9 @@ export async function startDiscordBot<
 
     await interaction.deferReply();
 
-    let responseEvent: BottResponseEvent;
+    let resultEvent: BottActionResultEvent;
     try {
-      responseEvent = await resolveCommandResponseEvent<O>(
+      resultEvent = await resolveCommandResponseEvent<O>(
         command,
         {
           request: await resolveCommandRequestEvent<O>(interaction),
@@ -207,12 +197,12 @@ export async function startDiscordBot<
       });
     }
 
-    interaction.followUp(responseEvent.details);
+    interaction.followUp(resultEvent.details);
   });
 
   // Sync commands with discord origin via their custom http client 🙄:
   const body = [];
-  for (const command of commands) {
+  for (const command of Object.values(commands)) {
     body.push(getCommandJson<O>(command));
   }
 

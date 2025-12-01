@@ -12,7 +12,7 @@
 import { decodeBase64 } from "@std/encoding";
 
 import { BottFileType } from "@bott/model";
-import { CONFIG_SONG_MODEL } from "../constants.ts";
+import { SONG_MODEL } from "../constants.ts";
 
 import type { BottFileDataGenerator } from "./types.ts";
 
@@ -28,7 +28,7 @@ const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN") ??
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
 const VERTEX_API_URL =
-  `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/${CONFIG_SONG_MODEL}:predict`;
+  `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/${SONG_MODEL}:predict`;
 
 export const generateSongData: BottFileDataGenerator = async (
   prompt,

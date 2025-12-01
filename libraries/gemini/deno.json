@@ -6,5 +6,8 @@
       "deno.ns",
       "dom"
     ]
+  },
+  "tasks": {
+    "eventPipelineTest": "LOG_TOPICS=debug,perf deno --allow-all --env-file=../../.env.development ./events/pipeline/e2e.ts"
   }
 }

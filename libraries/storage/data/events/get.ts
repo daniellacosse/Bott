@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { AnyBottEvent, BottEventType, BottFile } from "@bott/model";
+import type { BottEvent, BottEventType, BottFile } from "@bott/model";
 import { log } from "@bott/logger";
 
 import { commit } from "../commit.ts";
@@ -18,7 +18,7 @@ import { resolveFile } from "../../files/resolve.ts";
 
 export const getEvents = async (
   ...ids: string[]
-): Promise<AnyBottEvent[]> => {
+): Promise<BottEvent[]> => {
   const result = commit(
     sql`
       select
@@ -49,7 +49,7 @@ export const getEvents = async (
     throw result.error;
   }
 
-  const events = new Map<string, AnyBottEvent>();
+  const events = new Map<string, BottEvent>();
 
   for (
     const {
@@ -83,7 +83,7 @@ export const getEvents = async (
       continue;
     }
 
-    const event: AnyBottEvent = {
+    const event: BottEvent = {
       id,
       type: type as BottEventType,
       details: JSON.parse(details),

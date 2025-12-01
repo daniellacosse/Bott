@@ -130,7 +130,7 @@ export const log: Logger = {
   perf(...args: unknown[]): void {
     if (allowedTopics.has("perf")) {
       // Use INFO level for perf logs
-      logger.info(formatArgs(...args));
+      logger.info(formatArgs("__PERF__", ...args));
     }
   },
 };

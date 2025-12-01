@@ -12,25 +12,25 @@
 import type { Client, EmbedBuilder, GuildTextBasedChannel } from "discord.js";
 import type {
   AnyShape,
-  BottRequestEvent,
-  BottRequestHandler,
-  BottResponseEvent,
+  BottAction,
+  BottActionCallEvent,
+  BottActionResultEvent,
 } from "@bott/model";
 import { addEventData } from "@bott/storage";
 import { callWithContext } from "../context.ts";
 import { log } from "@bott/logger";
 
-type DiscordResponseEvent = BottResponseEvent<
+type DiscordResponseEvent = BottActionResultEvent<
   { content: string; embeds: EmbedBuilder[] }
 >;
 
 export const resolveCommandResponseEvent = async <
   O extends Record<string, unknown>,
 >(
-  command: BottRequestHandler<O, AnyShape>,
+  command: BottAction<O, AnyShape>,
   { client, request, channel }: {
     client: Client;
-    request: BottRequestEvent<O>;
+    request: BottActionCallEvent<O>;
     channel: GuildTextBasedChannel;
   },
 ): Promise<DiscordResponseEvent> => {

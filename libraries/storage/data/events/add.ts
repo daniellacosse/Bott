@@ -10,8 +10,8 @@
  */
 
 import type {
-  AnyBottEvent,
   BottChannel,
+  BottEvent,
   BottFile,
   BottSpace,
   BottUser,
@@ -46,7 +46,7 @@ const getAddChannelsSql = (
   `;
 };
 
-const getAddEventsSql = (...events: AnyBottEvent[]) => {
+const getAddEventsSql = (...events: BottEvent[]) => {
   if (!events.length) {
     return;
   }
@@ -60,7 +60,8 @@ const getAddEventsSql = (...events: AnyBottEvent[]) => {
   return sql`
     insert into events (id, type, details, parent_id, channel_id, user_id, timestamp)
     values ${values} 
-    on conflict(id) do nothing
+    on conflict(id) do update set
+      details = excluded.details
   `;
 };
 
@@ -118,11 +119,11 @@ const getAddUsersSql = (...users: BottUser[]) => {
 };
 
 export const addEventData = async (
-  ...inputEvents: AnyBottEvent[]
+  ...inputEvents: BottEvent[]
 ): Promise<TransactionResults> => {
   // Extract all unique entities (events, spaces, channels, users)
-  const events = new Map<string, AnyBottEvent>();
-  const _queue: AnyBottEvent[] = [...inputEvents];
+  const events = new Map<string, BottEvent>();
+  const _queue: BottEvent[] = [...inputEvents];
   const _seenEvents = new Set<string>();
 
   while (_queue.length > 0) {
@@ -185,13 +186,13 @@ export const addEventData = async (
 };
 
 function topologicallySortEvents(
-  ...events: AnyBottEvent[]
-): AnyBottEvent[] {
-  const result: AnyBottEvent[] = [];
+  ...events: BottEvent[]
+): BottEvent[] {
+  const result: BottEvent[] = [];
 
   const visiting = new Set<string>();
   const visited = new Set<string>();
-  function visit(event: AnyBottEvent) {
+  function visit(event: BottEvent) {
     if (visited.has(event.id) || visiting.has(event.id)) {
       return; // Cycle detected, break it
     }

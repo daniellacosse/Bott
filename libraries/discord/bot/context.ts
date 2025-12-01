@@ -17,7 +17,6 @@ import {
 } from "discord.js";
 
 import {
-  type AnyBottEvent,
   BOTT_FILE_TYPE_LOOKUP,
   type BottEvent,
   BottEventType,
@@ -25,12 +24,14 @@ import {
 } from "@bott/model";
 
 import { resolveBottEventFromMessage } from "../message/event.ts";
+import { log } from "@bott/logger";
 
+// TODO(#63): Generalize the action context and hoist it
 export type DiscordBotContext = {
   user: BottUser;
   send: (
     event: BottEvent,
-  ) => Promise<AnyBottEvent | undefined>;
+  ) => Promise<BottEvent | undefined>;
   startTyping: () => Promise<void> | undefined;
 };
 
@@ -75,31 +76,43 @@ export const callWithContext = <
           );
         }
 
+        const messageContent = event.details.content as string;
+
         let messageResult;
         switch (event.type) {
           case BottEventType.MESSAGE:
             messageResult = await channel?.send({
-              content: event.details.content,
+              content: messageContent,
               files,
             });
             break;
           case BottEventType.REPLY: {
+            if (!event.parent) {
+              log.warn("Tried to send a reply without a parent", event);
+              return;
+            }
+
             const sourceMessage = await channel?.messages.fetch(
-              String(event.parent!.id),
+              String(event.parent.id),
             );
             messageResult = await sourceMessage?.reply({
-              content: event.details.content,
+              content: messageContent,
               files,
             });
             break;
           }
           case BottEventType.REACTION: {
+            if (!event.parent) {
+              log.warn("Tried to send a reaction without a parent", event);
+              return;
+            }
+
             const sourceMessage = await channel?.messages.fetch(
               // TODO (nit): Sometimes this isn't a Discord ID...
-              String(event.parent!.id),
+              String(event.parent.id),
             );
             // There's no Discord DB object for reactions
-            await sourceMessage?.react(event.details.content);
+            await sourceMessage?.react(messageContent);
             break;
           }
           default:

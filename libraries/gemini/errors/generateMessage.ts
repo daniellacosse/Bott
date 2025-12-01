@@ -11,24 +11,29 @@
 
 import {
   type AnyShape,
+  type BottActionCallEvent,
   type BottChannel,
   type BottEvent,
   BottEventType,
-  type BottRequestEvent,
+  type BottGlobalSettings,
   type BottUser,
 } from "@bott/model";
 
 import gemini from "../client.ts";
-import { CONFIG_ERROR_MODEL } from "../constants.ts";
+import { ERROR_MODEL } from "../constants.ts";
 import instructions from "./instructions.ts";
 
 export async function generateErrorMessage<O extends AnyShape>(
   // deno-lint-ignore no-explicit-any
   error: any,
-  requestEvent: BottRequestEvent<O>,
-  context: { user: BottUser; channel: BottChannel; identity: string },
+  requestEvent: BottActionCallEvent<O>,
+  context: {
+    user: BottUser;
+    channel: BottChannel;
+    settings: BottGlobalSettings;
+  },
 ): Promise<BottEvent> {
-  const model = CONFIG_ERROR_MODEL;
+  const model = ERROR_MODEL;
 
   const geminiInput = {
     request: {
@@ -52,7 +57,7 @@ export async function generateErrorMessage<O extends AnyShape>(
     config: {
       candidateCount: 1,
       systemInstruction: {
-        parts: [{ text: context.identity + instructions }],
+        parts: [{ text: context.settings.identity }, { text: instructions }],
       },
     },
   });

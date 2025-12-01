@@ -11,7 +11,12 @@
 
 import { delay } from "@std/async";
 
-import { type AnyShape, BottEventType, BottRequestEvent } from "@bott/model";
+import {
+  type AnyShape,
+  type BottAction,
+  BottActionCallEvent,
+  BottEventType,
+} from "@bott/model";
 import {
   addEventData,
   getEventIdsForChannel,
@@ -22,15 +27,15 @@ import { createTask } from "@bott/task";
 import { startDiscordBot } from "@bott/discord";
 import { generateErrorMessage, generateEvents } from "@bott/gemini";
 import { log } from "@bott/logger";
-
 import { taskManager } from "./tasks.ts";
-import { getIdentity } from "./identity.ts";
-import { help } from "./requestHandlers/help.ts";
+
+import * as actions from "./actions/main.ts";
 import {
   generateMedia,
   GenerateMediaOptions,
-} from "./requestHandlers/generateMedia.ts";
-import { STORAGE_DEPLOY_NONCE_PATH, STORAGE_ROOT } from "./constants.ts";
+} from "./actions/generateMedia.ts";
+import { STORAGE_DEPLOY_NONCE_PATH, STORAGE_ROOT } from "./env.ts";
+import { getDefaultGlobalSettings } from "./defaultGlobalSettings/main.ts";
 
 const WORDS_PER_MINUTE = 200;
 const MS_IN_MINUTE = 60 * 1000;
@@ -45,7 +50,8 @@ const deployNonce = crypto.randomUUID();
 Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deployNonce);
 
 startDiscordBot({
-  requestHandlerCommands: [help],
+  // TODO(#63): Unify action infrastructure
+  actions: { help: actions.help },
   identityToken: Deno.env.get("DISCORD_TOKEN")!,
   mount() {
     log.info(
@@ -105,22 +111,25 @@ startDiscordBot({
         }
 
         const thisChannel = event.channel!;
+
+        const settings = getDefaultGlobalSettings({
+          user: this.user,
+        });
+
         const context = {
-          identity: getIdentity({
-            user: this.user,
-          }),
           user: this.user,
           channel: thisChannel,
+          // TODO(#63): Unify action infrastructure - fix generics
+          actions: actions as unknown as Record<string, BottAction>,
+          settings,
         };
 
         // 1. Get list of bot events (responses) from Gemini:
-        const eventGenerator = generateEvents<GenerateMediaOptions>(
+        const eventGenerator = generateEvents(
           eventHistoryResult,
           {
+            ...context,
             abortSignal,
-            context,
-            getEvents,
-            requestHandlers: [generateMedia],
           },
         );
 
@@ -135,15 +144,17 @@ startDiscordBot({
           }
 
           switch (genEvent.type) {
-            case BottEventType.REQUEST: {
+            case BottEventType.ACTION_CALL: {
               let responsePromise;
 
-              switch ((genEvent as BottRequestEvent<AnyShape>).details.name) {
+              switch (
+                (genEvent as BottActionCallEvent<AnyShape>).details.name
+              ) {
                 // We only have the "generateMedia" handler for now.
                 case "generateMedia":
                 default:
                   responsePromise = generateMedia(
-                    genEvent as BottRequestEvent<GenerateMediaOptions>,
+                    genEvent as BottActionCallEvent<GenerateMediaOptions>,
                   );
                   break;
               }
@@ -177,7 +188,7 @@ startDiscordBot({
                   this.send(
                     await generateErrorMessage(
                       error,
-                      genEvent as BottRequestEvent<AnyShape>,
+                      genEvent as BottActionCallEvent<AnyShape>,
                       context,
                     ),
                   );
@@ -187,7 +198,8 @@ startDiscordBot({
             }
             case BottEventType.MESSAGE:
             case BottEventType.REPLY: {
-              const words = genEvent.details.content.split(/\s+/).length;
+              const words =
+                (genEvent.details.content as string).split(/\s+/).length;
               const delayMs = (words / WORDS_PER_MINUTE) * MS_IN_MINUTE;
               const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
               await delay(cappedDelayMs, { signal: abortSignal });
@@ -198,10 +210,10 @@ startDiscordBot({
             } /* fall through */
             case BottEventType.REACTION: {
               this.send(genEvent);
-              return;
+              break;
             }
             default:
-              return;
+              break;
           }
         }
       }),

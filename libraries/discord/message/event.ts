@@ -11,12 +11,7 @@
 
 import type { Message } from "discord.js";
 
-import {
-  type AnyBottEvent,
-  type BottEvent,
-  BottEventType,
-  type BottFile,
-} from "@bott/model";
+import { type BottEvent, BottEventType, type BottFile } from "@bott/model";
 import { addEventData, getEvents } from "@bott/storage";
 import { log } from "@bott/logger";
 
@@ -24,7 +19,7 @@ import { getMarkdownLinks } from "./markdown.ts";
 
 export const resolveBottEventFromMessage = async (
   message: Message<true>,
-): Promise<AnyBottEvent> => {
+): Promise<BottEvent> => {
   const [possibleEvent] = await getEvents(message.id);
 
   if (possibleEvent) {
@@ -59,7 +54,7 @@ export const resolveBottEventFromMessage = async (
   if (message.reference?.messageId) {
     event.type = BottEventType.REPLY;
 
-    let parentMessage: AnyBottEvent | undefined;
+    let parentMessage: BottEvent | undefined;
 
     try {
       parentMessage = await resolveBottEventFromMessage(
