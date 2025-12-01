@@ -12,6 +12,7 @@ COPY ./app /app
 COPY ./libraries /libraries
 COPY ./model /model
 
-EXPOSE 8080
+ENV PORT=8080
+EXPOSE $PORT
 
 CMD ["deno", "task", "start:prod"]

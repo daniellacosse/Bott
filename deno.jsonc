@@ -29,10 +29,17 @@
     "build": "podman build -t bott .",
     "reset": "rm -rf ./fs_root",
     "setup": "brew bundle && gcloud auth login",
-    // TODO: refactor "start" to run the container in all cases
-    "start:dev": "deno run --allow-all --env-file=.env.development ./app/main.ts",
+    // Test: local development with .env.test, runs in container with volume mount
+    "app:test": "deno task build && podman run --rm --env-file .env.test -v $(pwd):/workspace:Z -p ${PORT:-8080}:${PORT:-8080} bott",
+    // Staging: container for Bott running at DanielLaCos.se
+    "app:staging": "deno task build && podman run --rm --env-file .env.staging -p ${PORT:-8080}:${PORT:-8080} bott",
+    // Production: container for public deployment (TBA)
+    "app:production": "deno task build && podman run --rm --env-file .env.production -p ${PORT:-8080}:${PORT:-8080} bott",
+    // Local development without container (deprecated, prefer app:test)
+    "start:dev": "deno run --allow-all --env-file=.env.test ./app/main.ts",
     "start:prod": "deno run --allow-all ./app/main.ts",
-    "start": "deno task build && podman run --rm --env-file .env.development -p 8080:8080 bott"
+    // Test runner in container
+    "test": "podman run --rm -v $(pwd):/workspace:Z -w /workspace bott deno test --allow-all"
   },
   "workspace": [
     "./model",

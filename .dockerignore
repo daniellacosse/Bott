@@ -1,6 +1,6 @@
 .git
 .env.*
-.env.example
+!.env.example
 .dockerignore
 Brewfile
 Dockerfile
