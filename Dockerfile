@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libx265-dev && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./deno.json ./deno.lock* ./
+COPY ./deno.jsonc ./deno.lock* ./
 COPY ./app /app
 COPY ./libraries /libraries
 COPY ./model /model
