@@ -73,9 +73,7 @@ export const queryGemini = async <O>(
     model,
     contents: typeof input === "string"
       ? [input]
-      : input.map((event) =>
-        _transformBottEventToContent(event, context.user.id)
-      ),
+      : input.map((event) => _transformBottEventToContent(event, context)),
     config,
   });
 
@@ -93,38 +91,49 @@ export const queryGemini = async <O>(
 
 export const _transformBottEventToContent = (
   event: BottEvent,
-  modelUserId: string,
+  context: EventPipelineContext,
 ): Content => {
-  const { files: _files, parent, timestamp, ...rest } = event;
+  const { files: _files, parent, createdAt, ...rest } = event;
 
-  let serializedParent;
-  if (parent) {
-    const {
-      files: _pFiles,
-      parent: _pParent,
-      timestamp: pTimestamp,
-      ...pRest
-    } = parent;
+  const pTimestamp = parent && "createdAt" in parent
+    ? parent.createdAt
+    : undefined;
+  const parentContent = parent
+    ? {
+      ...parent,
+      createdAt: pTimestamp,
+    }
+    : undefined;
 
-    serializedParent = {
-      ...structuredClone(pRest),
-      timestamp: _formatTimestampAsRelative(
-        pTimestamp ? pTimestamp : new Date(),
-      ),
-    };
-  }
+  const evaluationMetadata = context.evaluationState.get(event);
+  const triggeredInstructions = evaluationMetadata?.triggeredReasons?.map(
+    (reasonName) => {
+      const reason = [
+        ...context.settings.reasons.input,
+        ...context.settings.reasons.output,
+      ].find((r) => r.name === reasonName);
+      return reason?.instruction;
+    },
+  ).filter(Boolean) as string[] | undefined;
 
   const eventToSerialize = {
     ...structuredClone(rest),
-    timestamp: _formatTimestampAsRelative(
-      timestamp ? timestamp : new Date(),
+    createdAt: _formatTimestampAsRelative(
+      createdAt ? createdAt : new Date(),
     ),
-    parent: serializedParent,
+    parent: parentContent,
+    // Inject ephemeral state
+    ratings: evaluationMetadata?.ratings,
+    shouldFocus: evaluationMetadata?.shouldFocus,
+    shouldOutput: evaluationMetadata?.shouldOutput,
+    instructions: triggeredInstructions && triggeredInstructions.length > 0
+      ? triggeredInstructions
+      : undefined,
   };
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
   const content: Content = {
-    role: (event.user && event.user.id === modelUserId) ? "model" : "user",
+    role: (event.user && event.user.id === context.user.id) ? "model" : "user",
     parts,
   };
 

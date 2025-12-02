@@ -35,7 +35,8 @@ create table if not exists events (
   parent_id varchar(36),
   channel_id varchar(36),
   user_id varchar(36),
-  timestamp datetime not null,
+  created_at datetime not null,
+  last_processed_at datetime,
   foreign key(parent_id) references events(id),
   foreign key(channel_id) references channels(id),
   foreign key(user_id) references users(id)

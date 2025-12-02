@@ -22,7 +22,7 @@ export const getEvents = async (
   const result = commit(
     sql`
       select
-        e.id as e_id, e.type as e_type, e.details as e_details, e.timestamp as e_timestamp, -- event
+        e.id as e_id, e.type as e_type, e.details as e_details, e.created_at as e_created_at, e.last_processed_at as e_last_processed_at, -- event
         c.id as c_id, c.name as c_name, c.description as c_description, c.config as c_config, -- channel
         s.id as s_id, s.name as s_name, s.description as s_description, -- space
         u.id as u_id, u.name as u_name, -- user
@@ -42,7 +42,7 @@ export const getEvents = async (
         files f on e.id = f.parent_id
       where
         e.id in (${ids})
-      order by e.timestamp asc`,
+      order by e.created_at asc`,
   );
 
   if ("error" in result) {
@@ -56,7 +56,8 @@ export const getEvents = async (
       e_id: id,
       e_type: type,
       e_details: details,
-      e_timestamp: timestamp,
+      e_created_at: createdAt,
+      e_last_processed_at: lastProcessedAt,
       ...rowData
     } of result.reads
   ) {
@@ -87,7 +88,8 @@ export const getEvents = async (
       id,
       type: type as BottEventType,
       details: JSON.parse(details),
-      timestamp: new Date(timestamp),
+      createdAt: new Date(createdAt),
+      lastProcessedAt: lastProcessedAt ? new Date(lastProcessedAt) : undefined,
       files: fileInRow ? [fileInRow] : undefined,
     };
 

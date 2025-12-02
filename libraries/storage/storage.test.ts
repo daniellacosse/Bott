@@ -41,7 +41,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
     user: userNancy,
     channel: channelMain,
     details: { content: "Hello" },
-    timestamp: new Date(),
+    createdAt: new Date(),
   };
   const bobReply = {
     id: "2",
@@ -50,7 +50,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
     channel: channelMain,
     parent: nancyGreeting,
     details: { content: "Hi" },
-    timestamp: new Date(),
+    createdAt: new Date(),
   };
   const nancyReaction = {
     id: "3",
@@ -59,7 +59,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
     channel: channelMain,
     parent: bobReply,
     details: { content: "👍" },
-    timestamp: new Date(),
+    createdAt: new Date(),
   };
 
   log.debug("Adding events.");
@@ -75,7 +75,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
   assertExists(dbResult.id);
   assertExists(dbResult.type);
   assertExists(dbResult.details);
-  assertExists(dbResult.timestamp);
+  assertExists(dbResult.createdAt);
   assertExists(dbResult.channel);
   assertExists(dbResult.channel.id);
   assertExists(dbResult.channel.name);
@@ -89,7 +89,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
   assertExists(dbResult.parent.id);
   assertExists(dbResult.parent.type);
   assertExists(dbResult.parent.details);
-  assertExists(dbResult.parent.timestamp);
+  assertExists(dbResult.parent.createdAt);
 });
 
 const htmlInput = `

@@ -19,23 +19,24 @@ import {
   sincerity,
   urgency,
   visibility,
-} from "./classifiers.ts";
+} from "./ratingScales.ts";
 
 export const whenAddressed: (user: BottUser) => BottReason = (user) => ({
   name: "whenAddressed",
   definition:
-    `You should respond to events that have a \`directedAt${user.name}\` score of 5 or 4, or at 3 when \`visibility\` or \`urgency\` is also 4 or greater.`,
-  classifiers: [directedAt(user), visibility, urgency],
-  validator: (event) => {
-    const scores = event.details.scores as Record<string, number> | undefined;
+    `You should respond to events that have a \`directedAt${user.name}\` rating of 5 or 4, or at 3 when \`visibility\` or \`urgency\` is also 4 or greater.`,
+  instruction: "You have been addressed. Reply to this message.",
+  ratingScales: [directedAt(user), visibility, urgency],
+  validator: (metadata) => {
+    const ratings = metadata?.ratings;
 
-    if (!scores) {
+    if (!ratings) {
       return false;
     }
 
-    const directedAtUser = scores[`directedAt${user.name}`];
-    const visibility = scores.visibility;
-    const urgency = scores.urgency;
+    const directedAtUser = ratings[`directedAt${user.name}`];
+    const visibility = ratings.visibility;
+    const urgency = ratings.urgency;
 
     return (
       directedAtUser === 5 ||
@@ -48,16 +49,18 @@ export const whenAddressed: (user: BottUser) => BottReason = (user) => ({
 export const checkFacts: BottReason = {
   name: "checkFacts",
   definition:
-    "You must fact-check events of `visibility` 3 or greater that have an `objectivity` score of 4 or 5 but avoid engaging with events that have a `sincerity` or `relevance` score of 1 or 2.",
-  classifiers: [visibility, objectivity, sincerity, relevance],
-  validator: (event) => {
-    const scores = event.details.scores as Record<string, number> | undefined;
+    "You must fact-check events of `visibility` 3 or greater that have an `objectivity` rating of 4 or 5 but avoid engaging with events that have a `sincerity` or `relevance` rating of 1 or 2.",
+  instruction:
+    "This message contains objective claims. Verify them if necessary.",
+  ratingScales: [visibility, objectivity, sincerity, relevance],
+  validator: (metadata) => {
+    const ratings = metadata?.ratings;
 
-    if (!scores) {
+    if (!ratings) {
       return false;
     }
 
-    const { visibility, objectivity, sincerity, relevance } = scores;
+    const { visibility, objectivity, sincerity, relevance } = ratings;
 
     return (
       visibility >= 3 && (objectivity === 4 || objectivity === 5) &&
@@ -71,14 +74,15 @@ export const ensurePotentialImpact: BottReason = {
   name: "ensurePotentialImpact",
   definition:
     "You should only send events with a `potentialImpact` 4 or greater.",
-  classifiers: [potentialImpact],
-  validator: (event) => {
-    const scores = event.details.scores as Record<string, number> | undefined;
+  instruction: "Ensure your response has high potential impact.",
+  ratingScales: [potentialImpact],
+  validator: (metadata) => {
+    const ratings = metadata?.ratings;
 
-    if (!scores) {
+    if (!ratings) {
       return false;
     }
 
-    return scores.potentialImpact >= 4;
+    return ratings.potentialImpact >= 4;
   },
 };

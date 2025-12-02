@@ -18,11 +18,28 @@ import type {
   BottUser,
 } from "@bott/model";
 
+/**
+ * Pipeline evaluation metadata stored separately from event details.
+ * This data is ephemeral and not persisted to the database.
+ */
+export interface PipelineEvaluationMetadata {
+  /** Rating scale ratings for the event (input or output rating scales). */
+  ratings?: Record<string, number>;
+  /** Whether this input event should be focused on (input events only). */
+  shouldFocus?: boolean;
+  /** Whether this output event should be sent (output events only). */
+  shouldOutput?: boolean;
+  /** The names of the reasons that triggered focus or output. */
+  triggeredReasons?: string[];
+}
+
 export interface EventPipelineContext {
   data: {
     input: BottEvent[];
     output: BottEvent[];
   };
+  /** Ephemeral evaluation state for events in the pipeline. */
+  evaluationState: Map<BottEvent, PipelineEvaluationMetadata>;
   abortSignal: AbortSignal;
   user: BottUser;
   channel: BottChannel;

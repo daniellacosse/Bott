@@ -54,7 +54,7 @@ export const segmentOutput: EventPipelineProcessor = async (context) => {
   context.data.output = segments.flat();
 
   for (const event of context.data.output) {
-    event.details.output = true;
+    context.evaluationState.set(event, { shouldOutput: true });
   }
 
   return context;

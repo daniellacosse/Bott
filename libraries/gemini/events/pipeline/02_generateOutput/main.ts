@@ -23,7 +23,11 @@ export const generateOutput: EventPipelineProcessor = async function (
   context,
 ) {
   // If there's nothing to focus on, skip this step.
-  if (!context.data.input.some((event) => event.details.focus)) {
+  if (
+    !context.data.input.some((event) =>
+      context.evaluationState.get(event)?.shouldFocus
+    )
+  ) {
     return context;
   }
 
@@ -33,11 +37,17 @@ export const generateOutput: EventPipelineProcessor = async function (
       systemPrompt,
       responseSchema: getEventSchema(context),
       context,
+      outputCriteria: "## Output Criteria\n\n" +
+        "Your output will be evaluated based on the following criteria. Ensure your response meets these standards:\n\n" +
+        context.settings.reasons.output.map((reason) =>
+          `- **${reason.name}**: ${reason.definition}` +
+          (reason.instruction ? `\n  Instruction: ${reason.instruction}` : "")
+        ).join("\n"),
     },
   );
 
   for (const event of context.data.output) {
-    event.details.output = true;
+    context.evaluationState.set(event, { shouldOutput: true });
   }
 
   return context;

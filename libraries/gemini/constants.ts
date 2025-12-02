@@ -35,17 +35,17 @@ export const ERROR_MODEL = Deno.env.get("CONFIG_ERROR_MODEL") ??
 export const EVENT_MODEL = Deno.env.get("CONFIG_EVENTS_MODEL") ??
   "gemini-2.5-flash";
 
-export const CLASSIFIER_MODEL = Deno.env.get("CONFIG_CLASSIFIER_MODEL") ??
+export const RATING_MODEL = Deno.env.get("CONFIG_RATING_MODEL") ??
   "gemini-2.5-flash-lite";
 
 export const ESSAY_MODEL = Deno.env.get("CONFIG_ESSAY_MODEL") ??
-  "gemini-2.5-pro";
+  "gemini-3-pro-preview";
 
 export const PHOTO_MODEL = Deno.env.get("CONFIG_PHOTO_MODEL") ??
-  "imagen-4.0-generate-preview-06-06";
+  "gemini-3-pro-image-preview";
 
 export const SONG_MODEL = Deno.env.get("CONFIG_SONG_MODEL") ??
   "lyria-002";
 
 export const MOVIE_MODEL = Deno.env.get("CONFIG_MOVIE_MODEL") ??
-  "veo-3.0-generate-preview";
+  "veo-3.1-fast-generate-001";

@@ -34,7 +34,7 @@ export const patchOutput: EventPipelineProcessor = async (context) => {
   );
 
   for (const event of context.data.output) {
-    event.details.output = true;
+    context.evaluationState.set(event, { shouldOutput: true });
   }
 
   return context;

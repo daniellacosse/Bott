@@ -54,14 +54,17 @@ const getAddEventsSql = (...events: BottEvent[]) => {
   const values = events.map((event) =>
     sql`(${event.id}, ${event.type}, ${
       JSON.stringify(event.details)
-    }, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.timestamp.toISOString()})`
+    }, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${
+      event.lastProcessedAt?.toISOString() ?? null
+    })`
   );
 
   return sql`
-    insert into events (id, type, details, parent_id, channel_id, user_id, timestamp)
+    insert into events (id, type, details, parent_id, channel_id, user_id, created_at, last_processed_at)
     values ${values} 
     on conflict(id) do update set
-      details = excluded.details
+      details = excluded.details,
+      last_processed_at = excluded.last_processed_at
   `;
 };
 

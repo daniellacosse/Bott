@@ -9,9 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottClassifier, BottUser } from "@bott/model";
+import type { BottRatingScale, BottUser } from "@bott/model";
 
-export const directedAt = (user: BottUser): BottClassifier => ({
+export const directedAt = (user: BottUser): BottRatingScale => ({
   name: `directedAt${user.name}`,
   definition:
     `Whether the message is directly addressed to "${user.name}". A high score indicates a direct request or question.`,
@@ -32,7 +32,7 @@ export const directedAt = (user: BottUser): BottClassifier => ({
   },
 });
 
-export const visibility: BottClassifier = {
+export const visibility: BottRatingScale = {
   name: "visibility",
   definition:
     "How visible the message is to the group or ongoing conversation. A low score is for idle chatter, a high score is for something that affects the whole group.",
@@ -52,7 +52,7 @@ export const visibility: BottClassifier = {
   },
 };
 
-export const urgency: BottClassifier = {
+export const urgency: BottRatingScale = {
   name: "urgency",
   definition:
     "How time-sensitive the message is. A low score is for idle chat, while a high score indicates a need for an immediate response or action.",
@@ -72,7 +72,7 @@ export const urgency: BottClassifier = {
   },
 };
 
-export const objectivity: BottClassifier = {
+export const objectivity: BottRatingScale = {
   name: "objectivity",
   definition:
     "How objective or subjective the message is. A low score indicates a personal feeling or opinion, while a high score indicates a statement presented as a verifiable fact.",
@@ -88,7 +88,7 @@ export const objectivity: BottClassifier = {
   },
 };
 
-export const sincerity: BottClassifier = {
+export const sincerity: BottRatingScale = {
   name: "sincerity",
   definition:
     "How sincere or genuine the message is. A low score suggests a sarcastic, ironic, or joking tone, while a high score indicates a sincere or heartfelt tone.",
@@ -109,7 +109,7 @@ export const sincerity: BottClassifier = {
   },
 };
 
-export const relevance: BottClassifier = {
+export const relevance: BottRatingScale = {
   name: "relevance",
   definition:
     "How well the message relates to the recent conversation. A low score is for a complete non-sequitur, while a high score directly continues the current topic.",
@@ -126,7 +126,7 @@ export const relevance: BottClassifier = {
   },
 };
 
-export const novelty: BottClassifier = {
+export const novelty: BottRatingScale = {
   name: "novelty",
   definition:
     "The degree to which this message adds new information or a new perspective. A low score indicates redundancy, while a high score introduces a new idea or fact.",
@@ -143,7 +143,7 @@ export const novelty: BottClassifier = {
   },
 };
 
-export const potentialImpact: BottClassifier = {
+export const potentialImpact: BottRatingScale = {
   name: "potentialImpact",
   definition:
     "How much this message could change the course of the conversation. A low score is for idle chat, agreement, or morale support that doesn't introduce new direction. A high score indicates a message that could significantly shift the conversation.",

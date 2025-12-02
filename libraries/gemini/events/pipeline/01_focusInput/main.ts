@@ -13,7 +13,7 @@ import { type Schema, Type } from "@google/genai";
 
 import { log } from "@bott/logger";
 
-import { CLASSIFIER_MODEL } from "../../../constants.ts";
+import { RATING_MODEL } from "../../../constants.ts";
 import { queryGemini } from "../../utilities/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
@@ -25,25 +25,25 @@ export const focusInput: EventPipelineProcessor = async (context) => {
   const input = structuredClone(context.data.input);
 
   const inputReasons = context.settings.reasons.input;
-  const inputClassifiers = inputReasons.flatMap((reason) =>
-    reason.classifiers ?? []
+  const inputRatingScales = inputReasons.flatMap((reason) =>
+    reason.ratingScales ?? []
   );
 
   // If we have no way to determine focus, skip this step.
-  if (inputClassifiers.length === 0) {
+  if (inputRatingScales.length === 0) {
     return context;
   }
 
   const responseSchema = {
     type: Type.OBJECT,
-    properties: inputClassifiers.reduce(
-      (properties, classifier) => {
-        properties[classifier.name] = {
+    properties: inputRatingScales.reduce(
+      (properties, ratingScale) => {
+        properties[ratingScale.name] = {
           type: Type.OBJECT,
           properties: {
             score: {
               type: Type.STRING,
-              description: classifier.definition,
+              description: ratingScale.definition,
               enum: ["1", "2", "3", "4", "5"],
             },
             rationale: {
@@ -58,7 +58,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
       },
       {} as Record<string, Schema>,
     ),
-    required: inputClassifiers.map((classifier) => classifier.name),
+    required: inputRatingScales.map((ratingScale) => ratingScale.name),
   };
 
   const geminiCalls: Promise<void>[] = [];
@@ -67,7 +67,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
   while (pointer < input.length) {
     const event = input[pointer];
 
-    if (event.details.scores) {
+    if (event.lastProcessedAt) {
       pointer++;
       continue;
     }
@@ -87,28 +87,38 @@ export const focusInput: EventPipelineProcessor = async (context) => {
           systemPrompt,
           responseSchema,
           context,
-          model: CLASSIFIER_MODEL,
+          model: RATING_MODEL,
           useIdentity: false,
         },
       );
 
-      const scores: Record<string, number> = {};
+      const ratings: Record<string, number> = {};
       let logMessage = `Event ${event.id}:\n`;
-      for (const classifier in scoresWithRationale) {
-        const { score, rationale } = scoresWithRationale[classifier];
+      for (const ratingScale in scoresWithRationale) {
+        const { score, rationale } = scoresWithRationale[ratingScale];
         if (rationale) {
-          logMessage += `  ${classifier}: ${score}. Rationale: ${rationale}\n`;
+          logMessage += `  ${ratingScale}: ${score}. Rationale: ${rationale}\n`;
         }
 
-        scores[classifier] = Number(score);
+        ratings[ratingScale] = Number(score);
       }
 
-      event.details.scores = scores;
-      event.details.focus = Object.values(inputReasons).some((reason) =>
-        reason.validator(event)
-      );
+      const metadata = { ratings };
+      const triggeredReasons = Object.values(inputReasons)
+        .filter((reason) => reason.validator(metadata))
+        .map((reason) => reason.name);
+      const shouldFocus = triggeredReasons.length > 0;
 
-      log.debug(logMessage + "    Marked for focus: " + event.details.focus);
+      context.evaluationState.set(event, {
+        ratings,
+        shouldFocus,
+        triggeredReasons,
+      });
+
+      log.debug(
+        logMessage + "    Marked for focus: " + shouldFocus +
+          (shouldFocus ? ` (Reasons: ${triggeredReasons.join(", ")})` : ""),
+      );
     })());
 
     pointer++;

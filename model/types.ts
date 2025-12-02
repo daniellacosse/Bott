@@ -126,8 +126,10 @@ export interface BottEvent<
   id: string;
   type: T;
   details: D;
-  /** Timestamp of when the event occurred. */
-  timestamp: Date;
+  /** Timestamp of when the event was created. */
+  createdAt: Date;
+  /** Timestamp of when the event was last scored/evaluated by the pipeline. */
+  lastProcessedAt?: Date;
   /** Optional channel where the event took place. */
   channel?: BottChannel;
   /** Optional parent event, e.g., the message being replied or reacted to. */
@@ -141,11 +143,11 @@ export interface BottEvent<
 type NonEmptyArray<T> = [T, ...Array<T>];
 
 /**
- * Defines the structure for a "Classifier" in Bott.
- * Classifiers are used to describe characteristics of events or entities,
- * with a scoring system (e.g., 1-5 scale).
+ * Defines the structure for a "Rating Scale" in Bott.
+ * Rating scales are used to describe characteristics of events or entities,
+ * with a 1-5 scale rating system.
  */
-export interface BottClassifier {
+export interface BottRatingScale {
   name: string;
   definition: string;
   examples: {
@@ -159,13 +161,14 @@ export interface BottClassifier {
 
 /**
  * Defines the structure for a "Reason" in Bott.
- * Rules are conditions or actions that Bott must take based on classifier results.
+ * Rules are conditions or actions that Bott must take based on rating scale results.
  */
 export interface BottReason {
   name: string;
   definition: string;
-  classifiers?: NonEmptyArray<BottClassifier>;
-  validator: (event: BottEvent) => boolean;
+  instruction?: string;
+  ratingScales?: NonEmptyArray<BottRatingScale>;
+  validator: (metadata?: { ratings?: Record<string, number> }) => boolean;
 }
 
 /**
