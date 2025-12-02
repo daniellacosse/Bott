@@ -24,7 +24,7 @@ export const getDefaultGlobalSettings = (
       reasons.checkFacts,
     ],
     output: [
-      reasons.ensureImportance,
+      reasons.ensurePotentialImpact,
     ],
   },
 });
