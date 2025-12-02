@@ -32,10 +32,10 @@ export const directedAt = (user: BottUser): BottClassifier => ({
   },
 });
 
-export const importance: BottClassifier = {
-  name: "importance",
+export const visibility: BottClassifier = {
+  name: "visibility",
   definition:
-    "How significant the message's content is to the group or ongoing conversation. A low score is for trivial chatter, a high score is for something that affects the whole group.",
+    "How visible the message is to the group or ongoing conversation. A low score is for idle chatter, a high score is for something that affects the whole group.",
   examples: {
     1: [
       "lol",
@@ -139,6 +139,27 @@ export const novelty: BottClassifier = {
     ],
     5: [
       "User A: 'I love pizza.' User B: 'Did you know the first pizzeria in the US opened in New York in 1905?'",
+    ],
+  },
+};
+
+export const potentialImpact: BottClassifier = {
+  name: "potentialImpact",
+  definition:
+    "How much this message could change the course of the conversation. A low score is for idle chat, agreement, or morale support that doesn't introduce new direction. A high score indicates a message that could significantly shift the conversation.",
+  examples: {
+    1: ["lol", "nice!", "agreed", "+1", "same here"],
+    2: ["That's a great point!", "I support this", "Good job everyone!"],
+    3: ["Does anyone have a good recipe for chili?"],
+    4: [
+      "Have you thought about approaching this from a different angle?",
+      "What if we considered the security implications?",
+      "That reminds me of a similar issue we had last month",
+    ],
+    5: [
+      "Hey @everyone, we're planning a game night for this Friday!",
+      "BREAKING: The event has been cancelled, we need to reschedule",
+      "Important: We're updating the community rules, please read the announcement",
     ],
   },
 };
