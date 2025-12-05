@@ -165,7 +165,7 @@ export interface BottRatingScale {
  */
 export interface BottReason {
   name: string;
-  definition: string;
+  description: string;
   instruction?: string;
   ratingScales?: NonEmptyArray<BottRatingScale>;
   validator: (metadata?: { ratings?: Record<string, number> }) => boolean;

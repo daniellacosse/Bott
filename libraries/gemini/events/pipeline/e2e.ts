@@ -70,12 +70,11 @@ log.perf(`pipeline: end (${(pipelineEnd - pipelineStart).toFixed(2)}ms)`);
 
 // ---
 
-function printEvent(event: BottEvent<AnyShape>) {
+function printEvent(
+  event: BottEvent & { _pipelineEvaluationMetadata?: object },
+) {
   const details = event.details as {
     content?: string;
-    ratings?: Record<string, number>;
-    focus?: boolean;
-    output?: boolean;
   };
 
   const parts = [
@@ -84,18 +83,11 @@ function printEvent(event: BottEvent<AnyShape>) {
     details.content ? `'${details.content}'` : "(no content)",
   ];
 
-  const metadata: string[] = [];
-  if (details.ratings) {
-    metadata.push(`ratings: ${JSON.stringify(details.ratings)}`);
+  if (event._pipelineEvaluationMetadata) {
+    parts.push(
+      `pipeline: ${JSON.stringify(event._pipelineEvaluationMetadata)}`,
+    );
   }
-  if (typeof details.focus === "boolean") {
-    metadata.push(`focus: ${details.focus}`);
-  }
-  if (typeof details.output === "boolean") {
-    metadata.push(`output: ${details.output}`);
-  }
-
-  if (metadata.length > 0) parts.push(`{ ${metadata.join(", ")} }`);
 
   console.log(parts.join(" "));
 }
@@ -204,7 +196,7 @@ export function createMockContext(): EventPipelineContext {
 
   const inputRule: BottReason = {
     name: "onlyLookAtInterestingThings",
-    definition: "Only look at events that are interesting.",
+    description: "Only look at events that are interesting.",
     validator: (metadata) => {
       return metadata?.ratings?.isInteresting === 5;
     },
@@ -213,7 +205,7 @@ export function createMockContext(): EventPipelineContext {
 
   const outputRule: BottReason = {
     name: "onlySayCorrectThings",
-    definition: "Only say things that are correct.",
+    description: "Only say things that are correct.",
     validator: (metadata) => {
       return (metadata?.ratings?.isCorrect ?? 0) >= 4;
     },

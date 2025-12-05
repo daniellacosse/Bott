@@ -23,7 +23,7 @@ import {
 
 export const whenAddressed: (user: BottUser) => BottReason = (user) => ({
   name: "whenAddressed",
-  definition:
+  description:
     `You should respond to events that have a \`directedAt${user.name}\` rating of 5 or 4, or at 3 when \`visibility\` or \`urgency\` is also 4 or greater.`,
   instruction: "You have been addressed. Reply to this message.",
   ratingScales: [directedAt(user), visibility, urgency],
@@ -48,7 +48,7 @@ export const whenAddressed: (user: BottUser) => BottReason = (user) => ({
 
 export const checkFacts: BottReason = {
   name: "checkFacts",
-  definition:
+  description:
     "You must fact-check events of `visibility` 3 or greater that have an `objectivity` rating of 4 or 5 but avoid engaging with events that have a `sincerity` or `relevance` rating of 1 or 2.",
   instruction:
     "This message contains objective claims. Verify them if necessary.",
@@ -72,9 +72,8 @@ export const checkFacts: BottReason = {
 
 export const ensurePotentialImpact: BottReason = {
   name: "ensurePotentialImpact",
-  definition:
+  description:
     "You should only send events with a `potentialImpact` 4 or greater.",
-  instruction: "Ensure your response has high potential impact.",
   ratingScales: [potentialImpact],
   validator: (metadata) => {
     const ratings = metadata?.ratings;

@@ -15,6 +15,7 @@ import type {
   BottChannel,
   BottEvent,
   BottGlobalSettings,
+  BottReason,
   BottUser,
 } from "@bott/model";
 
@@ -23,14 +24,9 @@ import type {
  * This data is ephemeral and not persisted to the database.
  */
 export interface PipelineEvaluationMetadata {
-  /** Rating scale ratings for the event (input or output rating scales). */
   ratings?: Record<string, number>;
-  /** Whether this input event should be focused on (input events only). */
-  shouldFocus?: boolean;
-  /** Whether this output event should be sent (output events only). */
-  shouldOutput?: boolean;
-  /** The names of the reasons that triggered focus or output. */
-  triggeredReasons?: string[];
+  focusReasons?: BottReason[];
+  outputReasons?: BottReason[];
 }
 
 export interface EventPipelineContext {

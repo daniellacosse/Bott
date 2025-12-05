@@ -18,6 +18,7 @@ const systemPrompt = await Deno.readTextFile(
   new URL("./systemPrompt.md", import.meta.url),
 );
 
+// TODO: how to handle metadata in this case?
 export const patchOutput: EventPipelineProcessor = async (context) => {
   if (!context.data.output.length) {
     return context;
@@ -32,10 +33,6 @@ export const patchOutput: EventPipelineProcessor = async (context) => {
       useIdentity: false,
     },
   );
-
-  for (const event of context.data.output) {
-    context.evaluationState.set(event, { shouldOutput: true });
-  }
 
   return context;
 };

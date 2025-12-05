@@ -29,9 +29,9 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
 
   const output = structuredClone(context.data.output);
   const outputReasons = context.settings.reasons.output;
-  const outputRatingScales = outputReasons.flatMap((reason) =>
-    reason.ratingScales ?? []
-  );
+  const outputRatingScales = [
+    ...new Set(outputReasons.flatMap((reason) => reason.ratingScales ?? [])),
+  ];
 
   if (!outputRatingScales.length) {
     return context;
@@ -113,20 +113,21 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
       }
 
       const metadata = { ratings };
-      const triggeredReasons = Object.values(outputReasons)
-        .filter((reason) => reason.validator(metadata))
-        .map((reason) => reason.name);
-      const shouldOutput = triggeredReasons.length > 0;
+      const triggeredOutputReasons = Object.values(outputReasons)
+        .filter((reason) => reason.validator(metadata));
 
       context.evaluationState.set(event, {
         ratings,
-        shouldOutput,
-        triggeredReasons,
+        outputReasons: triggeredOutputReasons,
       });
 
       log.debug(
-        logMessage + "      Marked for output: " + shouldOutput +
-          (shouldOutput ? ` (Reasons: ${triggeredReasons.join(", ")})` : ""),
+        logMessage +
+          (triggeredOutputReasons.length > 0
+            ? `    Triggered output reasons: ${
+              triggeredOutputReasons.map(({ name }) => name).join(", ")
+            }`
+            : ""),
       );
     })());
 

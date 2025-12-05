@@ -10,7 +10,7 @@ All `BottEvent` objects share the following base properties:
 {
   "id": "string",
   "type": "string",
-  "timestamp": "a_few_seconds_ago",
+  "createdAt": "a_few_seconds_ago",
   "user": {
     "id": "string",
     "name": "string"
@@ -23,7 +23,7 @@ All `BottEvent` objects share the following base properties:
 | ----------- | -------- | -------------------------------------------------------------------------------------- |
 | `id`        | `string` | A unique identifier for the event.                                                     |
 | `type`      | `string` | The type of event. See `Type-Based Properties` for more details.                       |
-| `timestamp` | `string` | A relative time string (e.g., "a few seconds ago") indicating when the event occurred. |
+| `createdAt` | `string` | A relative time string (e.g., "a few seconds ago") indicating when the event occurred. |
 | `user`      | `object` | The user who initiated the event. For system events, this is _your_ user identity.     |
 
 ### Attached Files

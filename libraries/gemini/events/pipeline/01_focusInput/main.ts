@@ -25,9 +25,9 @@ export const focusInput: EventPipelineProcessor = async (context) => {
   const input = structuredClone(context.data.input);
 
   const inputReasons = context.settings.reasons.input;
-  const inputRatingScales = inputReasons.flatMap((reason) =>
-    reason.ratingScales ?? []
-  );
+  const inputRatingScales = [
+    ...new Set(inputReasons.flatMap((reason) => reason.ratingScales ?? [])),
+  ];
 
   // If we have no way to determine focus, skip this step.
   if (inputRatingScales.length === 0) {
@@ -104,20 +104,21 @@ export const focusInput: EventPipelineProcessor = async (context) => {
       }
 
       const metadata = { ratings };
-      const triggeredReasons = Object.values(inputReasons)
-        .filter((reason) => reason.validator(metadata))
-        .map((reason) => reason.name);
-      const shouldFocus = triggeredReasons.length > 0;
+      const triggeredFocusReasons = Object.values(inputReasons)
+        .filter((reason) => reason.validator(metadata));
 
       context.evaluationState.set(event, {
         ratings,
-        shouldFocus,
-        triggeredReasons,
+        focusReasons: triggeredFocusReasons,
       });
 
       log.debug(
-        logMessage + "    Marked for focus: " + shouldFocus +
-          (shouldFocus ? ` (Reasons: ${triggeredReasons.join(", ")})` : ""),
+        logMessage +
+          (triggeredFocusReasons.length > 0
+            ? `    Triggered focus reasons: ${
+              triggeredFocusReasons.map(({ name }) => name).join(", ")
+            }`
+            : ""),
       );
     })());
 

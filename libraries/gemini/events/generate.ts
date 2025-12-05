@@ -124,25 +124,21 @@ export async function* generateEvents(
     }
   }
 
-  // Set lastProcessedAt for all input events that were scored
-  const processingTime = new Date();
-  for (const event of pipelineContext.data.input) {
-    if (pipelineContext.evaluationState.has(event)) {
-      event.lastProcessedAt = processingTime;
-    }
-  }
-
   try {
-    // Persist the processed events with lastProcessedAt timestamp
+    const processingTime = new Date();
+
     await addEventData(
-      ...pipelineContext.data.input.filter((event) => event.lastProcessedAt),
+      ...pipelineContext.data.input.map((event) => ({
+        ...event,
+        lastProcessedAt: processingTime,
+      })),
     );
   } catch (error) {
     log.warn(error);
   }
 
   for (const event of pipelineContext.data.output) {
-    if (!pipelineContext.evaluationState.get(event)?.shouldOutput) {
+    if (!pipelineContext.evaluationState.get(event)?.outputReasons?.length) {
       continue;
     }
 

@@ -93,42 +93,30 @@ export const _transformBottEventToContent = (
   event: BottEvent,
   context: EventPipelineContext,
 ): Content => {
-  const { files: _files, parent, createdAt, ...rest } = event;
+  const {
+    files: _files,
+    parent: _parent,
+    createdAt,
+    ...rest
+  } = structuredClone(event);
 
-  const pTimestamp = parent && "createdAt" in parent
-    ? parent.createdAt
-    : undefined;
-  const parentContent = parent
-    ? {
-      ...parent,
-      createdAt: pTimestamp,
-    }
-    : undefined;
+  let parent;
 
-  const evaluationMetadata = context.evaluationState.get(event);
-  const triggeredInstructions = evaluationMetadata?.triggeredReasons?.map(
-    (reasonName) => {
-      const reason = [
-        ...context.settings.reasons.input,
-        ...context.settings.reasons.output,
-      ].find((r) => r.name === reasonName);
-      return reason?.instruction;
-    },
-  ).filter(Boolean) as string[] | undefined;
+  if (_parent) {
+    parent = {
+      ..._parent,
+      createdAt: _formatTimestampAsRelative(_parent.createdAt),
+    };
+
+    delete parent.parent;
+    delete parent.files;
+  }
 
   const eventToSerialize = {
-    ...structuredClone(rest),
-    createdAt: _formatTimestampAsRelative(
-      createdAt ? createdAt : new Date(),
-    ),
-    parent: parentContent,
-    // Inject ephemeral state
-    ratings: evaluationMetadata?.ratings,
-    shouldFocus: evaluationMetadata?.shouldFocus,
-    shouldOutput: evaluationMetadata?.shouldOutput,
-    instructions: triggeredInstructions && triggeredInstructions.length > 0
-      ? triggeredInstructions
-      : undefined,
+    ...rest,
+    createdAt: _formatTimestampAsRelative(createdAt),
+    parent,
+    _pipelineEvaluationMetadata: context.evaluationState.get(event),
   };
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
@@ -163,8 +151,12 @@ export const _transformBottEventToContent = (
  * @internal Exported for testing purposes only
  */
 export const _formatTimestampAsRelative = (
-  timestamp: Date | string,
-): string => {
+  timestamp: Date | string | undefined,
+): string | undefined => {
+  if (!timestamp) {
+    return undefined;
+  }
+
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
