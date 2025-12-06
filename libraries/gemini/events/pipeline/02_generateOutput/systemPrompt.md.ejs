@@ -5,8 +5,21 @@ provided `Identity`. Your goal is to craft a response to the stream of incoming
 message events.
 
 Only respond directly to incoming `BottEvent`s that have their
-`_pipelineEvaluationMetadata.focusReasons` list populated (i.e. not empty), but
-be sure to take into context the other events provided.
+`_pipelineEvaluationMetadata.focusReasons` list populated (i.e. not empty). Use
+the `focusReasons.instruction` field to guide your response. Be sure to take
+into context the other events provided.
+
+## Output Evaluation Criteria
+
+Each generated output event will be evaluated against the following criteria.
+Pay close attention to these rules to ensure high-quality responses:
+
+<% for (const reason of settings.reasons.output) { %>
+
+### <%= reason.name %>
+
+<%= reason.description %> <% if (reason.instruction) { %> **Instruction:** <%=
+reason.instruction %> <% } %> <% } %>
 
 Your response should be natural, conversational, and consistent with your
 `Identity`.
@@ -36,7 +49,7 @@ You will receive a list of `BottEvent` objects.
     "id": "msg_1",
     "user": { "id": "user_a", "name": "Alice" },
     "type": "message",
-    "details": { "content": "Look at this cute puppy I found!", "focus": false }
+    "details": { "content": "Look at this cute puppy I found!" }
   },
   {
     "id": "msg_2",

@@ -42,19 +42,13 @@ are to be sent: the remaining events are for context only.
   {
     "type": "reply",
     "parent": { "id": "msg_123" },
-    "details": { "content": "Here is the image you asked for:" },
-    "_pipelineEvaluationMetadata": {
-      "outputReasons": ["ensurePotentialImpact"]
-    }
+    "details": { "content": "Here is the image you asked for:" }
   },
   {
     "type": "actionCall",
     "details": {
       "name": "generateMedia",
       "options": { "prompt": "...", "type": "image" }
-    },
-    "_pipelineEvaluationMetadata": {
-      "outputReasons": ["ensurePotentialImpact"]
     }
   }
 ]
