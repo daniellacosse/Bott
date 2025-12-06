@@ -66,6 +66,11 @@ cp .env.example .env.development
 4. Set up the environment with `deno task setup`.
 5. Start the bot with `deno task start:dev`.
 
+> [!NOTE]
+> For production deployments, create a `.env.production` file with your
+> production credentials and use `deno task start` to build and run the
+> containerized application.
+
 ### Configuring Bott
 
 <details>
