@@ -82,8 +82,14 @@ export const queryGemini = async <O>(
     .map((part: Part) => (part as { text: string }).text)
     .join("") ?? "";
 
+  // Despite the schema, Gemini may still return a code block.
+  const cleanedResult = result.replace(/^```json\s*/i, "").replace(
+    /^```\s*/,
+    "",
+  ).replace(/```\s*$/, "");
+
   try {
-    return JSON.parse(result) as O;
+    return JSON.parse(cleanedResult) as O;
   } catch {
     return result as O;
   }

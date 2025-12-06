@@ -29,7 +29,7 @@
   "tasks": {
     "reset": "rm -rf ./fs_root",
     "setup": "brew bundle && gcloud auth login",
-    "runApp": "deno run --allow-all --watch=. ./scripts/runApp.ts"
+    "runApp": "deno run --allow-all --watch=app,libraries,model,scripts ./scripts/runApp.ts"
   },
   "workspace": [
     "./model",

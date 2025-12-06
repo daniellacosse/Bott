@@ -116,7 +116,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
       log.debug(
         logMessage +
           (triggeredFocusReasons.length > 0
-            ? `    Triggered focus reasons: ${
+            ? `    [TRIGGERED FOCUS REASONS]: ${
               triggeredFocusReasons.map(({ name }) => name).join(", ")
             }`
             : ""),

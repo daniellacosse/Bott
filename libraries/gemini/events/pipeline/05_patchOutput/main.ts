@@ -9,6 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { log } from "@bott/logger";
 import type { BottEvent } from "@bott/model";
 import { getEventSchema } from "../../utilities/getSchema.ts";
 import { queryGemini } from "../../utilities/queryGemini.ts";
@@ -24,6 +25,8 @@ export const patchOutput: EventPipelineProcessor = async (context) => {
     return context;
   }
 
+  log.debug(`Patching ${context.data.output.length} events...`);
+
   context.data.output = await queryGemini<BottEvent[]>(
     context.data.output,
     {
@@ -32,6 +35,17 @@ export const patchOutput: EventPipelineProcessor = async (context) => {
       context,
       useIdentity: false,
     },
+  );
+
+  log.debug(
+    `Patched events: ${context.data.output.length}. Content: ${
+      JSON.stringify(
+        context.data.output.map((e) => ({
+          type: e.type,
+          content: e.details?.content ?? "n/a",
+        })),
+      )
+    }`,
   );
 
   // Trusted Patching:

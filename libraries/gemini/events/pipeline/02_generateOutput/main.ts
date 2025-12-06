@@ -12,6 +12,7 @@
 import type { BottEvent } from "@bott/model";
 
 import ejs from "ejs";
+import { log } from "@bott/logger";
 import { getEventSchema } from "../../utilities/getSchema.ts";
 import { queryGemini } from "../../utilities/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
@@ -41,6 +42,15 @@ export const generateOutput: EventPipelineProcessor = async function (
       responseSchema: getEventSchema(context),
       context,
     },
+  );
+
+  log.debug(
+    `Raw generated output: ${
+      JSON.stringify(context.data.output, (key, value) => {
+        if (key === "parent") return value?.id;
+        return value;
+      })
+    }`,
   );
 
   return context;

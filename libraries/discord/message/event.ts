@@ -33,7 +33,7 @@ export const resolveBottEventFromMessage = async (
       content: (message.content || message.embeds.at(0)?.description) ??
         "",
     },
-    timestamp: new Date(message.createdTimestamp),
+    createdAt: new Date(message.createdTimestamp),
     channel: {
       id: message.channel.id,
       name: message.channel.name,

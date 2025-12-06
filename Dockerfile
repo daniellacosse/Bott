@@ -7,10 +7,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libx265-dev && \
     rm -rf /var/lib/apt/lists/*
 
+WORKDIR /workspace
+
 COPY ./deno.jsonc ./deno.lock* ./
-COPY ./app /app
-COPY ./libraries /libraries
-COPY ./model /model
+COPY ./app ./app
+COPY ./libraries ./libraries
+COPY ./model ./model
 
 ENV PORT=8080
 EXPOSE $PORT

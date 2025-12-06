@@ -9,6 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { log } from "@bott/logger";
 import type { BottEvent } from "@bott/model";
 import { getEventSchema } from "../../utilities/getSchema.ts";
 import { queryGemini } from "../../utilities/queryGemini.ts";
@@ -22,6 +23,8 @@ export const segmentOutput: EventPipelineProcessor = async (context) => {
   if (!context.data.output.length) {
     return context;
   }
+
+  log.debug(`Segmenting ${context.data.output.length} events...`);
 
   const output = structuredClone(context.data.output);
   const segmentPromises: Promise<BottEvent[]>[] = [];
@@ -52,6 +55,17 @@ export const segmentOutput: EventPipelineProcessor = async (context) => {
 
   const segments = await Promise.all(segmentPromises);
   context.data.output = segments.flat();
+
+  log.debug(
+    `Segmented events: ${context.data.output.length}. Content: ${
+      JSON.stringify(
+        context.data.output.map((e) => ({
+          type: e.type,
+          content: e.details?.content ?? "n/a",
+        })),
+      )
+    }`,
+  );
 
   return context;
 };

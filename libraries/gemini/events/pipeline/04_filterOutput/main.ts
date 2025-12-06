@@ -99,8 +99,8 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
       const ratings: Record<string, number> = {};
       let logMessage = `Message Candidate:\n`;
 
-      logMessage += `  Content: ${event.details.content}\n`;
-      logMessage += `  Name: ${event.details.name}\n`;
+      logMessage += `  Content: ${event.details?.content ?? "n/a"}\n`;
+      logMessage += `  Name: ${event.details?.name ?? "n/a"}\n`;
 
       for (const ratingScale in scoresWithRationale) {
         const { rating, rationale } = scoresWithRationale[ratingScale];
@@ -124,7 +124,7 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
       log.debug(
         logMessage +
           (triggeredOutputReasons.length > 0
-            ? `    Triggered output reasons: ${
+            ? `    [TRIGGERED OUTPUT REASONS]: ${
               triggeredOutputReasons.map(({ name }) => name).join(", ")
             }`
             : ""),

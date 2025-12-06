@@ -86,6 +86,11 @@ const args = [
 // Add volume if we are in test mode
 if (envName === testEnv) {
   args.push("-v", `${Deno.cwd()}:/workspace:Z`);
+  // Mount gcloud credentials
+  args.push(
+    "-v",
+    `${Deno.env.get("HOME")}/.config/gcloud:/root/.config/gcloud:Z`,
+  );
 }
 
 console.log(`Running container with ${envPath} on port ${port}...`);
