@@ -1,6 +1,6 @@
 {
   "name": "Bott Development Container",
-  "dockerFile": "Dockerfile",
+  "dockerFile": "../Dockerfile",
   "context": "..",
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
@@ -31,5 +31,6 @@
     }
   },
   "postCreateCommand": "deno --version",
-  "remoteUser": "root"
+  "remoteUser": "root",
+  "overrideCommand": true
 }

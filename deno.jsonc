@@ -28,9 +28,7 @@
   },
   "tasks": {
     "reset": "rm -rf ./fs_root",
-    "setup": "brew bundle && gcloud auth login",
-    "start:dev": "deno run --allow-all --watch=. ./app/main.ts",
-    "start": "docker build -t bott . && docker run --rm --env-file .env.production -p 8080:8080 bott"
+    "setup": "brew bundle && gcloud auth login"
   },
   "workspace": [
     "./model",

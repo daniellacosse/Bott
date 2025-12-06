@@ -51,7 +51,11 @@ cp .env.example .env.development
 
 4. Get your GCP information and add it to `.env.development`.
 5. Get your Discord information and add it to `.env.development`.
-6. Start the bot with `deno task start:dev`.
+6. The bot will automatically start via VS Code tasks. To run manually, use:
+
+```sh
+deno run --allow-all --watch=. ./app/main.ts
+```
 
 ##### Option 2: Local Development
 
@@ -64,12 +68,11 @@ cp .env.example .env.development
 2. Get your GCP information and add it to `.env.development`.
 3. Get your Discord information and add it to `.env.development`.
 4. Set up the environment with `deno task setup`.
-5. Start the bot with `deno task start:dev`.
+5. Start the bot with:
 
-> [!NOTE]
-> For production deployments, create a `.env.production` file with your
-> production credentials and use `deno task start` to build and run the
-> containerized application.
+```sh
+deno run --allow-all --watch=. ./app/main.ts
+```
 
 ### Configuring Bott
 
