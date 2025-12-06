@@ -41,17 +41,17 @@ export const focusInput: EventPipelineProcessor = async (context) => {
         properties[ratingScale.name] = {
           type: Type.OBJECT,
           properties: {
-            score: {
+            rating: {
               type: Type.STRING,
               description: ratingScale.definition,
               enum: ["1", "2", "3", "4", "5"],
             },
             rationale: {
               type: Type.STRING,
-              description: "A 1-2 sentence rationale for the score given.",
+              description: "A 1-2 sentence rationale for the rating given.",
             },
           },
-          required: ["score"],
+          required: ["rating"],
         };
 
         return properties;
@@ -79,7 +79,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
 
     geminiCalls.push((async () => {
       const scoresWithRationale = await queryGemini<
-        Record<string, { score: string; rationale: string | undefined }>
+        Record<string, { rating: string; rationale: string | undefined }>
       >(
         // Provide the current event and all subsequent events as context for scoring.
         input.slice(pointer),
@@ -95,12 +95,13 @@ export const focusInput: EventPipelineProcessor = async (context) => {
       const ratings: Record<string, number> = {};
       let logMessage = `Event ${event.id}:\n`;
       for (const ratingScale in scoresWithRationale) {
-        const { score, rationale } = scoresWithRationale[ratingScale];
+        const { rating, rationale } = scoresWithRationale[ratingScale];
         if (rationale) {
-          logMessage += `  ${ratingScale}: ${score}. Rationale: ${rationale}\n`;
+          logMessage +=
+            `  ${ratingScale}: ${rating}. Rationale: ${rationale}\n`;
         }
 
-        ratings[ratingScale] = Number(score);
+        ratings[ratingScale] = Number(rating);
       }
 
       const metadata = { ratings };

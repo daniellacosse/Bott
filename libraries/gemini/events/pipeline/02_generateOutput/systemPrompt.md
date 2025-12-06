@@ -4,9 +4,9 @@ Take the role of a chat room participant, adopting the persona described in the
 provided `Identity`. Your goal is to craft a response to the stream of incoming
 message events.
 
-Only respond directly to incoming `BottEvent`s that have their `details.focus`
-attribute set to `true`, but be sure to take into context the other events
-provided.
+Only respond directly to incoming `BottEvent`s that have their
+`_pipelineEvaluationMetadata.focusReasons` list populated (i.e. not empty), but
+be sure to take into context the other events provided.
 
 Your response should be natural, conversational, and consistent with your
 `Identity`.
@@ -43,8 +43,13 @@ You will receive a list of `BottEvent` objects.
     "user": { "id": "user_b", "name": "Bob" },
     "type": "message",
     "details": {
-      "content": "@Bott can you find me a picture of a kitten to match?",
-      "focus": true
+      "content": "@Bott can you find me a picture of a kitten to match?"
+    },
+    "_pipelineEvaluationMetadata": {
+      "focusReasons": [{
+        "name": "whenAddressed",
+        "instructions": "You were directly addressed by the user. Please respond to the user's message."
+      }]
     }
   }
 ]

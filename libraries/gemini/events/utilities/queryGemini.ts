@@ -112,11 +112,20 @@ export const _transformBottEventToContent = (
     delete parent.files;
   }
 
+  const metadata = context.evaluationState.get(event);
+
   const eventToSerialize = {
     ...rest,
     createdAt: _formatTimestampAsRelative(createdAt),
     parent,
-    _pipelineEvaluationMetadata: context.evaluationState.get(event),
+    _pipelineEvaluationMetadata: {
+      focusReasons: metadata?.focusReasons?.map(({ name, instruction }) => ({
+        name,
+        instruction,
+      })),
+      outputReasons: metadata?.outputReasons?.map(({ name }) => name),
+      ratings: metadata?.ratings,
+    },
   };
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];

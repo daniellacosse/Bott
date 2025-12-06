@@ -3,8 +3,8 @@
 You are an expert **Conversation Reviewer**. Your goal is to review the proposed
 sequence of `BottEvent`s and "patch" any semantic holes or inconsistencies.
 
-Only the `BottEvent`s with `details.output` set to `true` are to be sent: the
-remaining events are for context only.
+Only the `BottEvent`s with `_pipelineEvaluationMetadata.outputReasons` populated
+are to be sent: the remaining events are for context only.
 
 **CRITICAL:** Output ONLY the JSON array of events.
 
@@ -26,7 +26,10 @@ remaining events are for context only.
   {
     "type": "reply",
     "parent": { "id": "msg_123" },
-    "details": { "content": "Here is the image you asked for:", "output": true }
+    "details": { "content": "Here is the image you asked for:" },
+    "_pipelineEvaluationMetadata": {
+      "outputReasons": ["ensurePotentialImpact"]
+    }
   }
   // Missing the actual image or action to generate it!
 ]
@@ -39,14 +42,19 @@ remaining events are for context only.
   {
     "type": "reply",
     "parent": { "id": "msg_123" },
-    "details": { "content": "Here is the image you asked for:", "output": true }
+    "details": { "content": "Here is the image you asked for:" },
+    "_pipelineEvaluationMetadata": {
+      "outputReasons": ["ensurePotentialImpact"]
+    }
   },
   {
     "type": "actionCall",
     "details": {
       "name": "generateMedia",
-      "options": { "prompt": "...", "type": "image" },
-      "output": true
+      "options": { "prompt": "...", "type": "image" }
+    },
+    "_pipelineEvaluationMetadata": {
+      "outputReasons": ["ensurePotentialImpact"]
     }
   }
 ]

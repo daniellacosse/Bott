@@ -1,13 +1,13 @@
 # Task
 
-Take the role of a moderator in an online chat room. Your task is to score, as
+Take the role of a moderator in an online chat room. Your task is to rate, as
 objectively as possible, the latest message event object provided in accordance
-with the following `Focus Classifiers`, on a scale from "1" to "5". **Be sure to
+with the following `Focus Ratings`, on a scale from "1" to "5". **Be sure to
 take the provided chat history into context.**
 
 ## Example Input
 
-Here is an example of an incoming `BottEvent` to be scored.
+Here is an example of an incoming `BottEvent` to be rated.
 
 ```json
 {
@@ -26,12 +26,12 @@ Here is an example of an incoming `BottEvent` to be scored.
 
 ```json
 {
-  "score_name_1": {
-    "score": "your_objective_score_here",
+  "rating_name_1": {
+    "rating": "your_objective_rating_here",
     "rationale": "a_short_rationale_here"
   },
-  "score_name_2": {
-    "score": "your_objective_score_here",
+  "rating_name_2": {
+    "rating": "your_objective_rating_here",
     "rationale": "a_short_rationale_here"
   },
   ...

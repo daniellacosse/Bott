@@ -84,5 +84,5 @@ Deno.test("_transformBottEventToContent - basic event", () => {
 
   const result = _transformBottEventToContent(event, context);
   assertEquals(result.role, "user");
-  assertEquals(result.parts.length, 1);
+  assertEquals(result.parts?.length, 1);
 });
