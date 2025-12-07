@@ -160,7 +160,7 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 ### High-level Architecture
 
 > [!TIP]
-> Review the code data model annotated in [./model/types.ts](./model/types.ts).
+> Review the code data model annotated in [./model/types](./model/types).
 
 ```mermaid
 graph TD
