@@ -18,7 +18,7 @@ import type {
 } from "@bott/model";
 
 import { sql } from "../sql.ts";
-import { commit } from "../commit.ts";
+import { commit, type TransactionResults } from "../commit.ts";
 
 const getAddChannelsSql = (
   ...channels: BottChannel[]
@@ -147,7 +147,9 @@ const getAddUsersSql = (...users: BottUser[]) => {
   `;
 };
 
-export const addEvents = (...bottEvents: BottEvent[]) => {
+export const addEvents = (
+  ...bottEvents: BottEvent[]
+): TransactionResults => {
   // Extract all unique entities (events, spaces, channels, users)
   const events = new Map<string, BottEvent>();
   const _queue: BottEvent[] = [...bottEvents];
