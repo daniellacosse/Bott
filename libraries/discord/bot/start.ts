@@ -127,7 +127,7 @@ export async function startDiscordBot<
       id: crypto.randomUUID(),
       type: BottEventType.REACTION,
       details: { content: reaction.emoji.toString() },
-      timestamp: new Date(),
+      createdAt: new Date(),
       channel: {
         id: currentChannel.id,
         name: currentChannel.name,

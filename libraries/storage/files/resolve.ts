@@ -12,9 +12,9 @@
 import { join } from "@std/path";
 
 import {
-  BOTT_FILE_TYPE_LOOKUP,
-  type BottFile,
-  BottFileType,
+  BOTT_ATTACHMENT_TYPE_LOOKUP,
+  BottAttachmentType,
+  type BottEventAttachment,
 } from "@bott/model";
 import { throwIfUnsafeFileSize, throwIfUnsafeUrl } from "../validation.ts";
 import { log } from "@bott/logger";
@@ -32,13 +32,15 @@ const FETCH_TIMEOUT_MS = 30 * 1000;
 const MAX_TXT_WORDS = 600;
 
 /**
- * Fully resolves a `BottFile` object by ensuring its `raw` and `compressed` data are available.
+ * Fully resolves a `BottEventAttachment` object by ensuring its `raw` and `compressed` data are available.
  * If `raw` data is missing, it attempts to fetch it from the `source` URL.
  * If `compressed` data is missing, it generates it from the `raw` data based on the file type.
  * @param file `file` to be resolved.
- * @returns `BottFile` with its `raw` and `compressed` data populated.
+ * @returns `BottEventAttachment` with its `raw` and `compressed` data populated.
  */
-export const resolveFile = async (file: BottFile): Promise<BottFile> => {
+export const resolveFile = async (
+  file: BottEventAttachment,
+): Promise<BottEventAttachment> => {
   const fileRoot = join(STORAGE_FILE_ROOT, file.id);
 
   Deno.mkdirSync(fileRoot, { recursive: true });
@@ -57,8 +59,8 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
 
     file.raw = {
       data: Deno.readFileSync(rawFilePath),
-      type: BottFileType[
-        rawFileExtension?.toUpperCase() as keyof typeof BottFileType
+      type: BottAttachmentType[
+        rawFileExtension?.toUpperCase() as keyof typeof BottAttachmentType
       ],
     };
   }
@@ -95,11 +97,13 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
     const type = response.headers.get("content-type")?.split(";")[0].trim() ??
       "";
 
-    if (!Object.values(BottFileType).includes(type as BottFileType)) {
+    if (
+      !Object.values(BottAttachmentType).includes(type as BottAttachmentType)
+    ) {
       throw new Error(`Unsupported content type: ${type}`);
     }
 
-    file.raw = { data, type: type as BottFileType };
+    file.raw = { data, type: type as BottAttachmentType };
   }
 
   if (!rawFilePath) {
@@ -110,7 +114,7 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
     Deno.writeFileSync(
       join(
         fileRoot,
-        `raw.${BOTT_FILE_TYPE_LOOKUP[file.raw.type].toLowerCase()}`,
+        `raw.${BOTT_ATTACHMENT_TYPE_LOOKUP[file.raw.type].toLowerCase()}`,
       ),
       file.raw.data,
     );
@@ -121,9 +125,9 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
 
     file.compressed = {
       data: Deno.readFileSync(compressedFilePath),
-      type: BottFileType[
+      type: BottAttachmentType[
         compressedFileExtension
-          ?.toUpperCase() as keyof typeof BottFileType
+          ?.toUpperCase() as keyof typeof BottAttachmentType
       ],
     };
   }
@@ -139,7 +143,7 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
     const rawType = file.raw.type;
 
     switch (rawType) {
-      case BottFileType.TXT: {
+      case BottAttachmentType.TXT: {
         const textDecoder = new TextDecoder();
         let textContent = textDecoder.decode(rawData);
         const words = textContent.split(/\s+/);
@@ -152,28 +156,28 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
         } else {
           data = rawData;
         }
-        file.compressed = { data, type: BottFileType.MD };
+        file.compressed = { data, type: BottAttachmentType.MD };
         break;
       }
-      case BottFileType.HTML:
+      case BottAttachmentType.HTML:
         file.compressed = await prepareHtmlAsMarkdown(
           rawData,
         );
         break;
-      case BottFileType.PNG:
-      case BottFileType.JPEG:
+      case BottAttachmentType.PNG:
+      case BottAttachmentType.JPEG:
         file.compressed = await prepareStaticImageAsWebp(
           rawData,
         );
         break;
-      case BottFileType.MP3:
-      case BottFileType.WAV:
+      case BottAttachmentType.MP3:
+      case BottAttachmentType.WAV:
         file.compressed = await prepareAudioAsOpus(
           rawData,
         );
         break;
-      case BottFileType.GIF:
-      case BottFileType.MP4:
+      case BottAttachmentType.GIF:
+      case BottAttachmentType.MP4:
         file.compressed = await prepareDynamicImageAsMp4(
           rawData,
         );
@@ -192,7 +196,7 @@ export const resolveFile = async (file: BottFile): Promise<BottFile> => {
       join(
         fileRoot,
         `compressed.${
-          BOTT_FILE_TYPE_LOOKUP[file.compressed.type]
+          BOTT_ATTACHMENT_TYPE_LOOKUP[file.compressed.type]
             .toLowerCase()
         }`,
       ),

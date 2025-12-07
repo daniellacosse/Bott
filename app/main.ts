@@ -173,8 +173,8 @@ startDiscordBot({
                     details: {
                       content: responseEvent.details.content || "",
                     },
-                    files: responseEvent.files,
-                    timestamp: new Date(),
+                    attachments: responseEvent.attachments,
+                    createdAt: new Date(),
                     user: this.user,
                     channel: thisChannel,
                     parent: genEvent.parent,

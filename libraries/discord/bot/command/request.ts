@@ -62,7 +62,7 @@ export function resolveCommandRequestEvent<
       name: interaction.user.username,
     },
     channel,
-    timestamp: new Date(),
+    createdAt: new Date(),
   };
 
   const result = addEventData(event);

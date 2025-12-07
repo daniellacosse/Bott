@@ -17,7 +17,7 @@ import {
 } from "discord.js";
 
 import {
-  BOTT_FILE_TYPE_LOOKUP,
+  BOTT_ATTACHMENT_TYPE_LOOKUP,
   type BottEvent,
   BottEventType,
   type BottUser,
@@ -62,7 +62,7 @@ export const callWithContext = <
       send: async (event: BottEvent) => {
         const files = [];
 
-        for (const file of event.files ?? []) {
+        for (const file of event.attachments ?? []) {
           if (!file.raw) {
             continue;
           }
@@ -70,7 +70,7 @@ export const callWithContext = <
           files.push(
             new AttachmentBuilder(Buffer.from(file.raw.data as Uint8Array), {
               name: `${file.id}.${
-                BOTT_FILE_TYPE_LOOKUP[file.raw.type].toLowerCase()
+                BOTT_ATTACHMENT_TYPE_LOOKUP[file.raw.type].toLowerCase()
               }`,
             }),
           );

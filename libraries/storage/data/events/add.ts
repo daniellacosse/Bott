@@ -12,7 +12,7 @@
 import type {
   BottChannel,
   BottEvent,
-  BottFile,
+  BottEventAttachment,
   BottSpace,
   BottUser,
 } from "@bott/model";
@@ -68,7 +68,7 @@ const getAddEventsSql = (...events: BottEvent[]) => {
   `;
 };
 
-const getAddFilesSql = (...files: BottFile[]) => {
+const getAddFilesSql = (...files: BottEventAttachment[]) => {
   if (!files.length) {
     return;
   }
@@ -80,7 +80,7 @@ const getAddFilesSql = (...files: BottFile[]) => {
     parent_id
   ) values ${
     files.map((f) =>
-      sql`(${f.id}, ${f.source?.toString() ?? null}, ${f.parent?.id})`
+      sql`(${f.id}, ${f.source?.toString() ?? null}, ${f.parent.id})`
     )
   } on conflict(id) do update set
     source_url = excluded.source_url,
@@ -147,7 +147,7 @@ export const addEventData = async (
   const spaces = new Map<string, BottSpace>();
   const channels = new Map<string, BottChannel>();
   const users = new Map<string, BottUser>();
-  const files = new Map<string, BottFile>();
+  const files = new Map<string, BottEventAttachment>();
 
   for (const event of events.values()) {
     if (event.channel) {
@@ -159,17 +159,17 @@ export const addEventData = async (
       users.set(event.user.id, event.user);
     }
 
-    if (event.files) {
-      for (const file of event.files) {
+    if (event.attachments) {
+      for (const attachment of event.attachments) {
         try {
-          const resolvedFile = await resolveFile(file);
+          const resolvedFile = await resolveFile(attachment);
 
           files.set(resolvedFile.id, {
             ...resolvedFile,
             parent: event,
           });
         } catch (e) {
-          log.warn(`Failed to resolve file [${file.id}]: ${e}`);
+          log.warn(`Failed to resolve file [${attachment.id}]: ${e}`);
         }
       }
     }

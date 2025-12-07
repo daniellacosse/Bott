@@ -100,7 +100,7 @@ export const _transformBottEventToContent = (
   context: EventPipelineContext,
 ): Content => {
   const {
-    files: _files,
+    attachments: _attachments,
     parent: _parent,
     createdAt,
     ...rest
@@ -115,7 +115,7 @@ export const _transformBottEventToContent = (
     };
 
     delete parent.parent;
-    delete parent.files;
+    delete parent.attachments;
   }
 
   const metadata = context.evaluationState.get(event);
@@ -140,18 +140,18 @@ export const _transformBottEventToContent = (
     parts,
   };
 
-  if (event.files && event.files.length) {
+  if (event.attachments && event.attachments.length) {
     parts.push({ text: "--- Attached Files ---" });
 
-    for (const file of event.files) {
-      if (!file.compressed) {
+    for (const attachment of event.attachments) {
+      if (!attachment.compressed) {
         continue;
       }
 
       parts.push({
         inlineData: {
-          mimeType: file.compressed.type,
-          data: encodeBase64(file.compressed.data!),
+          mimeType: attachment.compressed.type,
+          data: encodeBase64(attachment.compressed.data!),
         },
       });
     }

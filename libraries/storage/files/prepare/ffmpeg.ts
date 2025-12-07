@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import { throwIfUnsafeFileSize } from "@bott/storage";
 
 // Security Note: _ffmpeg is not exported and all arguments are hardcoded below.
@@ -110,7 +110,7 @@ export const prepareStaticImageAsWebp = async (
     "webp", // Output format container
     "{{OUTPUT_FILE}}",
   ];
-  return { data: await _ffmpeg(args, data), type: BottFileType.WEBP };
+  return { data: await _ffmpeg(args, data), type: BottAttachmentType.WEBP };
 };
 
 export const prepareAudioAsOpus = async (
@@ -139,7 +139,7 @@ export const prepareAudioAsOpus = async (
     "opus", // Output format
     "{{OUTPUT_FILE}}",
   ];
-  return { data: await _ffmpeg(args, data), type: BottFileType.OPUS };
+  return { data: await _ffmpeg(args, data), type: BottAttachmentType.OPUS };
 };
 
 export const prepareDynamicImageAsMp4 = async (
@@ -165,5 +165,5 @@ export const prepareDynamicImageAsMp4 = async (
     "{{OUTPUT_FILE}}",
   ];
 
-  return { data: await _ffmpeg(args, data), type: BottFileType.MP4 };
+  return { data: await _ffmpeg(args, data), type: BottAttachmentType.MP4 };
 };

@@ -11,7 +11,7 @@
 
 import { extractFromHtml } from "@extractus/article-extractor";
 import TurndownService from "turndown";
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 
 import { STORAGE_FILE_SIZE_CAUTION } from "../../start.ts";
 
@@ -50,5 +50,8 @@ export const prepareHtmlAsMarkdown = async (data: Uint8Array) => {
       "\n\n...(truncated)";
   }
 
-  return { data: new TextEncoder().encode(result), type: BottFileType.MD };
+  return {
+    data: new TextEncoder().encode(result),
+    type: BottAttachmentType.MD,
+  };
 };

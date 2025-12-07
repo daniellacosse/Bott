@@ -11,7 +11,11 @@
 
 import type { Message } from "discord.js";
 
-import { type BottEvent, BottEventType, type BottFile } from "@bott/model";
+import {
+  type BottEvent,
+  type BottEventAttachment,
+  BottEventType,
+} from "@bott/model";
 import { addEventData, getEvents } from "@bott/storage";
 import { log } from "@bott/logger";
 
@@ -77,7 +81,7 @@ export const resolveBottEventFromMessage = async (
   ];
 
   if (urls.length) {
-    event.files = urls.map<BottFile>((url) => ({
+    event.attachments = urls.map<BottEventAttachment>((url) => ({
       id: crypto.randomUUID(),
       source: new URL(url),
       parent: event,

@@ -14,8 +14,8 @@ import {
   type BottActionCallEvent,
   BottActionOptionType,
   type BottActionResultEvent,
+  type BottAttachmentData,
   BottEventType,
-  type BottFileData,
 } from "@bott/model";
 import { createTask } from "@bott/task";
 import {
@@ -125,7 +125,7 @@ export const generateMedia: BottAction<
         taskManager.push(
           type,
           createTask(async (abortSignal: AbortSignal) => {
-            let fileData: BottFileData | undefined;
+            let attachmentData: BottAttachmentData | undefined;
 
             try {
               const context = {
@@ -134,17 +134,17 @@ export const generateMedia: BottAction<
 
               switch (type) {
                 case GeneratedMediaType.PHOTO:
-                  fileData = await generatePhotoData(prompt, context);
+                  attachmentData = await generatePhotoData(prompt, context);
                   break;
                 case GeneratedMediaType.MOVIE:
-                  fileData = await generateMovieData(prompt, context);
+                  attachmentData = await generateMovieData(prompt, context);
                   break;
                 case GeneratedMediaType.SONG:
-                  fileData = await generateSongData(prompt, context);
+                  attachmentData = await generateSongData(prompt, context);
                   break;
                 case GeneratedMediaType.ESSAY:
                 default:
-                  fileData = await generateEssayData(prompt, context);
+                  attachmentData = await generateEssayData(prompt, context);
                   break;
               }
             } catch (error) {
@@ -156,25 +156,27 @@ export const generateMedia: BottAction<
             }
 
             // This shouldn't happen.
-            if (!fileData) {
+            if (!attachmentData) {
               throw new Error("Failed to generate media");
             }
 
-            resolve({
+            const resultEvent: BottActionResultEvent = {
               id: crypto.randomUUID(),
               type: BottEventType.ACTION_RESULT as const,
-              details: {
-                content: "",
-              },
-              files: [{
-                id: crypto.randomUUID(),
-                raw: fileData,
-              }],
-              timestamp: new Date(),
+              details: {},
+              createdAt: new Date(),
               user: requestEvent.user,
               channel: requestEvent.channel,
               parent: requestEvent,
-            });
+            };
+
+            resultEvent.attachments = [{
+              id: crypto.randomUUID(),
+              raw: attachmentData,
+              parent: resultEvent,
+            }];
+
+            resolve(resultEvent);
           }),
         );
       },
