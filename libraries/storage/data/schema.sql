@@ -8,11 +8,33 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+-- =============================================================================
+-- Database Schema - Organized by dependency order for maximum compatibility
+-- Tables are created in order: independent tables first, then dependent tables
+-- This structure minimizes errors when running against an existing database
+-- =============================================================================
+
+-- Level 0: Independent base tables (no foreign key dependencies)
+-- These can be created in any order
+
 create table if not exists spaces (
   id varchar(36) primary key not null,
   name text not null,
   description text
 );
+
+create table if not exists users (
+  id varchar(36) primary key not null,
+  name text not null
+);
+
+create table if not exists files (
+  id varchar(36) primary key not null,
+  type varchar(64), -- mime type
+  path text not null
+);
+
+-- Level 1: Tables that depend only on Level 0 tables
 
 create table if not exists channels (
   id varchar(36) primary key not null,
@@ -23,10 +45,7 @@ create table if not exists channels (
   foreign key(space_id) references spaces(id)
 );
 
-create table if not exists users (
-  id varchar(36) primary key not null,
-  name text not null
-);
+-- Level 2: Tables that depend on Level 0 and Level 1 tables
 
 create table if not exists events (
   id varchar(36) primary key not null,
@@ -42,14 +61,10 @@ create table if not exists events (
   foreign key(user_id) references users(id)
 );
 
-create table if not exists files (
-  id varchar(36) not null primary key,
-  type varchar(64), -- mime type
-  path text not null
-);
+-- Level 3: Tables that depend on Level 0 and Level 2 tables
 
 create table if not exists attachments (
-  id varchar(36) not null primary key,
+  id varchar(36) primary key not null,
   source_url text not null,
   raw_file_id varchar(36),
   compressed_file_id varchar(36),

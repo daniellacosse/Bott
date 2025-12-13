@@ -11,6 +11,7 @@
 
 import { join } from "@std/path";
 import { DatabaseSync } from "node:sqlite";
+import { applyMigrations } from "./data/migrations.ts";
 
 const dbClientSchema = Deno.readTextFileSync(
   new URL("./data/schema.sql", import.meta.url).pathname,
@@ -40,5 +41,10 @@ export const startStorage = (
   );
 
   // Initialize database tables:
+  // Tables are created in dependency order to minimize errors
   STORAGE_DATA_CLIENT.exec(dbClientSchema);
+
+  // Apply any schema migrations for existing databases:
+  // This ensures older schemas are updated and new columns are added safely
+  applyMigrations(STORAGE_DATA_CLIENT);
 };
