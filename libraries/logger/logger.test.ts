@@ -28,7 +28,7 @@ Deno.test("Logger methods can be called without errors", () => {
   log.warn("test warn");
   log.error("test error");
   log.perf("test perf start");
-  log.perf("test perf start"); // end the timer
+  log.perf("test perf start"); // This call ends the timer and logs elapsed time
 });
 
 Deno.test("Logger testHandler captures log messages", () => {

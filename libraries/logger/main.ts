@@ -102,6 +102,7 @@ function formatArgs(...args: unknown[]): string {
 }
 
 // Map to track performance timers (label -> start time)
+// Note: Timers not ended will remain in memory, similar to console.time behavior
 const perfTimers = new Map<string, number>();
 
 // Export a logger object that maintains the same API
