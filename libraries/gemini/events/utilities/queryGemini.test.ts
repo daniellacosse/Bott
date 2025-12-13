@@ -71,7 +71,7 @@ Deno.test("_formatTimestampAsRelative - ISO string format", () => {
   assertEquals(result, "2 hours ago");
 });
 
-Deno.test("_transformBottEventToContent - basic event", () => {
+Deno.test("_transformBottEventToContent - basic event", async () => {
   const context = createMockContext();
   const event = {
     id: "1",
@@ -82,7 +82,7 @@ Deno.test("_transformBottEventToContent - basic event", () => {
     details: { content: "test" },
   };
 
-  const result = _transformBottEventToContent(event, context);
+  const result = await _transformBottEventToContent(event, context);
   assertEquals(result.role, "user");
   assertEquals(result.parts?.length, 1);
 });

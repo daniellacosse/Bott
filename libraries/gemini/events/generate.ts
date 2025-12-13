@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import type {
   BottAction,
   BottChannel,
@@ -17,7 +17,7 @@ import type {
   BottGlobalSettings,
   BottUser,
 } from "@bott/model";
-import { addEventData } from "@bott/storage";
+import { addEvents } from "@bott/storage";
 import { log } from "@bott/logger";
 
 import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
@@ -64,40 +64,44 @@ export async function* generateEvents(
       break;
     }
 
-    if (event.files) {
-      const filesToKeep = [];
-      for (const file of event.files) {
-        if (!file.compressed) continue;
+    if (event.attachments) {
+      const attachmentsToKeep = [];
+      for (const attachment of event.attachments) {
+        if (!attachment.compressed?.file) continue;
 
         const newTotalTokens = resourceAccumulator.tokens +
-          file.compressed.data.byteLength;
+          attachment.compressed.file.size;
 
         if (newTotalTokens > INPUT_FILE_TOKEN_LIMIT) continue;
 
-        const isAudio = file.compressed.type === BottFileType.MP3 ||
-          file.compressed.type === BottFileType.OPUS ||
-          file.compressed.type === BottFileType.WAV;
+        const isAudio =
+          attachment.compressed.file.type === BottAttachmentType.MP3 ||
+          attachment.compressed.file.type === BottAttachmentType.OPUS ||
+          attachment.compressed.file.type === BottAttachmentType.WAV;
 
         if (
           isAudio &&
           resourceAccumulator.audioFiles >= INPUT_FILE_AUDIO_COUNT_LIMIT
         ) continue;
 
-        const isVideo = file.compressed.type === BottFileType.MP4;
+        const isVideo =
+          attachment.compressed.file.type === BottAttachmentType.MP4;
 
         if (
           isVideo &&
           resourceAccumulator.videoFiles >= INPUT_FILE_VIDEO_COUNT_LIMIT
         ) continue;
 
-        filesToKeep.push(file);
+        attachmentsToKeep.push(attachment);
 
         resourceAccumulator.tokens = newTotalTokens;
         if (isAudio) resourceAccumulator.audioFiles++;
         if (isVideo) resourceAccumulator.videoFiles++;
       }
 
-      event.files = filesToKeep.length > 0 ? filesToKeep : undefined;
+      event.attachments = attachmentsToKeep.length > 0
+        ? attachmentsToKeep
+        : undefined;
     }
 
     prunedInput.unshift(event);
@@ -127,7 +131,7 @@ export async function* generateEvents(
   try {
     const processingTime = new Date();
 
-    await addEventData(
+    await addEvents(
       ...pipelineContext.data.input.map((event) => ({
         ...event,
         lastProcessedAt: processingTime,

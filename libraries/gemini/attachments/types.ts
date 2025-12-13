@@ -11,8 +11,6 @@
 
 import type { GoogleGenAI } from "@google/genai";
 
-import type { BottFileData } from "@bott/model";
-
 export type PromptParameters = {
   abortSignal?: AbortSignal;
   context?: string[];
@@ -22,7 +20,7 @@ export type PromptParameters = {
   characterLimit?: number;
 };
 
-export type BottFileDataGenerator = (
+export type BottAttachmentDataGenerator = (
   prompt: string,
   params: PromptParameters,
-) => Promise<BottFileData>;
+) => Promise<File>;

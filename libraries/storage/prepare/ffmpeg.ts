@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import { throwIfUnsafeFileSize } from "@bott/storage";
 
 // Security Note: _ffmpeg is not exported and all arguments are hardcoded below.
@@ -20,9 +20,11 @@ const FFMPEG_TIMEOUT_MS = 5 * 60 * 1000;
 
 const _ffmpeg = async (
   args: string[],
-  input: Uint8Array,
-): Promise<Uint8Array> => {
-  throwIfUnsafeFileSize(input);
+  input: ArrayBuffer,
+): Promise<BlobPart> => {
+  const inputArray = new Uint8Array(input);
+
+  throwIfUnsafeFileSize(inputArray);
 
   const tempInputFilePath = await Deno.makeTempFile({
     prefix: "bott_ffmpeg_in_",
@@ -32,7 +34,7 @@ const _ffmpeg = async (
   });
 
   try {
-    await Deno.writeFile(tempInputFilePath, input);
+    await Deno.writeFile(tempInputFilePath, inputArray);
 
     const processedArgs = args.map((arg) => {
       switch (arg) {
@@ -87,8 +89,9 @@ const _ffmpeg = async (
 const MAX_DIMENSION = 480;
 
 export const prepareStaticImageAsWebp = async (
-  data: Uint8Array,
-) => {
+  file: File,
+  attachmentId: string,
+): Promise<File> => {
   const args = [
     "-y",
     "-i",
@@ -110,12 +113,17 @@ export const prepareStaticImageAsWebp = async (
     "webp", // Output format container
     "{{OUTPUT_FILE}}",
   ];
-  return { data: await _ffmpeg(args, data), type: BottFileType.WEBP };
+  return new File(
+    [await _ffmpeg(args, await file.arrayBuffer())],
+    `${attachmentId}.compressed.webp`,
+    { type: BottAttachmentType.WEBP },
+  );
 };
 
 export const prepareAudioAsOpus = async (
-  data: Uint8Array,
-) => {
+  file: File,
+  attachmentId: string,
+): Promise<File> => {
   const DURATION_SECONDS = 60;
 
   const args = [
@@ -139,12 +147,17 @@ export const prepareAudioAsOpus = async (
     "opus", // Output format
     "{{OUTPUT_FILE}}",
   ];
-  return { data: await _ffmpeg(args, data), type: BottFileType.OPUS };
+  return new File(
+    [await _ffmpeg(args, await file.arrayBuffer())],
+    `${attachmentId}.compressed.opus`,
+    { type: BottAttachmentType.OPUS },
+  );
 };
 
 export const prepareDynamicImageAsMp4 = async (
-  data: Uint8Array,
-) => {
+  file: File,
+  attachmentId: string,
+): Promise<File> => {
   const DURATION_SECONDS = 30;
   const FRAME_RATE = 15;
 
@@ -165,5 +178,9 @@ export const prepareDynamicImageAsMp4 = async (
     "{{OUTPUT_FILE}}",
   ];
 
-  return { data: await _ffmpeg(args, data), type: BottFileType.MP4 };
+  return new File(
+    [await _ffmpeg(args, await file.arrayBuffer())],
+    `${attachmentId}.compressed.mp4`,
+    { type: BottAttachmentType.MP4 },
+  );
 };

@@ -12,13 +12,13 @@
 import { PersonGeneration, SafetyFilterLevel } from "@google/genai";
 import { decodeBase64 } from "@std/encoding";
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import { PHOTO_MODEL } from "../constants.ts";
 
 import _gemini from "../client.ts";
-import type { BottFileDataGenerator } from "./types.ts";
+import type { BottAttachmentDataGenerator } from "./types.ts";
 
-export const generatePhotoData: BottFileDataGenerator = async (
+export const generatePhotoData: BottAttachmentDataGenerator = async (
   prompt: string,
   {
     model = PHOTO_MODEL,
@@ -58,8 +58,9 @@ export const generatePhotoData: BottFileDataGenerator = async (
     throw new Error("No image bytes");
   }
 
-  return {
-    data: decodeBase64(imageData.image.imageBytes),
-    type: BottFileType.PNG,
-  };
+  return new File(
+    [decodeBase64(imageData.image.imageBytes)],
+    "photo.png",
+    { type: BottAttachmentType.PNG },
+  );
 };

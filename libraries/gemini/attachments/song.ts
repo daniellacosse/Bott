@@ -11,10 +11,10 @@
 
 import { decodeBase64 } from "@std/encoding";
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import { SONG_MODEL } from "../constants.ts";
 
-import type { BottFileDataGenerator } from "./types.ts";
+import type { BottAttachmentDataGenerator } from "./types.ts";
 
 const GOOGLE_PROJECT_LOCATION = Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
   Deno.env.get("GCP_LOCATION") ??
@@ -30,7 +30,7 @@ const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 const VERTEX_API_URL =
   `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/${SONG_MODEL}:predict`;
 
-export const generateSongData: BottFileDataGenerator = async (
+export const generateSongData: BottAttachmentDataGenerator = async (
   prompt,
   { abortSignal },
 ) => {
@@ -56,10 +56,11 @@ export const generateSongData: BottFileDataGenerator = async (
 
   const { predictions } = await response.json();
 
-  return {
-    data: decodeBase64(predictions[0].bytesBase64Encoded),
-    type: BottFileType.WAV,
-  };
+  return new File(
+    [decodeBase64(predictions[0].bytesBase64Encoded)],
+    "song.wav",
+    { type: BottAttachmentType.WAV },
+  );
 };
 
 async function getAccessToken(): Promise<string> {

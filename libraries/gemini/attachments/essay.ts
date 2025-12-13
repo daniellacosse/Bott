@@ -10,12 +10,12 @@
  */
 
 import _gemini from "../client.ts";
-import type { BottFileDataGenerator } from "./types.ts";
+import type { BottAttachmentDataGenerator } from "./types.ts";
 import { ESSAY_MODEL } from "../constants.ts";
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 
-export const generateEssayData: BottFileDataGenerator = async (
+export const generateEssayData: BottAttachmentDataGenerator = async (
   prompt: string,
   {
     model = ESSAY_MODEL,
@@ -51,8 +51,11 @@ export const generateEssayData: BottFileDataGenerator = async (
     throw new Error("No text in sanitized response");
   }
 
-  return {
-    data: new TextEncoder().encode(sanitizedResponse.text),
-    type: BottFileType.TXT,
-  };
+  return new File(
+    [new TextEncoder().encode(sanitizedResponse.text)],
+    "essay.txt",
+    {
+      type: BottAttachmentType.TXT,
+    },
+  );
 };

@@ -14,7 +14,7 @@ import {
   type BottChannel,
   BottEventType,
 } from "@bott/model";
-import { addEventData } from "@bott/storage";
+import { addEvents } from "@bott/storage";
 import {
   ApplicationCommandOptionType,
   ChannelType,
@@ -62,10 +62,10 @@ export function resolveCommandRequestEvent<
       name: interaction.user.username,
     },
     channel,
-    timestamp: new Date(),
+    createdAt: new Date(),
   };
 
-  const result = addEventData(event);
+  const result = addEvents(event);
   if ("error" in result) {
     log.error(
       "Failed to resolve request event to database:",

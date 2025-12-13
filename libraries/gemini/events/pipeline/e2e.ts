@@ -120,7 +120,7 @@ function createMockEvent(
   type: BottEventType,
   details?: AnyShape,
   parent?: BottEvent,
-): BottEvent<AnyShape> {
+): BottEvent {
   return {
     id: faker.string.uuid(),
     type,
