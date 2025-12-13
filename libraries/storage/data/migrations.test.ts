@@ -128,3 +128,98 @@ Deno.test("Migrations - schema is idempotent", () => {
 
   assertEquals(result.count, 6, "All 6 tables should exist");
 });
+
+Deno.test("Migrations - rejects invalid table names", () => {
+  const db = new DatabaseSync(":memory:");
+
+  db.exec(`
+    create table test_table (
+      id varchar(36) primary key not null,
+      name text not null
+    );
+  `);
+
+  // Test various invalid table names
+  let errorThrown = false;
+  try {
+    addColumnIfNotExists(db, "test'; DROP TABLE test_table; --", "col", "text");
+  } catch (error) {
+    errorThrown = true;
+    assertEquals(
+      error.message.includes("Invalid table name"),
+      true,
+      "Should reject SQL injection attempt in table name",
+    );
+  }
+  assertEquals(
+    errorThrown,
+    true,
+    "Should have thrown error for invalid table name",
+  );
+});
+
+Deno.test("Migrations - rejects invalid column names", () => {
+  const db = new DatabaseSync(":memory:");
+
+  db.exec(`
+    create table test_table (
+      id varchar(36) primary key not null,
+      name text not null
+    );
+  `);
+
+  let errorThrown = false;
+  try {
+    addColumnIfNotExists(
+      db,
+      "test_table",
+      "col'; DROP TABLE test_table; --",
+      "text",
+    );
+  } catch (error) {
+    errorThrown = true;
+    assertEquals(
+      error.message.includes("Invalid column name"),
+      true,
+      "Should reject SQL injection attempt in column name",
+    );
+  }
+  assertEquals(
+    errorThrown,
+    true,
+    "Should have thrown error for invalid column name",
+  );
+});
+
+Deno.test("Migrations - rejects invalid column definitions", () => {
+  const db = new DatabaseSync(":memory:");
+
+  db.exec(`
+    create table test_table (
+      id varchar(36) primary key not null,
+      name text not null
+    );
+  `);
+
+  let errorThrown = false;
+  try {
+    addColumnIfNotExists(
+      db,
+      "test_table",
+      "col",
+      "text; DROP TABLE test_table;",
+    );
+  } catch (error) {
+    errorThrown = true;
+    assertEquals(
+      error.message.includes("Invalid column definition"),
+      true,
+      "Should reject SQL injection attempt in column definition",
+    );
+  }
+  assertEquals(
+    errorThrown,
+    true,
+    "Should have thrown error for invalid column definition",
+  );
+});

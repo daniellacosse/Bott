@@ -13,6 +13,25 @@ import type { DatabaseSync } from "node:sqlite";
 import { log } from "@bott/logger";
 
 /**
+ * Validate an identifier (table name or column name) to prevent SQL injection
+ * Only allows alphanumeric characters and underscores
+ */
+function isValidIdentifier(identifier: string): boolean {
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(identifier);
+}
+
+/**
+ * Validate column definition to prevent SQL injection
+ * Allows common SQLite types and constraints
+ */
+function isValidColumnDefinition(definition: string): boolean {
+  // Allow common SQLite types and keywords
+  const pattern =
+    /^(varchar|text|integer|real|blob|datetime|numeric)(\(\d+\))?\s*(primary key|not null|null|unique|default .+)?$/i;
+  return pattern.test(definition.trim());
+}
+
+/**
  * Check if a column exists in a table
  */
 function columnExists(
@@ -20,6 +39,13 @@ function columnExists(
   tableName: string,
   columnName: string,
 ): boolean {
+  if (!isValidIdentifier(tableName)) {
+    throw new Error(`Invalid table name: ${tableName}`);
+  }
+  if (!isValidIdentifier(columnName)) {
+    throw new Error(`Invalid column name: ${columnName}`);
+  }
+
   const stmt = db.prepare(`PRAGMA table_info(${tableName})`);
   const columns = stmt.all() as Array<{ name: string }>;
   return columns.some((col) => col.name === columnName);
@@ -35,6 +61,17 @@ export function addColumnIfNotExists(
   columnName: string,
   columnDefinition: string,
 ): void {
+  // Validate all inputs to prevent SQL injection
+  if (!isValidIdentifier(tableName)) {
+    throw new Error(`Invalid table name: ${tableName}`);
+  }
+  if (!isValidIdentifier(columnName)) {
+    throw new Error(`Invalid column name: ${columnName}`);
+  }
+  if (!isValidColumnDefinition(columnDefinition)) {
+    throw new Error(`Invalid column definition: ${columnDefinition}`);
+  }
+
   if (!columnExists(db, tableName, columnName)) {
     try {
       const sql =
