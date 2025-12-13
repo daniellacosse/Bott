@@ -23,7 +23,7 @@ export const help: BottAction = Object.assign(
       new BottEvent(BottEventType.ACTION_RESULT, {
         detail: {
           embeds: [
-            createInfoEmbed("Help", {
+            createInfoEmbed("Help Menu", {
               fields: [
                 {
                   name: "About",
