@@ -141,7 +141,7 @@ export const _transformBottEventToContent = async (
   };
 
   if (event.attachments && event.attachments.length) {
-    parts.push({ text: "--- Attached Files ---" });
+    parts.push({ text: "--- Attachments ---" });
 
     for (const attachment of event.attachments) {
       if (!attachment.compressed?.file) {
