@@ -31,7 +31,7 @@ create table if not exists users (
 create table if not exists events (
   id varchar(36) primary key not null,
   type varchar(16) not null,
-  details text,
+  detail text,
   parent_id varchar(36),
   channel_id varchar(36),
   user_id varchar(36),
