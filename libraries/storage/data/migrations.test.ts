@@ -253,3 +253,62 @@ Deno.test("Migrations - rejects invalid column definitions", () => {
     "Should have thrown error for invalid column definition",
   );
 });
+
+Deno.test("Migrations - rejects column definition ending with DEFAULT", () => {
+  const db = new DatabaseSync(":memory:");
+
+  db.exec(`
+    create table test_table (
+      id varchar(36) primary key not null,
+      name text not null
+    );
+  `);
+
+  let errorThrown = false;
+  try {
+    addColumnIfNotExists(db, "test_table", "col", "text default");
+  } catch (error) {
+    errorThrown = true;
+    assertEquals(
+      error.message.includes("Invalid column definition"),
+      true,
+      "Should reject column definition ending with DEFAULT",
+    );
+  }
+  assertEquals(
+    errorThrown,
+    true,
+    "Should have thrown error for incomplete DEFAULT",
+  );
+});
+
+Deno.test("Migrations - accepts valid string defaults with special characters", () => {
+  const db = new DatabaseSync(":memory:");
+
+  db.exec(`
+    create table test_table (
+      id varchar(36) primary key not null
+    );
+  `);
+
+  // Add column with string default containing special characters
+  addColumnIfNotExists(
+    db,
+    "test_table",
+    "col1",
+    "text default 'hello world'",
+  );
+  addColumnIfNotExists(db, "test_table", "col2", "text default 'test-value'");
+  addColumnIfNotExists(db, "test_table", "col3", "integer default -42");
+  addColumnIfNotExists(db, "test_table", "col4", "real default 3.14");
+
+  // Verify columns were added
+  const stmt = db.prepare("PRAGMA table_info(test_table)");
+  const columns = stmt.all() as Array<{ name: string }>;
+  const columnNames = columns.map((col) => col.name);
+
+  assertEquals(columnNames.includes("col1"), true, "col1 should exist");
+  assertEquals(columnNames.includes("col2"), true, "col2 should exist");
+  assertEquals(columnNames.includes("col3"), true, "col3 should exist");
+  assertEquals(columnNames.includes("col4"), true, "col4 should exist");
+});

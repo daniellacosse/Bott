@@ -44,7 +44,35 @@ function isValidColumnDefinition(definition: string): boolean {
 
   // Allow specific constraint keywords in any order
   // Validate DEFAULT values more strictly - only allow safe literals
-  const constraints = withoutType.split(/\s+/);
+  // Split by spaces but keep quoted strings together
+  const constraints: string[] = [];
+  let currentToken = "";
+  let inQuotes = false;
+  let quoteChar = "";
+
+  for (let i = 0; i < withoutType.length; i++) {
+    const char = withoutType[i];
+
+    if ((char === "'" || char === '"') && !inQuotes) {
+      inQuotes = true;
+      quoteChar = char;
+      currentToken += char;
+    } else if (char === quoteChar && inQuotes) {
+      inQuotes = false;
+      currentToken += char;
+    } else if (char === " " && !inQuotes) {
+      if (currentToken) {
+        constraints.push(currentToken);
+        currentToken = "";
+      }
+    } else {
+      currentToken += char;
+    }
+  }
+  if (currentToken) {
+    constraints.push(currentToken);
+  }
+
   const validKeywords = [
     "primary",
     "key",
@@ -53,8 +81,9 @@ function isValidColumnDefinition(definition: string): boolean {
     "unique",
     "default",
   ];
+  // Allow: null, CURRENT_*, numbers, and quoted strings
   const validDefaultValues =
-    /^(null|current_timestamp|current_date|current_time|\d+|'\w+'|"\w+")$/i;
+    /^(null|current_timestamp|current_date|current_time|-?\d+(\.\d+)?|'[^']*'|"[^"]*")$/i;
 
   let expectingDefaultValue = false;
   for (const constraint of constraints) {
@@ -70,6 +99,11 @@ function isValidColumnDefinition(definition: string): boolean {
     } else if (!validKeywords.includes(lower)) {
       return false; // Invalid keyword
     }
+  }
+
+  // Ensure we're not left expecting a default value
+  if (expectingDefaultValue) {
+    return false; // Column definition ended with DEFAULT but no value
   }
 
   return true;
