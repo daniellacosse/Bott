@@ -141,7 +141,7 @@ export async function startDiscordBot<
     }
 
     const event = new BottEvent(BottEventType.REACTION, {
-      detail: { content: "Bot connected." },
+      detail: { content: reaction.emoji.toString() },
       channel: {
         id: currentChannel.id,
         name: currentChannel.name,
