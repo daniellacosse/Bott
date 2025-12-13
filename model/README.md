@@ -21,16 +21,17 @@ The model is split into several domain-specific files:
 
 ## Entities
 
-- **`BottSpace`**: A top-level "chat workspace" container, analogous to a
-  Discord Guild.
-- **`BottChannel`**: A communication context within a space.
-- **`BottUser`**: An individual interacting with Bott.
+- **[`BottSpace`](./types/entities.ts)**: A top-level "chat workspace"
+  container, analogous to a Discord Guild.
+- **[`BottChannel`](./types/entities.ts)**: A communication context within a
+  space.
+- **[`BottUser`](./types/entities.ts)**: An individual interacting with Bott.
 
 ## Events
 
 Events are the primary unit of data flow.
 
-- **`BottEventType`**:
+- **[`BottEventType`](./types/events.ts)**:
   - `MESSAGE`: A standard chat message.
   - `REPLY`: A response to another event.
   - `REACTION`: An emoji reaction.
@@ -38,7 +39,8 @@ Events are the primary unit of data flow.
     image).
   - `ACTION_RESULT`: The output of a tool call.
 
-All events share a common `BottEvent` interface which includes:
+All events share a common **[`BottEvent`](./types/events.ts)** interface which
+includes:
 
 - `id`, `type`, `createdAt`
 - `details`: A generic bag of properties specific to the event type.
@@ -48,20 +50,22 @@ All events share a common `BottEvent` interface which includes:
 
 Actions allow Bott to do more than just speak.
 
-- **`BottAction`**: A function signature for a tool the AI can invoke.
-- **`BottActionOption`**: Defines the arguments (string, integer, boolean) an
-  action accepts.
+- **[`BottAction`](./types/actions.ts)**: A function signature for a tool the AI
+  can invoke.
+- **[`BottActionOption`](./types/actions.ts)**: Defines the arguments (string,
+  integer, boolean) an action accepts.
 
 ## Reasons & Ratings
 
 This is the "brain" of Bott's decision making.
 
-- **`BottRatingScale`**: A 1-5 scale used to evaluate an event (e.g., `Urgency`,
-  `Humor`, `Safety`).
-- **`BottReason`**: A rule that combines multiple rating scales to determine if
-  Bott should take an action (e.g., "Reply if Urgency > 4").
+- **[`BottRatingScale`](./types/reasons.ts)**: A 1-5 scale used to evaluate an
+  event (e.g., `Urgency`, `Humor`, `Safety`).
+- **[`BottReason`](./types/reasons.ts)**: A rule that combines multiple rating
+  scales to determine if Bott should take an action (e.g., "Reply if Urgency >
+  4").
 
 ## Settings
 
-- **`BottGlobalSettings`**: Contains Bott's `identity` definition and the active
-  set of `reasons` for input and output processing.
+- **[`BottGlobalSettings`](./types/settings.ts)**: Contains Bott's `identity`
+  definition and the active set of `reasons` for input and output processing.

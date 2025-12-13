@@ -2,7 +2,7 @@
 
 This library provides the Discord integration layer for Bott. It handles the
 connection to the Discord Gateway, normalizes incoming Discord interactions into
-`BottEvent`s, and synchronizes slash commands.
+[`BottEvent`](../../model/types/events.ts)s, and synchronizes slash commands.
 
 ## Key Capabilities
 
@@ -19,5 +19,6 @@ The primary entry point is `startDiscordBot`. It:
 ### Event Normalization
 
 Incoming Discord `Message`s and `Reaction`s are converted into normalized
-`BottEvent` structures. This isolates the rest of the application (Event
-Pipeline, Storage) from Discord-specific implementation details.
+[`BottEvent`](../../model/types/events.ts) structures. This isolates the rest of
+the application (Event Pipeline, Storage) from Discord-specific implementation
+details.

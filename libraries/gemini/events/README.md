@@ -1,8 +1,9 @@
 # Gemini Event Pipeline
 
-This directory contains the logic for generating `BottEvent`s using Google's
-Gemini models. The core of this functionality is exposed via the
-[`generateEvents`](./generate.ts) function.
+This directory contains the logic for generating
+[`BottEvent`](../../../model/types/events.ts)s using Google's Gemini models. The
+core of this functionality is exposed via the [`generateEvents`](./generate.ts)
+function.
 
 ## Input Curation
 
@@ -27,11 +28,11 @@ steps**. Each step receives the current `EventPipelineContext` and returns an
 updated context.
 
 ```mermaid
-flowchart LR
+flowchart TD
     Event[Input Context] --> Pipeline
 
     subgraph Pipeline [Generation Pipeline]
-      direction LR
+      direction TB
       Focus[Focus Input] --> Generate[Generate Output]
       Generate --> Segment[Segment Output]
       Segment --> Filter[Filter Output]

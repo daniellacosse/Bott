@@ -1,8 +1,9 @@
 # <img src="assets/avatar.jpg" width="49" /> `@Bott`
 
 [![Maintainability](https://qlty.sh/gh/daniellacosse-code/projects/Bott/maintainability.svg)](https://qlty.sh/gh/daniellacosse-code/projects/Bott)
-![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
-[![discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
+[![Code Coverage](https://qlty.sh/gh/daniellacosse-code/projects/Bott/coverage.svg)](https://qlty.sh/gh/daniellacosse-code/projects/Bott)
+![GitHub Checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
+[![Discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
 An autonomous groupchat agent.
 
