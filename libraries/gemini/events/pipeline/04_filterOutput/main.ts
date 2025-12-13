@@ -99,8 +99,8 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
       const ratings: Record<string, number> = {};
       let logMessage = `Message Candidate:\n`;
 
-      logMessage += `  Content: ${event.details?.content ?? "n/a"}\n`;
-      logMessage += `  Name: ${event.details?.name ?? "n/a"}\n`;
+      logMessage += `  Content: ${event.detail?.content ?? "n/a"}\n`;
+      logMessage += `  Name: ${event.detail?.name ?? "n/a"}\n`;
 
       for (const ratingScale in scoresWithRationale) {
         const { rating, rationale } = scoresWithRationale[ratingScale];

@@ -12,6 +12,7 @@
 import {
   type BottActionCallEvent,
   type BottChannel,
+  BottEvent,
   BottEventType,
 } from "@bott/model";
 import { addEvents } from "@bott/storage";
@@ -47,10 +48,8 @@ export function resolveCommandRequestEvent<
     };
   }
 
-  const event = {
-    id: crypto.randomUUID(),
-    type: BottEventType.ACTION_CALL as const,
-    details: {
+  const event = new BottEvent(BottEventType.ACTION_CALL, {
+    detail: {
       name: interaction.commandName,
       options: extractResolvedOptions(
         interaction,
@@ -62,8 +61,7 @@ export function resolveCommandRequestEvent<
       name: interaction.user.username,
     },
     channel,
-    createdAt: new Date(),
-  };
+  }) as BottActionCallEvent<O>;
 
   const result = addEvents(event);
   if ("error" in result) {

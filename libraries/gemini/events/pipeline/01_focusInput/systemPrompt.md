@@ -16,7 +16,7 @@ Here is an example of an incoming `BottEvent` to be rated.
     "name": "user_name"
   },
   "type": "message",
-  "details": {
+  "detail": {
     "content": "How is everyone doing today?"
   }
 }

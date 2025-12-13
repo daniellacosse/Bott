@@ -11,7 +11,7 @@
 
 import type { Message } from "discord.js";
 
-import { type BottEvent, BottEventType } from "@bott/model";
+import { BottEvent, BottEventType } from "@bott/model";
 import { addEvents, getEvents, prepareAttachmentFromUrl } from "@bott/storage";
 import { log } from "@bott/logger";
 
@@ -26,50 +26,48 @@ export const resolveBottEventFromMessage = async (
     return possibleEvent;
   }
 
-  const event: BottEvent = {
-    id: message.id,
-    type: BottEventType.MESSAGE,
-    details: {
-      content: (message.content || message.embeds.at(0)?.description) ??
-        "",
-    },
-    createdAt: new Date(message.createdTimestamp),
-    channel: {
-      id: message.channel.id,
-      name: message.channel.name,
-      space: {
-        id: message.guild?.id,
-        name: message.guild?.name,
-      },
-    },
-  };
-
-  if (message.author) {
-    event.user = {
-      id: message.author.id,
-      name: message.author.username,
-    };
-  }
+  let type = BottEventType.MESSAGE;
+  let parent: BottEvent | undefined;
 
   if (message.reference?.messageId) {
-    event.type = BottEventType.REPLY;
-
-    let parentMessage: BottEvent | undefined;
-
+    type = BottEventType.REPLY;
     try {
-      parentMessage = await resolveBottEventFromMessage(
-        await message.channel.messages.fetch(
-          message.reference.messageId,
-        ),
+      parent = await resolveBottEventFromMessage(
+        await message.channel.messages.fetch(message.reference.messageId),
       );
     } catch (_) {
       // If the parent message isn't available, we can't populate the parent event.
       // This can happen if the parent message was deleted or is otherwise inaccessible.
       // In this case, we'll just omit the parent event.
     }
-
-    event.parent = parentMessage;
   }
+
+  const event = new BottEvent(type, {
+    detail: {
+      content: (message.content || message.embeds.at(0)?.description) ?? "",
+    },
+    channel: {
+      id: message.channel.id,
+      name: message.channel.name as string,
+      space: {
+        id: message.guild?.id as string,
+        name: message.guild?.name as string,
+      },
+    },
+    user: message.author
+      ? {
+        id: message.author.id,
+        name: message.author.username,
+      }
+      : undefined,
+    parent,
+  });
+
+  // Override auto-generated ID and createdAt for hydration
+  Object.assign(event, {
+    id: message.id,
+    createdAt: new Date(message.createdTimestamp),
+  });
 
   const urls = [
     ...message.attachments.values().map(({ url }) => url),

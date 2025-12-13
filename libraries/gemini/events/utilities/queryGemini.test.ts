@@ -15,7 +15,7 @@ import {
   _transformBottEventToContent,
 } from "./queryGemini.ts";
 import { createMockContext, createMockUser } from "../pipeline/e2e.ts";
-import { BottEventType } from "@bott/model";
+import { BottEvent, BottEventType } from "@bott/model";
 
 Deno.test("_formatTimestampAsRelative - just now", () => {
   const now = new Date();
@@ -73,14 +73,11 @@ Deno.test("_formatTimestampAsRelative - ISO string format", () => {
 
 Deno.test("_transformBottEventToContent - basic event", async () => {
   const context = createMockContext();
-  const event = {
-    id: "1",
-    type: BottEventType.MESSAGE,
-    createdAt: new Date(),
+  const event = new BottEvent(BottEventType.MESSAGE, {
     user: createMockUser(),
     channel: context.channel,
-    details: { content: "test" },
-  };
+    detail: { content: "test" },
+  });
 
   const result = await _transformBottEventToContent(event, context);
   assertEquals(result.role, "user");

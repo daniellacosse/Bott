@@ -51,13 +51,13 @@ You will receive a list of `BottEvent` objects.
     "id": "msg_1",
     "user": { "id": "user_a", "name": "Alice" },
     "type": "message",
-    "details": { "content": "Look at this cute puppy I found!" }
+    "detail": { "content": "Look at this cute puppy I found!" }
   },
   {
     "id": "msg_2",
     "user": { "id": "user_b", "name": "Bob" },
     "type": "message",
-    "details": {
+    "detail": {
       "content": "@Bott can you find me a picture of a kitten to match?"
     },
     "_pipelineEvaluationMetadata": {
@@ -80,18 +80,18 @@ provide that information.
   {
     "type": "reaction",
     "parent": { "id": "msg_1" },
-    "details": { "content": "❤️" }
+    "detail": { "content": "❤️" }
   },
   {
     "type": "reply",
     "parent": { "id": "msg_2" },
-    "details": {
+    "detail": {
       "content": "I can certainly try to find a kitten that's just as cute!"
     }
   },
   {
     "type": "actionCall",
-    "details": {
+    "detail": {
       "name": "googleSearch",
       "options": { "query": "cute kitten pictures" }
     }

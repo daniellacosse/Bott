@@ -34,14 +34,14 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
   {
     "type": "reply",
     "parent": { "id": "msg_123" },
-    "details": { "content": "Here is the image you asked for:" },
+    "detail": { "content": "Here is the image you asked for:" },
     "_pipelineEvaluationMetadata": {
       "outputReasons": ["ensurePotentialImpact"]
     }
   },
   {
     "type": "message",
-    "details": { "content": "lol" },
+    "detail": { "content": "lol" },
     "_pipelineEvaluationMetadata": {
       "outputReasons": [] 
     }
@@ -49,7 +49,7 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
   {
     "type": "reaction",
     "parent": { "id": "msg_123" },
-    "details": { "content": "👍" }
+    "detail": { "content": "👍" }
   }
 ]
 
@@ -59,11 +59,11 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
   {
     "type": "reply",
     "parent": { "id": "msg_123" },
-    "details": { "content": "Here is the image you asked for:" }
+    "detail": { "content": "Here is the image you asked for:" }
   },
   {
     "type": "actionCall",
-    "details": {
+    "detail": {
       "name": "generateMedia",
       "options": { "prompt": "...", "type": "image" }
     }

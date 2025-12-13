@@ -51,7 +51,7 @@ const getAddEventsSql = (...events: BottEvent[]) => {
 
   const values = events.map((event) =>
     sql`(${event.id}, ${event.type}, ${
-      JSON.stringify(event.details)
+      JSON.stringify(event.detail)
     }, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${
       event.lastProcessedAt?.toISOString() ?? null
     })`

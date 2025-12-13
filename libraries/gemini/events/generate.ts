@@ -13,10 +13,10 @@ import { BottAttachmentType } from "@bott/model";
 import type {
   BottAction,
   BottChannel,
-  BottEvent,
   BottGlobalSettings,
   BottUser,
 } from "@bott/model";
+import { BottEvent } from "@bott/model";
 import { addEvents } from "@bott/storage";
 import { log } from "@bott/logger";
 
@@ -131,10 +131,10 @@ export async function* generateEvents(
     const processingTime = new Date();
 
     await addEvents(
-      ...pipelineContext.data.input.map((event) => ({
-        ...event,
-        lastProcessedAt: processingTime,
-      })),
+      ...pipelineContext.data.input.map((event) => {
+        event.lastProcessedAt = processingTime;
+        return event;
+      }),
     );
   } catch (error) {
     log.warn(error);
@@ -145,15 +145,13 @@ export async function* generateEvents(
       continue;
     }
 
-    yield {
-      ...event,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      user: context.user,
-      channel: context.channel,
+    yield new BottEvent(event.type, {
+      detail: event.detail,
       // Gemini does not return the full parent event
       parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
-    };
+      channel: context.channel,
+      user: context.user,
+    });
   }
 
   return;

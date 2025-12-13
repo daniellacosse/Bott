@@ -24,8 +24,9 @@ import {
   type AnyShape,
   type BottAction,
   type BottActionResultEvent,
-  type BottEvent,
+  BottEvent,
   BottEventType,
+  type BottUser,
 } from "@bott/model";
 
 import { createErrorEmbed } from "../message/embed/error.ts";
@@ -123,11 +124,24 @@ export async function startDiscordBot<
       return;
     }
 
-    const event: BottEvent = {
-      id: crypto.randomUUID(),
-      type: BottEventType.REACTION,
-      details: { content: reaction.emoji.toString() },
-      createdAt: new Date(),
+    const reactor = reaction.users.cache.first();
+    let user: BottUser | undefined;
+    if (reactor) {
+      user = {
+        id: reactor.id,
+        name: reactor.username,
+      };
+    }
+
+    let parent: BottEvent | undefined;
+    if (reaction.message.content) {
+      parent = await resolveBottEventFromMessage(
+        reaction.message as Message<true>,
+      );
+    }
+
+    const event = new BottEvent(BottEventType.REACTION, {
+      detail: { content: "Bot connected." },
       channel: {
         id: currentChannel.id,
         name: currentChannel.name,
@@ -136,21 +150,9 @@ export async function startDiscordBot<
           name: currentChannel.guild.name,
         },
       },
-    };
-
-    const reactor = reaction.users.cache.first();
-    if (reactor) {
-      event.user = {
-        id: reactor.id,
-        name: reactor.username,
-      };
-    }
-
-    if (reaction.message.content) {
-      event.parent = await resolveBottEventFromMessage(
-        reaction.message as Message<true>,
-      );
-    }
+      user,
+      parent,
+    });
 
     if (handleEvent) {
       callWithContext(handleEvent, {
@@ -197,7 +199,7 @@ export async function startDiscordBot<
       });
     }
 
-    interaction.followUp(resultEvent.details);
+    interaction.followUp(resultEvent.detail);
   });
 
   // Sync commands with discord origin via their custom http client 🙄:

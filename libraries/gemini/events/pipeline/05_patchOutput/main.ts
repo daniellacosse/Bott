@@ -42,7 +42,7 @@ export const patchOutput: EventPipelineProcessor = async (context) => {
       JSON.stringify(
         context.data.output.map((e) => ({
           type: e.type,
-          content: e.details?.content ?? "n/a",
+          content: e.detail?.content ?? "n/a",
         })),
       )
     }`,

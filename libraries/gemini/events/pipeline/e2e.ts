@@ -15,7 +15,7 @@ import {
   type BottAction,
   BottActionOptionType,
   type BottChannel,
-  type BottEvent,
+  BottEvent,
   BottEventType,
   type BottRatingScale,
   type BottReason,
@@ -69,14 +69,14 @@ if (import.meta.main) {
 function printEvent(
   event: BottEvent & { _pipelineEvaluationMetadata?: object },
 ) {
-  const details = event.details as {
+  const detail = event.detail as {
     content?: string;
   };
 
   const parts = [
     `[${event.type.padEnd(8)}]`,
     `${(event.user?.name ?? "bott").padEnd(8)}:`,
-    details.content ? `'${details.content}'` : "(no content)",
+    detail.content ? `'${detail.content}'` : "(no content)",
   ];
 
   if (event._pipelineEvaluationMetadata) {
@@ -113,15 +113,12 @@ function createMockEvent(
   details?: AnyShape,
   parent?: BottEvent,
 ): BottEvent {
-  return {
-    id: faker.string.uuid(),
-    type,
-    createdAt: faker.date.recent(),
-    user,
-    channel,
-    details: details ?? { content: faker.lorem.sentence() },
-    parent,
-  };
+  return new BottEvent(type, {
+    detail: details ?? { content: faker.lorem.sentence() },
+    user: user,
+    channel: channel,
+    parent: parent,
+  });
 }
 
 export function createMockContext(): EventPipelineContext {

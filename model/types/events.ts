@@ -9,8 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottChannel, BottUser } from "./entities.ts";
 import type { AnyShape } from "./utility.ts";
+import type { BottChannel, BottUser } from "./entities.ts";
 
 /**
  * Enumerates the different types of events that can occur in Bott.
@@ -31,10 +31,14 @@ export enum BottEventType {
 /**
  * Represents a generic event in Bott.
  */
-export interface BottEvent {
+export interface BottEvent<
+  T extends BottEventType = BottEventType,
+  D extends AnyShape = AnyShape,
+> extends CustomEvent<D> {
+  /** The type of the event. */
+  type: T;
+  /** The unique identifier of the event. */
   id: string;
-  type: BottEventType;
-  details: AnyShape;
   /** Timestamp of when the event was created. */
   createdAt: Date;
   /** Timestamp of when the event was last scored/evaluated by the pipeline. */
@@ -48,19 +52,6 @@ export interface BottEvent {
   /** Optional array of attachments associated with the event. */
   attachments?: BottEventAttachment[];
 }
-
-export type BottActionCallEvent<O extends AnyShape = AnyShape> = BottEvent & {
-  type: BottEventType.ACTION_CALL;
-  details: {
-    name: string;
-    options: O;
-  };
-};
-
-export type BottActionResultEvent<D extends AnyShape = AnyShape> = BottEvent & {
-  type: BottEventType.ACTION_RESULT;
-  details: D;
-};
 
 /**
  * Enumerates the different types of attachments that can be associated with a BottEvent.
@@ -97,3 +88,16 @@ export type BottEventAttachment = {
     file: File;
   };
 };
+
+export type BottActionCallEvent<O extends AnyShape = AnyShape> = BottEvent<
+  BottEventType.ACTION_CALL,
+  {
+    name: string;
+    options: O;
+  }
+>;
+
+export type BottActionResultEvent<D extends AnyShape = AnyShape> = BottEvent<
+  BottEventType.ACTION_RESULT,
+  D
+>;

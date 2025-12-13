@@ -11,7 +11,7 @@
 
 import { assertEquals, assertExists } from "@std/assert";
 
-import { BottEventType } from "@bott/model";
+import { BottEvent, BottEventType } from "@bott/model";
 import { log } from "@bott/logger";
 
 import { addEvents } from "./data/events/add.ts";
@@ -30,37 +30,28 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
     name: "Chat World",
   };
 
-  const channelMain = { id: "1", name: "main", space: spaceChatWorld };
+  const channel = { id: "1", name: "main", space: spaceChatWorld };
 
-  const userNancy = { id: "1", name: "Nancy" };
-  const userBob = { id: "2", name: "Bob" };
+  const nancy = { id: "1", name: "Nancy" };
+  const bob = { id: "2", name: "Bob" };
 
-  const nancyGreeting = {
-    id: "1",
-    type: BottEventType.MESSAGE,
-    user: userNancy,
-    channel: channelMain,
-    details: { content: "Hello" },
-    createdAt: new Date(),
-  };
-  const bobReply = {
-    id: "2",
-    type: BottEventType.REPLY,
-    user: userBob,
-    channel: channelMain,
+  const nancyGreeting = new BottEvent(BottEventType.MESSAGE, {
+    detail: { content: "Hello, world!" },
+    user: nancy,
+    channel,
+  });
+  const bobReply = new BottEvent(BottEventType.REPLY, {
+    detail: { content: "Hi Nancy!" },
+    user: bob,
+    channel,
     parent: nancyGreeting,
-    details: { content: "Hi" },
-    createdAt: new Date(),
-  };
-  const nancyReaction = {
-    id: "3",
-    type: BottEventType.REACTION,
-    user: userNancy,
-    channel: channelMain,
+  });
+  const nancyReaction = new BottEvent(BottEventType.REACTION, {
+    detail: { content: "👍" },
+    user: nancy,
+    channel,
     parent: bobReply,
-    details: { content: "👍" },
-    createdAt: new Date(),
-  };
+  });
 
   log.debug("Adding events.");
 
@@ -74,7 +65,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
 
   assertExists(dbResult.id);
   assertExists(dbResult.type);
-  assertExists(dbResult.details);
+  assertExists(dbResult.detail);
   assertExists(dbResult.createdAt);
   assertExists(dbResult.channel);
   assertExists(dbResult.channel.id);
@@ -88,7 +79,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
   assertExists(dbResult.parent);
   assertExists(dbResult.parent.id);
   assertExists(dbResult.parent.type);
-  assertExists(dbResult.parent.details);
+  assertExists(dbResult.parent.detail);
   assertExists(dbResult.parent.createdAt);
 });
 

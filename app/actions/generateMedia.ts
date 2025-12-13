@@ -14,6 +14,7 @@ import {
   type BottActionCallEvent,
   BottActionOptionType,
   type BottActionResultEvent,
+  BottEvent,
   BottEventType,
 } from "@bott/model";
 import { createTask } from "@bott/task";
@@ -72,7 +73,7 @@ export const generateMedia: BottAction<
       prompt: string;
     }>,
   ) {
-    const { type, prompt: rawPrompt } = requestEvent.details.options;
+    const { type, prompt: rawPrompt } = requestEvent.detail.options;
 
     const prompt = sanitizeAIPrompt(rawPrompt);
 
@@ -160,15 +161,12 @@ export const generateMedia: BottAction<
               throw new Error("Failed to generate media");
             }
 
-            const resultEvent: BottActionResultEvent = {
-              id: crypto.randomUUID(),
-              type: BottEventType.ACTION_RESULT as const,
-              details: {},
-              createdAt: new Date(),
+            const resultEvent = new BottEvent(BottEventType.ACTION_RESULT, {
+              detail: {},
               user: requestEvent.user,
               channel: requestEvent.channel,
               parent: requestEvent,
-            };
+            }) as BottActionResultEvent;
 
             resultEvent.attachments = [
               await prepareAttachmentFromFile(attachmentFile, resultEvent),

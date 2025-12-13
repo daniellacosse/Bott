@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEvent, BottEventType } from "@bott/model";
+import { BottEvent } from "@bott/model";
 
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
@@ -69,14 +69,15 @@ export const getEvents = async (
       continue;
     }
 
-    const event: BottEvent = {
+    const event = new BottEvent(type, {
+      detail: JSON.parse(details),
+    });
+
+    Object.assign(event, {
       id,
-      type: type as BottEventType,
-      details: JSON.parse(details),
       createdAt: new Date(createdAt),
       lastProcessedAt: lastProcessedAt ? new Date(lastProcessedAt) : undefined,
-      attachments: undefined,
-    };
+    });
 
     if (rowData.c_id) {
       event.channel = {

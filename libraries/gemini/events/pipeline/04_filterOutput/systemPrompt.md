@@ -12,7 +12,7 @@ Here is an example of an incoming event to be rated.
 ```json
 {
   "type": "message",
-  "details": {
+  "detail": {
     "content": "some_message_content_here"
   }
 }
