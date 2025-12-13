@@ -27,7 +27,8 @@ Deno.test("Logger methods can be called without errors", () => {
   log.info("test info", { key: "value" });
   log.warn("test warn");
   log.error("test error");
-  log.perf("test perf");
+  log.perf("test perf start");
+  log.perf("test perf start"); // end the timer
 });
 
 Deno.test("Logger testHandler captures log messages", () => {
@@ -55,4 +56,74 @@ Deno.test("Logger testHandler captures log messages", () => {
     messages.some((msg) => msg.includes("test message 3")),
     "Should capture error message",
   );
+});
+
+Deno.test("Logger perf works like console.time/timeEnd", async () => {
+  // Clear previous logs
+  testHandler.clear();
+
+  // Start timer
+  log.perf("timer1");
+
+  // Simulate some work
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  // End timer
+  log.perf("timer1");
+
+  // Check that a timing message was logged
+  const messages = testHandler.logs.map((l) => l.msg);
+  const perfMessage = messages.find((msg) => msg.includes("timer1:"));
+
+  assert(perfMessage, "Should log timing message");
+  assert(perfMessage!.includes("ms"), "Should include 'ms' in message");
+
+  // Extract the time value and verify it's reasonable
+  const timeMatch = perfMessage!.match(/timer1: ([\d.]+)ms/);
+  assert(timeMatch, "Should match format 'label: XXms'");
+
+  const elapsedTime = parseFloat(timeMatch![1]);
+  assert(
+    elapsedTime >= 40 && elapsedTime <= 150,
+    `Elapsed time should be ~50ms, got ${elapsedTime}ms`,
+  );
+});
+
+Deno.test("Logger perf supports multiple concurrent timers", async () => {
+  // Clear previous logs
+  testHandler.clear();
+
+  // Start multiple timers
+  log.perf("timer-a");
+  log.perf("timer-b");
+
+  await new Promise((resolve) => setTimeout(resolve, 30));
+
+  // End in different order
+  log.perf("timer-b");
+  log.perf("timer-a");
+
+  // Check that both timing messages were logged
+  const messages = testHandler.logs.map((l) => l.msg);
+
+  const perfMessageA = messages.find((msg) => msg.includes("timer-a:"));
+  const perfMessageB = messages.find((msg) => msg.includes("timer-b:"));
+
+  assert(perfMessageA, "Should log timer-a");
+  assert(perfMessageB, "Should log timer-b");
+});
+
+Deno.test("Logger perf uses default label when none provided", () => {
+  // Clear previous logs
+  testHandler.clear();
+
+  // Start and end timer without label
+  log.perf();
+  log.perf();
+
+  // Check that default label was used
+  const messages = testHandler.logs.map((l) => l.msg);
+  const perfMessage = messages.find((msg) => msg.includes("default:"));
+
+  assert(perfMessage, "Should log with 'default' label");
 });

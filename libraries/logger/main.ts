@@ -75,7 +75,7 @@ type Logger = {
   info(...args: unknown[]): void;
   warn(...args: unknown[]): void;
   error(...args: unknown[]): void;
-  perf(...args: unknown[]): void;
+  perf(label?: string): void;
 };
 
 // Helper function to format log arguments similar to console methods
@@ -100,6 +100,9 @@ function formatArgs(...args: unknown[]): string {
     return String(arg);
   }).join(" ");
 }
+
+// Map to track performance timers (label -> start time)
+const perfTimers = new Map<string, number>();
 
 // Export a logger object that maintains the same API
 export const log: Logger = {
@@ -127,10 +130,20 @@ export const log: Logger = {
     }
   },
 
-  perf(...args: unknown[]): void {
-    if (allowedTopics.has("perf")) {
-      // Use INFO level for perf logs
-      logger.info(formatArgs("__PERF__", ...args));
+  perf(label = "default"): void {
+    if (!allowedTopics.has("perf")) {
+      return;
+    }
+
+    // If timer exists, end it and log elapsed time
+    if (perfTimers.has(label)) {
+      const startTime = perfTimers.get(label)!;
+      const elapsed = performance.now() - startTime;
+      perfTimers.delete(label);
+      logger.info(`${label}: ${elapsed.toFixed(2)}ms`);
+    } else {
+      // Start a new timer
+      perfTimers.set(label, performance.now());
     }
   },
 };
