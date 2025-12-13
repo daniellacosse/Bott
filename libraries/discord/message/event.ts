@@ -63,11 +63,10 @@ export const resolveBottEventFromMessage = async (
     parent,
   });
 
-  // Override auto-generated ID and createdAt for hydration
-  Object.assign(event, {
-    id: message.id,
-    createdAt: new Date(message.createdTimestamp),
-  });
+  // Set ID and createdAt directly for hydration from Discord message.
+  // TODO: Refactor BottEvent to support hydration via constructor or static factory method.
+  event.id = message.id;
+  event.createdAt = new Date(message.createdTimestamp);
 
   const urls = [
     ...message.attachments.values().map(({ url }) => url),
