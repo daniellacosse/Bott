@@ -101,14 +101,14 @@ _(currently implemented via Gemini - see:
       <figure>
         <img width="360" alt="origin_of_bott" src="assets/origin.png" />
         <br />
-        <figcaption>Bott's origin</figcaption>
+        <figcaption><i>Bott's origin</i></figcaption>
       </figure>
     </td>
     <td>
       <figure>
         <img width="360" src="assets/concept.png" alt="concept" />
         <br />
-        <figcaption>concept art by <a href="https://DanielLaCos.se">DanielLaCos.se</a></figcaption>
+        <figcaption><i>Concept art by <a href="https://DanielLaCos.se">DanielLaCos.se</a></i></figcaption>
       </figure>
     </td>
   </tr>
