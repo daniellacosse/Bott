@@ -10,10 +10,11 @@
  */
 
 import { BaseHandler, ConsoleHandler, getLogger, setup } from "@std/log";
+import { LOG_TOPICS } from "@bott/constants";
 
 // Parse LOG_TOPICS environment variable
 const allowedTopics = new Set(
-  (Deno.env.get("LOG_TOPICS") || "info,warn,error")
+  LOG_TOPICS
     .toLowerCase()
     .split(",")
     .map((topic) => topic.trim())

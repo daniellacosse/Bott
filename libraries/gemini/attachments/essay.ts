@@ -11,7 +11,7 @@
 
 import _gemini from "../client.ts";
 import type { BottAttachmentDataGenerator } from "./types.ts";
-import { ESSAY_MODEL } from "../constants.ts";
+import { ESSAY_MODEL } from "@bott/constants";
 
 import { BottAttachmentType } from "@bott/model";
 

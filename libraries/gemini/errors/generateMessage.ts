@@ -20,7 +20,7 @@ import {
 } from "@bott/model";
 
 import gemini from "../client.ts";
-import { ERROR_MODEL } from "../constants.ts";
+import { ERROR_MODEL } from "@bott/constants";
 import instructions from "./instructions.ts";
 
 export async function generateErrorMessage<O extends AnyShape>(

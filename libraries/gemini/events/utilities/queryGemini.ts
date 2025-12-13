@@ -21,7 +21,7 @@ import type { BottEvent } from "@bott/model";
 
 import type { EventPipelineContext } from "../pipeline/types.ts";
 import gemini from "../../client.ts";
-import { EVENT_MODEL } from "../../constants.ts";
+import { EVENT_MODEL } from "@bott/constants";
 
 const eventStructure = await Deno.readTextFile(
   new URL("./eventStructure.md.ejs", import.meta.url),

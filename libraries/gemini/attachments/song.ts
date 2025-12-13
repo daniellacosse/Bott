@@ -12,18 +12,14 @@
 import { decodeBase64 } from "@std/encoding";
 
 import { BottAttachmentType } from "@bott/model";
-import { SONG_MODEL } from "../constants.ts";
+import {
+  GOOGLE_ACCESS_TOKEN,
+  GOOGLE_PROJECT_ID,
+  GOOGLE_PROJECT_LOCATION,
+  SONG_MODEL,
+} from "@bott/constants";
 
 import type { BottAttachmentDataGenerator } from "./types.ts";
-
-const GOOGLE_PROJECT_LOCATION = Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
-  Deno.env.get("GCP_LOCATION") ??
-  "us-central1";
-const GOOGLE_PROJECT_ID = Deno.env.get("GOOGLE_PROJECT_ID") ??
-  Deno.env.get("GCP_PROJECT") ??
-  "PROJECT_MISSING";
-const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN") ??
-  "TOKEN_MISSING";
 
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
@@ -86,7 +82,7 @@ async function getAccessToken(): Promise<string> {
       );
     }
   } else {
-    if (GOOGLE_ACCESS_TOKEN === "TOKEN_MISSING") {
+    if (!GOOGLE_ACCESS_TOKEN || GOOGLE_ACCESS_TOKEN === "TOKEN_MISSING") {
       throw new Error(
         "GOOGLE_ACCESS_TOKEN is not set. Please set it for local development or ensure the app is running in Cloud Run.",
       );

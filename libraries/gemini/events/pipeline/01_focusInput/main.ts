@@ -13,7 +13,7 @@ import { type Schema, Type } from "@google/genai";
 
 import { log } from "@bott/logger";
 
-import { RATING_MODEL } from "../../../constants.ts";
+import { RATING_MODEL } from "@bott/constants";
 import { queryGemini } from "../../utilities/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 

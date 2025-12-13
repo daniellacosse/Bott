@@ -36,7 +36,16 @@ jobs:
           deno-version: v2.5.x
 
       - name: Run Tests
-        run: deno test --allow-all
+        run: |
+          deno test --allow-all --coverage=cov_profile
+          mkdir -p coverage
+          deno coverage cov_profile --lcov --output=coverage/lcov.info
+
+      - name: Upload Coverage
+        uses: qltysh/qlty-action/coverage@v2
+        with:
+          token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
+          files: coverage/lcov.info
 
   licensing:
     name: License Headers

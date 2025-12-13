@@ -13,7 +13,7 @@ import { PersonGeneration, SafetyFilterLevel } from "@google/genai";
 import { decodeBase64 } from "@std/encoding";
 
 import { BottAttachmentType } from "@bott/model";
-import { PHOTO_MODEL } from "../constants.ts";
+import { PHOTO_MODEL } from "@bott/constants";
 
 import _gemini from "../client.ts";
 import type { BottAttachmentDataGenerator } from "./types.ts";

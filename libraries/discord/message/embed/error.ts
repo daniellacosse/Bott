@@ -33,7 +33,7 @@ export const createErrorEmbed = (error: Error) => {
   }
 
   return new EmbedBuilder()
-    .setColor(EmbedColor.RED)
+    .setColor(EmbedColor.ERROR)
     .setTitle(title)
     .setDescription(description)
     .setTimestamp();

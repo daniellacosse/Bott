@@ -34,7 +34,12 @@ import {
   generateMedia,
   GenerateMediaOptions,
 } from "./actions/generateMedia.ts";
-import { STORAGE_DEPLOY_NONCE_PATH, STORAGE_ROOT } from "./env.ts";
+import {
+  DISCORD_TOKEN,
+  PORT,
+  STORAGE_DEPLOY_NONCE_PATH,
+  STORAGE_ROOT,
+} from "@bott/constants";
 import { getDefaultGlobalSettings } from "./defaultGlobalSettings/main.ts";
 
 const WORDS_PER_MINUTE = 200;
@@ -52,7 +57,7 @@ Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deployNonce);
 startDiscordBot({
   // TODO(#63): Unify action infrastructure
   actions: { help: actions.help },
-  identityToken: Deno.env.get("DISCORD_TOKEN")!,
+  identityToken: DISCORD_TOKEN!,
   mount() {
     log.info(
       `Running bot "${this.user.name}" at user id "<@${this.user.id}>"`,
@@ -223,7 +228,7 @@ startDiscordBot({
 
 // Need to respond to GCP health probe:
 Deno.serve(
-  { port: Number(Deno.env.get("PORT") ?? 8080) },
+  { port: PORT },
   () => new Response("OK", { status: 200 }),
 );
 

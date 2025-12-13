@@ -32,7 +32,7 @@ import {
   RATE_LIMIT_MUSIC,
   RATE_LIMIT_VIDEOS,
   RATE_LIMIT_WINDOW_MS,
-} from "../env.ts";
+} from "@bott/constants";
 
 // Constants for AI prompt processing
 const MAX_AI_PROMPT_LENGTH = 10000;

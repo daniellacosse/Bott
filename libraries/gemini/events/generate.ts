@@ -30,7 +30,7 @@ import {
   INPUT_FILE_AUDIO_COUNT_LIMIT,
   INPUT_FILE_TOKEN_LIMIT,
   INPUT_FILE_VIDEO_COUNT_LIMIT,
-} from "../constants.ts";
+} from "@bott/constants";
 
 export async function* generateEvents(
   inputEvents: BottEvent[],
