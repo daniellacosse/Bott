@@ -1,8 +1,10 @@
-# <img src="assets/avatar.jpg" width="49" /> `@Bott`
+<img src="assets/avatar.jpg" width="128" />
 
+# `@Bott`
+
+![GitHub Checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
 [![Maintainability](https://qlty.sh/gh/daniellacosse-code/projects/Bott/maintainability.svg)](https://qlty.sh/gh/daniellacosse-code/projects/Bott)
 [![Code Coverage](https://qlty.sh/gh/daniellacosse-code/projects/Bott/coverage.svg)](https://qlty.sh/gh/daniellacosse-code/projects/Bott)
-![GitHub Checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
 [![Discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
 An autonomous groupchat agent.
@@ -19,8 +21,8 @@ An autonomous groupchat agent.
 
 ## Current Features
 
-- Uses its pre-configured `Identity` and `Reasons` to determine when to engage
-  with server members.
+- Bott uses a pre-configured `Identity` and `Reasons` to determine when to
+  engage with server members.
 - Views and discusses most types of media posted in chat. (See
   [Media Support](#media-support))
 - Asynchronously performs tasks as requested:
@@ -39,13 +41,13 @@ An autonomous groupchat agent.
 
 ## Development
 
-Interested in contributing? See our [Contribution Guide](./CONTRIBUTING.md) for
-contribution guidelines and the development guide!
+**Interested in contributing?** See our [Contribution Guide](./CONTRIBUTING.md)
+for contribution guidelines and the development guide!
 
 ### High-level Architecture
 
 > [!TIP]
-> Click on the components in the diagram below to navigate to their
+> Click on the links in the diagram below to navigate to a specific component's
 > documentation.
 
 ```mermaid
@@ -88,15 +90,22 @@ implemented via Gemini)_, see the
 
 ## Gallery
 
+<table>
+<tr>
+<td>
 <figure>
   <img width="360" alt="origin_of_bott" src="assets/origin.png" />
   <figcaption>Bott's origin</figcaption>
 </figure>
-
+</td>
+<td>
 <figure>
   <img width="360" src="assets/concept.png" alt="concept" />
   <figcaption>concept art by DanielLaCos.se</figcaption>
 </figure>
+</td>
+</tr>
+</table>
 
 ## Licensing
 
