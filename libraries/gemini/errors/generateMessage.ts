@@ -71,7 +71,7 @@ export async function generateErrorMessage<O extends AnyShape>(
       content: interpretation ||
         "[SYSTEM] An error occurred while processing your request.",
     },
-    timestamp: new Date(),
+    createdAt: new Date(),
     user: context.user,
     channel: context.channel,
     parent: requestEvent.parent,

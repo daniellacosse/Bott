@@ -10,8 +10,8 @@
  */
 
 export * from "./events/generate.ts";
-export * from "./files/song.ts";
-export * from "./files/photo.ts";
-export * from "./files/essay.ts";
-export * from "./files/movie.ts";
+export * from "./attachments/essay.ts";
+export * from "./attachments/movie.ts";
+export * from "./attachments/photo.ts";
+export * from "./attachments/song.ts";
 export * from "./errors/generateMessage.ts";

@@ -71,9 +71,9 @@ export const queryGemini = async <O>(
 
   const response = await gemini.models.generateContent({
     model,
-    contents: typeof input === "string"
-      ? [input]
-      : input.map((event) => _transformBottEventToContent(event, context)),
+    contents: typeof input === "string" ? [input] : await Promise.all(
+      input.map((event) => _transformBottEventToContent(event, context)),
+    ),
     config,
   });
 
@@ -95,12 +95,12 @@ export const queryGemini = async <O>(
   }
 };
 
-export const _transformBottEventToContent = (
+export const _transformBottEventToContent = async (
   event: BottEvent,
   context: EventPipelineContext,
-): Content => {
+): Promise<Content> => {
   const {
-    files: _files,
+    attachments: _attachments,
     parent: _parent,
     createdAt,
     ...rest
@@ -115,7 +115,7 @@ export const _transformBottEventToContent = (
     };
 
     delete parent.parent;
-    delete parent.files;
+    delete parent.attachments;
   }
 
   const metadata = context.evaluationState.get(event);
@@ -140,18 +140,20 @@ export const _transformBottEventToContent = (
     parts,
   };
 
-  if (event.files && event.files.length) {
-    parts.push({ text: "--- Attached Files ---" });
+  if (event.attachments && event.attachments.length) {
+    parts.push({ text: "--- Attachments ---" });
 
-    for (const file of event.files) {
-      if (!file.compressed) {
+    for (const attachment of event.attachments) {
+      if (!attachment.compressed?.file) {
         continue;
       }
 
       parts.push({
         inlineData: {
-          mimeType: file.compressed.type,
-          data: encodeBase64(file.compressed.data!),
+          mimeType: attachment.compressed.file.type,
+          data: encodeBase64(
+            new Uint8Array(await attachment.compressed.file.arrayBuffer()),
+          ),
         },
       });
     }

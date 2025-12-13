@@ -45,7 +45,7 @@ An autonomous groupchat agent.
 ### High-level Architecture
 
 > [!TIP]
-> Review the code data model annotated in [./model/types.ts](./model/types.ts).
+> Review the code data model annotated in [./model/types](./model/types).
 
 ```mermaid
 graph TD

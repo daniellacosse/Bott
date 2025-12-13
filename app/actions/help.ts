@@ -9,12 +9,12 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { type AnyShape, type BottAction, BottEventType } from "@bott/model";
+import { type BottAction, BottEventType } from "@bott/model";
 import { createInfoEmbed } from "@bott/discord";
 
-export const help: BottAction<AnyShape, AnyShape> = Object.assign(
+export const help: BottAction = Object.assign(
   function help() {
-    return {
+    return Promise.resolve({
       id: crypto.randomUUID(),
       type: BottEventType.ACTION_RESULT as const,
       // user: this.user,
@@ -36,8 +36,8 @@ export const help: BottAction<AnyShape, AnyShape> = Object.assign(
           footer: "@Bott written by DanielLaCos.se ᛫ Powered by Google Gemini",
         })],
       },
-      timestamp: new Date(),
-    };
+      createdAt: new Date(),
+    });
   },
   {
     description: "Get help with @Bott.",

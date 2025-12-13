@@ -12,13 +12,13 @@
 import { type GenerateVideosOperation, PersonGeneration } from "@google/genai";
 import { decodeBase64 } from "@std/encoding";
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import { MOVIE_MODEL } from "../constants.ts";
 
 import _gemini from "../client.ts";
-import type { BottFileDataGenerator } from "./types.ts";
+import type { BottAttachmentDataGenerator } from "./types.ts";
 
-export const generateMovieData: BottFileDataGenerator = async (
+export const generateMovieData: BottAttachmentDataGenerator = async (
   prompt: string,
   {
     model = MOVIE_MODEL,
@@ -69,10 +69,11 @@ export const generateMovieData: BottFileDataGenerator = async (
     throw new Error("No video bytes");
   }
 
-  return {
-    type: BottFileType.MP4,
-    data: decodeBase64(videoData.video.videoBytes),
-  };
+  return new File(
+    [decodeBase64(videoData.video.videoBytes)],
+    "movie.mp4",
+    { type: BottAttachmentType.MP4 },
+  );
 };
 
 function doVideoJob(

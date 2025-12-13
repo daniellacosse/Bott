@@ -11,8 +11,8 @@
 
 import type { Message } from "discord.js";
 
-import { type BottEvent, BottEventType, type BottFile } from "@bott/model";
-import { addEventData, getEvents } from "@bott/storage";
+import { type BottEvent, BottEventType } from "@bott/model";
+import { addEvents, getEvents, prepareAttachmentFromUrl } from "@bott/storage";
 import { log } from "@bott/logger";
 
 import { getMarkdownLinks } from "./markdown.ts";
@@ -77,14 +77,12 @@ export const resolveBottEventFromMessage = async (
   ];
 
   if (urls.length) {
-    event.files = urls.map<BottFile>((url) => ({
-      id: crypto.randomUUID(),
-      source: new URL(url),
-      parent: event,
-    }));
+    event.attachments = await Promise.all(
+      urls.map((url) => prepareAttachmentFromUrl(new URL(url), event)),
+    );
   }
 
-  const result = await addEventData(event);
+  const result = await addEvents(event);
   if ("error" in result) {
     log.error(
       "Failed to resolve message event to database:",
