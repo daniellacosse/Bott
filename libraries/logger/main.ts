@@ -141,7 +141,7 @@ export const log: Logger = {
       const startTime = perfTimers.get(label)!;
       const elapsed = performance.now() - startTime;
       perfTimers.delete(label);
-      logger.info(`${label}: ${elapsed.toFixed(2)}ms`);
+      logger.info(`PERF ${label}: ${elapsed.toFixed(2)}ms`);
     } else {
       // Start a new timer
       perfTimers.set(label, performance.now());

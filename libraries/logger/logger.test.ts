@@ -76,11 +76,12 @@ Deno.test("Logger perf works like console.time/timeEnd", async () => {
   const perfMessage = messages.find((msg) => msg.includes("timer1:"));
 
   assert(perfMessage, "Should log timing message");
+  assert(perfMessage!.includes("PERF"), "Should include 'PERF' prefix");
   assert(perfMessage!.includes("ms"), "Should include 'ms' in message");
 
   // Extract the time value and verify it's reasonable
-  const timeMatch = perfMessage!.match(/timer1: ([\d.]+)ms/);
-  assert(timeMatch, "Should match format 'label: XXms'");
+  const timeMatch = perfMessage!.match(/PERF timer1: ([\d.]+)ms/);
+  assert(timeMatch, "Should match format 'PERF label: XXms'");
 
   const elapsedTime = parseFloat(timeMatch![1]);
   assert(
@@ -106,11 +107,11 @@ Deno.test("Logger perf supports multiple concurrent timers", async () => {
   // Check that both timing messages were logged
   const messages = testHandler.logs.map((l) => l.msg);
 
-  const perfMessageA = messages.find((msg) => msg.includes("timer-a:"));
-  const perfMessageB = messages.find((msg) => msg.includes("timer-b:"));
+  const perfMessageA = messages.find((msg) => msg.includes("PERF timer-a:"));
+  const perfMessageB = messages.find((msg) => msg.includes("PERF timer-b:"));
 
-  assert(perfMessageA, "Should log timer-a");
-  assert(perfMessageB, "Should log timer-b");
+  assert(perfMessageA, "Should log timer-a with PERF prefix");
+  assert(perfMessageB, "Should log timer-b with PERF prefix");
 });
 
 Deno.test("Logger perf uses default label when none provided", () => {
@@ -123,7 +124,7 @@ Deno.test("Logger perf uses default label when none provided", () => {
 
   // Check that default label was used
   const messages = testHandler.logs.map((l) => l.msg);
-  const perfMessage = messages.find((msg) => msg.includes("default:"));
+  const perfMessage = messages.find((msg) => msg.includes("PERF default:"));
 
-  assert(perfMessage, "Should log with 'default' label");
+  assert(perfMessage, "Should log with 'default' label and PERF prefix");
 });
