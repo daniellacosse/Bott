@@ -31,10 +31,8 @@ All `BottEvent` objects share the following base properties:
 
 Each `BottEvent` object may have one or more attached files. These are not a
 part of the JSON object, but rather added by the system under a
-`--- Attached Files ---` header.
-
-There may be files referenced in events that are missing - they were likely
-pruned by the system to fit into context.
+`--- Attached Files ---` header. There may be files referenced in events that
+are missing - they were likely pruned by the system to fit into context.
 
 ## Type-Based Properties
 
@@ -63,9 +61,7 @@ system.
 {
   "id": "rply_4d5e6f",
   "type": "reply",
-  "parent": {
-    "id": "msg_1a2b3c"
-  },
+  "parent": { "id": "msg_1a2b3c" },
   "createdAt": "a minute ago",
   "user": { "id": "user_abc", "name": "Jane Smith" },
   "details": { "content": "Hello back!" },
@@ -106,13 +102,11 @@ parameters. These are the actions currently available to the system:
 
 <%= action.description %>
 
-| Option                                                            | Description                      | Type                 | Allowed Values                                                                                  | Required                              |
-| ----------------------------------------------------------------- | -------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------- |
-| <% for (const option of Object.values(action.options ?? {})) { %> |                                  |                      |                                                                                                 |                                       |
-| `<%= option.name %>`                                              | <%= option.description ?? '-' %> | `<%= option.type %>` | <% if (option.allowedValues) { %>`<%= option.allowedValues.join(", ") %>`<% } else { %>-<% } %> | <%= option.required ? "Yes" : "No" %> |
-| <% } %>                                                           |                                  |                      |                                                                                                 |                                       |
-
-<% } %>
+| Option                                                            | Description          | Type                             | Allowed Values       | Required                                                                                        |
+| ----------------------------------------------------------------- | -------------------- | -------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------- |
+| <% for (const option of Object.values(action.options ?? {})) { %> | `<%= option.name %>` | <%= option.description ?? '-' %> | `<%= option.type %>` | <% if (option.allowedValues) { %>`<%= option.allowedValues.join(", ") %>`<% } else { %>-<% } %> |
+| <% } %>                                                           |                      |                                  |                      |                                                                                                 |
+| <% } %>                                                           |                      |                                  |                      |                                                                                                 |
 
 ---
 
@@ -150,8 +144,8 @@ Definition: <%= ratingScale.definition %>
 <% for (const key of Object.keys(ratingScale.examples)) { %>
 
 - **Examples of a rating of `<%= key %>`**: <% for (const example of
-  ratingScale.examples[key]) { %>
-  - <%= example %> <% } %> <% } %> <% } %> <% } %>
+  ratingScale.examples[key]) { %> - <%= example %> <% } %> <% } %> <% } %> <% }
+  %>
 
 <% for (const reason of settings.reasons.output) { %> <% for (const ratingScale
 of reason.ratingScales ?? []) { %>
@@ -163,8 +157,8 @@ Definition: <%= ratingScale.definition %>
 <% for (const key of Object.keys(ratingScale.examples)) { %>
 
 - **Examples of a rating of `<%= key %>`**: <% for (const example of
-  ratingScale.examples[key]) { %>
-  - <%= example %> <% } %> <% } %> <% } %> <% } %>
+  ratingScale.examples[key]) { %> - <%= example %> <% } %> <% } %> <% } %> <% }
+  %>
 
 ---
 
@@ -176,18 +170,11 @@ Definition: <%= ratingScale.definition %>
 {
   "id": "msg_1a2b3c",
   "type": "message",
-  "timestamp": "a few seconds ago",
-  "user": {
-    "id": "user_xyz",
-    "name": "John Doe"
-  },
-  "details": {
-    "content": "Hello, world!"
-  },
+  "createdAt": "a few seconds ago",
+  "user": { "id": "user_xyz", "name": "John Doe" },
+  "details": { "content": "Hello, world!" },
   "_pipelineEvaluationMetadata": {
-    "ratings": {
-      "some_rating_scale_name": 4
-    },
+    "ratings": { "some_rating_scale_name": 4 },
     "focusReasons": [
       { "name": "whenAddressed", "instruction": "..." }
     ]
@@ -201,21 +188,12 @@ Definition: <%= ratingScale.definition %>
 {
   "id": "rply_4d5e6f",
   "type": "reply",
-  "parent": {
-    "id": "msg_1a2b3c"
-  },
-  "timestamp": "a minute ago",
-  "user": {
-    "id": "user_abc",
-    "name": "Jane Smith"
-  },
-  "details": {
-    "content": "Hello back!"
-  },
+  "parent": { "id": "msg_1a2b3c" },
+  "createdAt": "a minute ago",
+  "user": { "id": "user_abc", "name": "Jane Smith" },
+  "details": { "content": "Hello back!" },
   "_pipelineEvaluationMetadata": {
-    "ratings": {
-      "some_rating_scale_name": 2
-    }
+    "ratings": { "some_rating_scale_name": 2 }
   }
 }
 ```
@@ -226,17 +204,10 @@ Definition: <%= ratingScale.definition %>
 {
   "id": "react_7g8h9i",
   "type": "reaction",
-  "parent": {
-    "id": "msg_1a2b3c"
-  },
-  "timestamp": "2 minutes ago",
-  "user": {
-    "id": "user_abc",
-    "name": "Jane Smith"
-  },
-  "details": {
-    "content": "👍"
-  },
+  "parent": { "id": "msg_1a2b3c" },
+  "createdAt": "2 minutes ago",
+  "user": { "id": "user_abc", "name": "Jane Smith" },
+  "details": { "content": "👍" },
   "_pipelineEvaluationMetadata": {}
 }
 ```
@@ -247,21 +218,14 @@ Definition: <%= ratingScale.definition %>
 {
   "id": "act_j1k2l3",
   "type": "actionCall",
-  "timestamp": "3 minutes ago",
-  "user": {
-    "id": "<%= user.id %>",
-    "name": "<%= user.name %>"
-  },
+  "createdAt": "3 minutes ago",
+  "user": { "id": "<%= user.id %>", "name": "<%= user.name %>" },
   "details": {
     "name": "generateMedia",
-    "options": {
-      "query": "cute kitten pictures"
-    }
+    "options": { "query": "cute kitten pictures" }
   },
   "_pipelineEvaluationMetadata": {
-    "ratings": {
-      "some_rating_scale_name": 4
-    },
+    "ratings": { "some_rating_scale_name": 4 },
     "outputReasons": ["ensurePotentialImpact"]
   }
 }

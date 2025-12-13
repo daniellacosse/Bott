@@ -16,7 +16,7 @@ import type {
   BottActionCallEvent,
   BottActionResultEvent,
 } from "@bott/model";
-import { addEventData } from "@bott/storage";
+import { addEvents } from "@bott/storage";
 import { callWithContext } from "../context.ts";
 import { log } from "@bott/logger";
 
@@ -40,7 +40,7 @@ export const resolveCommandResponseEvent = async <
     arguments: [request],
   }) as DiscordResponseEvent;
 
-  const result = addEventData(response);
+  const result = addEvents(response);
   if ("error" in result) {
     log.error(
       "Failed to resolve response event to database:",
