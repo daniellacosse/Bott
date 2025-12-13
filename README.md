@@ -50,7 +50,7 @@ An autonomous groupchat agent.
 
 ```mermaid
 flowchart TD
-  subgraph "@bott/model"["<a href='./model'>**@bott/model**</a>"]
+  subgraph Model["<a href='./model'>**@bott/model**</a>"]
     BottDiscord["<a href='./libraries/discord'>**@bott/discord**</a>"]
     
     subgraph App["<a href='./app'>./app</a>"]
@@ -75,7 +75,7 @@ flowchart TD
   BottDiscord -- "System Message" --> Discord
 
   style App fill:#f2896f;
-  style "@bott/model" fill:#c7e2e2;
+  style Model fill:#c7e2e2;
 ```
 
 #### Event Generation
@@ -88,15 +88,13 @@ implemented via Gemini), see the
 ## Gallery
 
 <figure>
-<img width="360" alt="origin_of_bott" src="assets/origin.png" />
-
-<figcaption>Bott's origin</figcaption>
+  <img width="360" alt="origin_of_bott" src="assets/origin.png" />
+  <figcaption>Bott's origin</figcaption>
 </figure>
 
 <figure>
-<img width="360" src="assets/concept.png" alt="concept" />
-
-<figcaption>concept art by DanielLaCos.se</figcaption>
+  <img width="360" src="assets/concept.png" alt="concept" />
+  <figcaption>concept art by DanielLaCos.se</figcaption>
 </figure>
 
 ## Licensing
