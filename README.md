@@ -38,9 +38,8 @@ An autonomous groupchat agent.
 
 ## Development
 
-> [!NOTE]
-> Interested in contributing? See our [Contribution Guide](./CONTRIBUTING.md)
-> for contribution guidelines and the development guide!
+Interested in contributing? See our [Contribution Guide](./CONTRIBUTING.md) for
+contribution guidelines and the development guide!
 
 ### High-level Architecture
 
@@ -49,19 +48,20 @@ An autonomous groupchat agent.
 > documentation.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'lineColor': '#5e5e5e', 'fontSize': '14px' }}}%%
 flowchart TD
-  subgraph Model["<a href='./model'>**@bott/model**</a>"]
-    BottDiscord["<a href='./libraries/discord'>**@bott/discord**</a>"]
+  subgraph Model["<a href='https://github.com/daniellacosse-code/Bott/tree/main/model'>**@bott/model**</a>"]
+    BottDiscord["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/discord'>**@bott/discord**</a>"]
     
-    subgraph App["<a href='./app'>./app</a>"]
-      BottAppLayer["<a href='./libraries/task'>**@bott/task**</a>"]
-      BottDataLayer["<a href='./libraries/storage'>**@bott/storage**</a><br>Persistence layer"]
+    subgraph App["<a href='https://github.com/daniellacosse-code/Bott/tree/main/app'>./app</a>"]
+      BottAppLayer["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/task'>**@bott/task**</a>"]
+      BottDataLayer["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/storage'>**@bott/storage**</a><br>Persistence layer"]
       
       BottAppLayer --> BottDataLayer
       BottDataLayer --> BottAppLayer
     end
     
-    BottGemini["<a href='./libraries/gemini'>**@bott/gemini**</a>"]
+    BottGemini["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/gemini'>**@bott/gemini**</a>"]
   end
 
   %% Flow from Discord User to Bot and back
@@ -74,16 +74,16 @@ flowchart TD
   App -- "BottEvent" --> BottDiscord
   BottDiscord -- "System Message" --> Discord
 
-  style App fill:#f2896f;
-  style Model fill:#c7e2e2;
+  style App fill:#f2896f,color:black,stroke:#333,stroke-width:2px
+  style Model fill:#c7e2e2,color:black,stroke:#333,stroke-width:2px
 ```
 
 #### Event Generation
 
 Bott processes incoming messages and events through complicated multi-step to
-avoid undue chatter. For a more detailed breakdown of this process (currently
-implemented via Gemini), see the
-**[Gemini Event Pipeline documentation](./libraries/gemini/events/README.md)**.
+avoid undue chatter. For a more detailed breakdown of this process _(currently
+implemented via Gemini)_, see the
+**[Gemini Event Pipeline documentation](./libraries/gemini/events)**.
 
 ## Gallery
 

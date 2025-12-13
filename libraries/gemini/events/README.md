@@ -28,12 +28,20 @@ updated context.
 
 ```mermaid
 flowchart LR
-    Event[Context] --> Focus[Focus Input]
-    Focus --> Generate[Generate Output]
-    Generate --> Segment[Segment Output]
-    Segment --> Filter[Filter Output]
-    Filter --> Patch[Patch Output]
-    Patch --> Result[BottEvent]
+    Event[Input Context] --> Pipeline
+
+    subgraph Pipeline [Generation Pipeline]
+      direction LR
+      Focus[Focus Input] --> Generate[Generate Output]
+      Generate --> Segment[Segment Output]
+      Segment --> Filter[Filter Output]
+      Filter --> Patch[Patch Output]
+    end
+
+    Patch --> Result(BottEvent)
+    
+    style Result fill:#f2896f,color:black
+    style Pipeline fill:none,stroke:#333,stroke-dasharray: 5 5
 ```
 
 ### 1. Focus Input ([`01_focusInput`](./pipeline/01_focusInput))
