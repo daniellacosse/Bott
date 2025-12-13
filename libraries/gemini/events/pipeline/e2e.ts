@@ -33,8 +33,7 @@ import { filterOutput } from "./04_filterOutput/main.ts";
 import { patchOutput } from "./05_patchOutput/main.ts";
 
 if (import.meta.main) {
-  const pipelineStart = performance.now();
-  log.perf("pipeline: start");
+  log.perf("pipeline");
 
   const pipelineToTest: EventPipelineProcessor[] = [
     focusInput,
@@ -47,15 +46,9 @@ if (import.meta.main) {
   let result: EventPipelineContext | object = {};
 
   for (const processor of pipelineToTest) {
-    const processorStart = performance.now();
-    log.perf(`${processor.name}: start`);
+    log.perf(processor.name);
     result = await processor(createMockContext());
-    const processorEnd = performance.now();
-    log.perf(
-      `${processor.name}: end (${
-        (processorEnd - processorStart).toFixed(2)
-      }ms)`,
-    );
+    log.perf(processor.name);
   }
 
   if (!("data" in result)) {
@@ -68,8 +61,7 @@ if (import.meta.main) {
   log.debug("\n--- OUTPUT ---");
   result.data.output.forEach(printEvent);
 
-  const pipelineEnd = performance.now();
-  log.perf(`pipeline: end (${(pipelineEnd - pipelineStart).toFixed(2)}ms)`);
+  log.perf("pipeline");
 }
 
 // ---

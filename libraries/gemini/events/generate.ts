@@ -118,10 +118,9 @@ export async function* generateEvents(
 
   for (const processor of pipeline) {
     try {
-      const start = performance.now();
-      log.perf(`${processor.name}: start`);
+      log.perf(processor.name);
       pipelineContext = await processor(pipelineContext);
-      log.perf(`${processor.name}: end (${performance.now() - start}ms)`);
+      log.perf(processor.name);
     } catch (error) {
       log.error((error as Error).message, (error as Error).stack);
       break;
