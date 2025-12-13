@@ -9,6 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+// Set LOG_TOPICS to include 'perf' before importing the logger module
+Deno.env.set("LOG_TOPICS", "debug,info,warn,error,perf");
+
 import { assert, assertEquals } from "@std/assert";
 import { log, testHandler } from "./main.ts";
 
