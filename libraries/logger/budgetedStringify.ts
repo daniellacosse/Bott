@@ -23,7 +23,7 @@ interface EstimationNode {
  * 1. Build an estimation tree estimating the exact JSON size of every subtree.
  * 2. Load balance the budget across children proportional to their size.
  */
-export function smartlySerialize(value: unknown, totalBudget: number): string {
+export function budgetedStringify(value: unknown, totalBudget: number): string {
   function _buildEstimationTree(value: unknown, depth: number): EstimationNode {
     if (depth > MAX_RECURSION_DEPTH) {
       return { size: "[Max Depth]".length };

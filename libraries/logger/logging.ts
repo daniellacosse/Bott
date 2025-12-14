@@ -11,7 +11,7 @@
 
 import { ConsoleHandler, getLogger, setup } from "@std/log";
 import { LOGGER_MAX_CHARACTER_LENGTH, LOGGER_TOPICS } from "@bott/constants";
-import { smartlySerialize } from "./smartlySerialize.ts";
+import { budgetedStringify } from "./budgetedStringify.ts";
 
 // Parse LOGGER_TOPICS environment variable
 export const allowedTopics = new Set(LOGGER_TOPICS);
@@ -45,7 +45,7 @@ export type Logger = {
  * Helper function to format log arguments similar to console methods
  */
 export function formatArgs(...args: unknown[]): string {
-  return smartlySerialize(args, LOGGER_MAX_CHARACTER_LENGTH);
+  return budgetedStringify(args, LOGGER_MAX_CHARACTER_LENGTH);
 }
 
 // Map to track performance timers (label -> start time)

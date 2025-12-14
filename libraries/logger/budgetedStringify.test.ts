@@ -10,17 +10,17 @@
  */
 
 import { assert, assertEquals } from "@std/assert";
-import { smartlySerialize } from "./smartlySerialize.ts";
+import { budgetedStringify } from "./budgetedStringify.ts";
 
 const MAX_LENGTH = 20;
 
-Deno.test("smartTruncate - string smaller than budget", () => {
-  const result = smartlySerialize("short string", MAX_LENGTH);
+Deno.test("budgetedStringify - string smaller than budget", () => {
+  const result = budgetedStringify("short string", MAX_LENGTH);
   assertEquals(result, JSON.stringify("short string"));
 });
 
-Deno.test("smartTruncate - string larger than budget", () => {
-  const result = smartlySerialize(
+Deno.test("budgetedStringify - string larger than budget", () => {
+  const result = budgetedStringify(
     "this is a very long string that should be truncated",
     MAX_LENGTH,
   );
@@ -31,15 +31,15 @@ Deno.test("smartTruncate - string larger than budget", () => {
   assert(result.length <= MAX_LENGTH);
 });
 
-Deno.test("smartTruncate - object smaller than budget", () => {
+Deno.test("budgetedStringify - object smaller than budget", () => {
   const input = { key: "val" };
-  const result = smartlySerialize(input, MAX_LENGTH);
+  const result = budgetedStringify(input, MAX_LENGTH);
   assertEquals(result, JSON.stringify(input));
 });
 
-Deno.test("smartTruncate - object with single long string exceeds budget", () => {
+Deno.test("budgetedStringify - object with single long string exceeds budget", () => {
   const input = { key: "this is a long value intended to be truncated" };
-  const result = smartlySerialize(input, MAX_LENGTH);
+  const result = budgetedStringify(input, MAX_LENGTH);
 
   assert(result.length <= MAX_LENGTH);
   // {"key":"..."}
@@ -50,7 +50,7 @@ Deno.test("smartTruncate - object with single long string exceeds budget", () =>
   assertEquals(parsedTruncated.key.endsWith("…"), true);
 });
 
-Deno.test("smartTruncate - nested object with proportional truncation", () => {
+Deno.test("budgetedStringify - nested object with proportional truncation", () => {
   const input = {
     a: "aaaaa aaaaa", // 11
     b: {
@@ -58,7 +58,7 @@ Deno.test("smartTruncate - nested object with proportional truncation", () => {
     },
   };
   // Total size 43. Budget 35.
-  const result = smartlySerialize(input, 35);
+  const result = budgetedStringify(input, 35);
   const parsed = JSON.parse(result);
 
   assertEquals(parsed.a.startsWith("aaaa"), true);
@@ -68,7 +68,7 @@ Deno.test("smartTruncate - nested object with proportional truncation", () => {
   assertEquals(parsed.b.c.length < 11, true);
 });
 
-Deno.test("smartTruncate - max depth exceeded", () => {
+Deno.test("budgetedStringify - max depth exceeded", () => {
   let depth = 0;
   type Nested = { next?: Nested | string };
   let obj: Nested | string = "leaf";
@@ -78,8 +78,7 @@ Deno.test("smartTruncate - max depth exceeded", () => {
     depth++;
   }
 
-  const result = smartlySerialize(obj, 1000);
+  const result = budgetedStringify(obj, 1000);
   // Should return JSON with "{…}" at depth
   assert(result.includes("{…}"));
 });
-
