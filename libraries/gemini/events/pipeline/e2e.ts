@@ -15,12 +15,12 @@ import {
   type BottAction,
   BottActionOptionType,
   type BottChannel,
-  type BottClassifier,
-  type BottEvent,
   BottEventType,
+  type BottRatingScale,
   type BottReason,
   type BottUser,
 } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { log } from "@bott/logger";
 
 import type { EventPipelineContext, EventPipelineProcessor } from "./types.ts";
@@ -32,70 +32,58 @@ import { segmentOutput } from "./03_segmentOutput/main.ts";
 import { filterOutput } from "./04_filterOutput/main.ts";
 import { patchOutput } from "./05_patchOutput/main.ts";
 
-const pipelineStart = performance.now();
-log.perf("pipeline: start");
+if (import.meta.main) {
+  log.perf("pipeline");
 
-const pipelineToTest: EventPipelineProcessor[] = [
-  focusInput,
-  generateOutput,
-  segmentOutput,
-  filterOutput,
-  patchOutput,
-];
+  const pipelineToTest: EventPipelineProcessor[] = [
+    focusInput,
+    generateOutput,
+    segmentOutput,
+    filterOutput,
+    patchOutput,
+  ];
 
-let result: EventPipelineContext | object = {};
+  let result: EventPipelineContext | object = {};
 
-for (const processor of pipelineToTest) {
-  const processorStart = performance.now();
-  log.perf(`${processor.name}: start`);
-  result = await processor(createMockContext());
-  const processorEnd = performance.now();
-  log.perf(
-    `${processor.name}: end (${(processorEnd - processorStart).toFixed(2)}ms)`,
-  );
+  for (const processor of pipelineToTest) {
+    log.perf(processor.name);
+    result = await processor(createMockContext());
+    log.perf(processor.name);
+  }
+
+  if (!("data" in result)) {
+    throw new Error("NO DATA");
+  }
+
+  log.debug("--- INPUT ---");
+  result.data.input.forEach(printEvent);
+
+  log.debug("\n--- OUTPUT ---");
+  result.data.output.forEach(printEvent);
+
+  log.perf("pipeline");
 }
-
-if (!("data" in result)) {
-  throw new Error("NO DATA");
-}
-
-log.debug("--- INPUT ---");
-result.data.input.forEach(printEvent);
-
-log.debug("\n--- OUTPUT ---");
-result.data.output.forEach(printEvent);
-
-const pipelineEnd = performance.now();
-log.perf(`pipeline: end (${(pipelineEnd - pipelineStart).toFixed(2)}ms)`);
 
 // ---
 
-function printEvent(event: BottEvent<AnyShape>) {
-  const details = event.details as {
+function printEvent(
+  event: BottEvent & { _pipelineEvaluationMetadata?: object },
+) {
+  const detail = event.detail as {
     content?: string;
-    scores?: Record<string, number>;
-    focus?: boolean;
-    output?: boolean;
   };
 
   const parts = [
     `[${event.type.padEnd(8)}]`,
     `${(event.user?.name ?? "bott").padEnd(8)}:`,
-    details.content ? `'${details.content}'` : "(no content)",
+    detail.content ? `'${detail.content}'` : "(no content)",
   ];
 
-  const metadata: string[] = [];
-  if (details.scores) {
-    metadata.push(`scores: ${JSON.stringify(details.scores)}`);
+  if (event._pipelineEvaluationMetadata) {
+    parts.push(
+      `pipeline: ${JSON.stringify(event._pipelineEvaluationMetadata)}`,
+    );
   }
-  if (typeof details.focus === "boolean") {
-    metadata.push(`focus: ${details.focus}`);
-  }
-  if (typeof details.output === "boolean") {
-    metadata.push(`output: ${details.output}`);
-  }
-
-  if (metadata.length > 0) parts.push(`{ ${metadata.join(", ")} }`);
 
   console.log(parts.join(" "));
 }
@@ -124,16 +112,13 @@ function createMockEvent(
   type: BottEventType,
   details?: AnyShape,
   parent?: BottEvent,
-): BottEvent<AnyShape> {
-  return {
-    id: faker.string.uuid(),
-    type,
-    timestamp: faker.date.recent(),
-    user,
-    channel,
-    details: details ?? { content: faker.lorem.sentence() },
-    parent,
-  };
+): BottEvent {
+  return new BottEvent(type, {
+    detail: details ?? { content: faker.lorem.sentence() },
+    user: user,
+    channel: channel,
+    parent: parent,
+  });
 }
 
 export function createMockContext(): EventPipelineContext {
@@ -190,13 +175,13 @@ export function createMockContext(): EventPipelineContext {
     outputEvent1,
   );
 
-  const classifier: BottClassifier = {
+  const ratingScale: BottRatingScale = {
     name: "isInteresting",
     definition: "Is the content interesting?",
     examples: { 1: ["boring", "blah"], 5: ["fascinating", "whohoo"] },
   };
 
-  const classifier2: BottClassifier = {
+  const ratingScale2: BottRatingScale = {
     name: "isCorrect",
     definition: "Is the content correct?",
     examples: { 1: ["<a blatant lie>"], 5: ["<a profound truth>"] },
@@ -204,21 +189,20 @@ export function createMockContext(): EventPipelineContext {
 
   const inputRule: BottReason = {
     name: "onlyLookAtInterestingThings",
-    definition: "Only look at events that are interesting.",
-    validator: (event) => {
-      return (event.details.scores as Record<string, number>).isInteresting ===
-        5;
+    description: "Only look at events that are interesting.",
+    validator: (metadata) => {
+      return metadata?.ratings?.isInteresting === 5;
     },
-    classifiers: [classifier],
+    ratingScales: [ratingScale],
   };
 
   const outputRule: BottReason = {
     name: "onlySayCorrectThings",
-    definition: "Only say things that are correct.",
-    validator: (event) => {
-      return (event.details.scores as Record<string, number>).isCorrect >= 4;
+    description: "Only say things that are correct.",
+    validator: (metadata) => {
+      return (metadata?.ratings?.isCorrect ?? 0) >= 4;
     },
-    classifiers: [classifier2],
+    ratingScales: [ratingScale2],
   };
 
   const generateMedia = function (context: object) {
@@ -256,6 +240,7 @@ export function createMockContext(): EventPipelineContext {
         outputEvent2,
       ],
     },
+    evaluationState: new Map(),
     abortSignal: new AbortController().signal,
     user: bott,
     channel,

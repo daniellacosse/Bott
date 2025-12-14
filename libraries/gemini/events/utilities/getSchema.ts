@@ -50,9 +50,9 @@ export const getEventSchema = <O extends AnyShape>(
             ],
             description: "The type of event to generate.",
           },
-          details: {
+          detail: {
             type: GeminiStructuredResponseType.OBJECT,
-            description: "The specific details for the generated event.",
+            description: "The specific detail for the generated event.",
             properties: {
               content: { type: GeminiStructuredResponseType.STRING },
             },
@@ -71,7 +71,7 @@ export const getEventSchema = <O extends AnyShape>(
             required: ["id"],
           },
         },
-        required: ["type", "details"],
+        required: ["type", "detail"],
       },
       ...getActionSchema(context.actions),
     ],
@@ -99,7 +99,7 @@ export const getActionSchema = <O extends AnyShape>(
           type: GeminiStructuredResponseType.STRING,
           enum: [BottEventType.ACTION_CALL],
         },
-        details: {
+        detail: {
           type: GeminiStructuredResponseType.OBJECT,
           properties: {
             name: {
@@ -143,7 +143,7 @@ export const getActionSchema = <O extends AnyShape>(
           required: ["name"],
         },
       },
-      required: ["type", "details"],
+      required: ["type", "detail"],
     });
   }
 

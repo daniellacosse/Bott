@@ -9,4 +9,20 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export * from "./types.ts";
+import { BottAttachmentType } from "./types/events.ts";
+
+export * from "./types/actions.ts";
+export * from "./types/entities.ts";
+export * from "./types/events.ts";
+export * from "./types/reasons.ts";
+export * from "./types/service.ts";
+export * from "./types/settings.ts";
+export * from "./types/utility.ts";
+
+/**
+ * Convenience map for looking up an extension based on its file type.
+ */
+export const BOTT_ATTACHMENT_TYPE_LOOKUP: Record<string, string> = Object
+  .fromEntries(
+    Object.entries(BottAttachmentType).map(([key, value]) => [value, key]),
+  );

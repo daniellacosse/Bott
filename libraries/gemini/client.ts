@@ -10,10 +10,10 @@
  */
 
 import { GoogleGenAI } from "@google/genai";
+import { GOOGLE_PROJECT_ID, GOOGLE_PROJECT_LOCATION } from "@bott/constants";
 
 export default new GoogleGenAI({
   vertexai: true,
-  project: Deno.env.get("GOOGLE_PROJECT_ID") ?? Deno.env.get("GCP_PROJECT"),
-  location: Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
-    Deno.env.get("GCP_LOCATION"),
+  project: GOOGLE_PROJECT_ID,
+  location: GOOGLE_PROJECT_LOCATION,
 });

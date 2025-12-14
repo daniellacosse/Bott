@@ -13,7 +13,7 @@ import { type Schema, Type } from "@google/genai";
 
 import { log } from "@bott/logger";
 
-import { CLASSIFIER_MODEL } from "../../../constants.ts";
+import { RATING_MODEL } from "@bott/constants";
 import { queryGemini } from "../../utilities/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
@@ -22,43 +22,42 @@ const systemPrompt = await Deno.readTextFile(
 );
 
 export const focusInput: EventPipelineProcessor = async (context) => {
-  const input = structuredClone(context.data.input);
-
+  const input = context.data.input;
   const inputReasons = context.settings.reasons.input;
-  const inputClassifiers = inputReasons.flatMap((reason) =>
-    reason.classifiers ?? []
-  );
+  const inputRatingScales = [
+    ...new Set(inputReasons.flatMap((reason) => reason.ratingScales ?? [])),
+  ];
 
   // If we have no way to determine focus, skip this step.
-  if (inputClassifiers.length === 0) {
+  if (inputRatingScales.length === 0) {
     return context;
   }
 
   const responseSchema = {
     type: Type.OBJECT,
-    properties: inputClassifiers.reduce(
-      (properties, classifier) => {
-        properties[classifier.name] = {
+    properties: inputRatingScales.reduce(
+      (properties, ratingScale) => {
+        properties[ratingScale.name] = {
           type: Type.OBJECT,
           properties: {
-            score: {
+            rating: {
               type: Type.STRING,
-              description: classifier.definition,
+              description: ratingScale.definition,
               enum: ["1", "2", "3", "4", "5"],
             },
             rationale: {
               type: Type.STRING,
-              description: "A 1-2 sentence rationale for the score given.",
+              description: "A 1-2 sentence rationale for the rating given.",
             },
           },
-          required: ["score"],
+          required: ["rating"],
         };
 
         return properties;
       },
       {} as Record<string, Schema>,
     ),
-    required: inputClassifiers.map((classifier) => classifier.name),
+    required: inputRatingScales.map((ratingScale) => ratingScale.name),
   };
 
   const geminiCalls: Promise<void>[] = [];
@@ -67,7 +66,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
   while (pointer < input.length) {
     const event = input[pointer];
 
-    if (event.details.scores) {
+    if (event.lastProcessedAt) {
       pointer++;
       continue;
     }
@@ -79,7 +78,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
 
     geminiCalls.push((async () => {
       const scoresWithRationale = await queryGemini<
-        Record<string, { score: string; rationale: string | undefined }>
+        Record<string, { rating: string; rationale: string | undefined }>
       >(
         // Provide the current event and all subsequent events as context for scoring.
         input.slice(pointer),
@@ -87,28 +86,40 @@ export const focusInput: EventPipelineProcessor = async (context) => {
           systemPrompt,
           responseSchema,
           context,
-          model: CLASSIFIER_MODEL,
+          model: RATING_MODEL,
           useIdentity: false,
         },
       );
 
-      const scores: Record<string, number> = {};
+      const ratings: Record<string, number> = {};
       let logMessage = `Event ${event.id}:\n`;
-      for (const classifier in scoresWithRationale) {
-        const { score, rationale } = scoresWithRationale[classifier];
+      for (const ratingScale in scoresWithRationale) {
+        const { rating, rationale } = scoresWithRationale[ratingScale];
         if (rationale) {
-          logMessage += `  ${classifier}: ${score}. Rationale: ${rationale}\n`;
+          logMessage +=
+            `  ${ratingScale}: ${rating}. Rationale: ${rationale}\n`;
         }
 
-        scores[classifier] = Number(score);
+        ratings[ratingScale] = Number(rating);
       }
 
-      event.details.scores = scores;
-      event.details.focus = Object.values(inputReasons).some((reason) =>
-        reason.validator(event)
-      );
+      const metadata = { ratings };
+      const triggeredFocusReasons = Object.values(inputReasons)
+        .filter((reason) => reason.validator(metadata));
 
-      log.debug(logMessage + "    Marked for focus: " + event.details.focus);
+      context.evaluationState.set(event, {
+        ratings,
+        focusReasons: triggeredFocusReasons,
+      });
+
+      log.debug(
+        logMessage +
+          (triggeredFocusReasons.length > 0
+            ? `    [TRIGGERED FOCUS REASONS]: ${
+              triggeredFocusReasons.map(({ name }) => name).join(", ")
+            }`
+            : ""),
+      );
     })());
 
     pointer++;

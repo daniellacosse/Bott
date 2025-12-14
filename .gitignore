@@ -5,5 +5,10 @@
 fs_root/
 .build-hash
 
+
 # for agents
-deno.zip 
+deno.zip
+
+# Coverage
+coverage/
+cov_profile

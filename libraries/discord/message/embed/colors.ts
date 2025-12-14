@@ -10,6 +10,6 @@
  */
 
 export enum EmbedColor {
-  RED = 0xFF0000,
-  BLUE = 0x0066FF,
+  ERROR = 0xFF0000,
+  THEME = 0xF2896F,
 }

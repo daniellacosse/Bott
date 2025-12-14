@@ -10,8 +10,13 @@
  */
 
 import { assertEquals } from "@std/assert/equals";
-
-import { _formatTimestampAsRelative } from "./queryGemini.ts";
+import {
+  _formatTimestampAsRelative,
+  _transformBottEventToContent,
+} from "./queryGemini.ts";
+import { createMockContext, createMockUser } from "../pipeline/e2e.ts";
+import { BottEventType } from "@bott/model";
+import { BottEvent } from "@bott/service";
 
 Deno.test("_formatTimestampAsRelative - just now", () => {
   const now = new Date();
@@ -65,4 +70,17 @@ Deno.test("_formatTimestampAsRelative - ISO string format", () => {
   const timestamp = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
   const result = _formatTimestampAsRelative(timestamp);
   assertEquals(result, "2 hours ago");
+});
+
+Deno.test("_transformBottEventToContent - basic event", async () => {
+  const context = createMockContext();
+  const event = new BottEvent(BottEventType.MESSAGE, {
+    user: createMockUser(),
+    channel: context.channel,
+    detail: { content: "test" },
+  });
+
+  const result = await _transformBottEventToContent(event, context);
+  assertEquals(result.role, "user");
+  assertEquals(result.parts?.length, 1);
 });

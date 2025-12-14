@@ -15,9 +15,10 @@ import {
   BottActionOptionType,
   type BottActionResultEvent,
   BottEventType,
-  type BottFileData,
 } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { createTask } from "@bott/task";
+import { prepareAttachmentFromFile } from "@bott/storage";
 import {
   generateEssayData,
   generateMovieData,
@@ -32,7 +33,7 @@ import {
   RATE_LIMIT_MUSIC,
   RATE_LIMIT_VIDEOS,
   RATE_LIMIT_WINDOW_MS,
-} from "../env.ts";
+} from "@bott/constants";
 
 // Constants for AI prompt processing
 const MAX_AI_PROMPT_LENGTH = 10000;
@@ -72,7 +73,7 @@ export const generateMedia: BottAction<
       prompt: string;
     }>,
   ) {
-    const { type, prompt: rawPrompt } = requestEvent.details.options;
+    const { type, prompt: rawPrompt } = requestEvent.detail.options;
 
     const prompt = sanitizeAIPrompt(rawPrompt);
 
@@ -125,7 +126,7 @@ export const generateMedia: BottAction<
         taskManager.push(
           type,
           createTask(async (abortSignal: AbortSignal) => {
-            let fileData: BottFileData | undefined;
+            let attachmentFile: File | undefined;
 
             try {
               const context = {
@@ -134,17 +135,17 @@ export const generateMedia: BottAction<
 
               switch (type) {
                 case GeneratedMediaType.PHOTO:
-                  fileData = await generatePhotoData(prompt, context);
+                  attachmentFile = await generatePhotoData(prompt, context);
                   break;
                 case GeneratedMediaType.MOVIE:
-                  fileData = await generateMovieData(prompt, context);
+                  attachmentFile = await generateMovieData(prompt, context);
                   break;
                 case GeneratedMediaType.SONG:
-                  fileData = await generateSongData(prompt, context);
+                  attachmentFile = await generateSongData(prompt, context);
                   break;
                 case GeneratedMediaType.ESSAY:
                 default:
-                  fileData = await generateEssayData(prompt, context);
+                  attachmentFile = await generateEssayData(prompt, context);
                   break;
               }
             } catch (error) {
@@ -156,25 +157,22 @@ export const generateMedia: BottAction<
             }
 
             // This shouldn't happen.
-            if (!fileData) {
+            if (!attachmentFile) {
               throw new Error("Failed to generate media");
             }
 
-            resolve({
-              id: crypto.randomUUID(),
-              type: BottEventType.ACTION_RESULT as const,
-              details: {
-                content: "",
-              },
-              files: [{
-                id: crypto.randomUUID(),
-                raw: fileData,
-              }],
-              timestamp: new Date(),
+            const resultEvent = new BottEvent(BottEventType.ACTION_RESULT, {
+              detail: {},
               user: requestEvent.user,
               channel: requestEvent.channel,
               parent: requestEvent,
-            });
+            }) as BottActionResultEvent;
+
+            resultEvent.attachments = [
+              await prepareAttachmentFromFile(attachmentFile, resultEvent),
+            ];
+
+            resolve(resultEvent);
           }),
         );
       },

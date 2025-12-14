@@ -12,15 +12,13 @@
 import type {
   BottChannel,
   BottEvent,
-  BottFile,
+  BottEventAttachment,
   BottSpace,
   BottUser,
 } from "@bott/model";
-import { log } from "@bott/logger";
 
 import { sql } from "../sql.ts";
 import { commit, type TransactionResults } from "../commit.ts";
-import { resolveFile } from "../../files/resolve.ts";
 
 const getAddChannelsSql = (
   ...channels: BottChannel[]
@@ -53,35 +51,66 @@ const getAddEventsSql = (...events: BottEvent[]) => {
 
   const values = events.map((event) =>
     sql`(${event.id}, ${event.type}, ${
-      JSON.stringify(event.details)
-    }, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.timestamp.toISOString()})`
+      JSON.stringify(event.detail)
+    }, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${
+      event.lastProcessedAt?.toISOString() ?? null
+    })`
   );
 
   return sql`
-    insert into events (id, type, details, parent_id, channel_id, user_id, timestamp)
+    insert into events (id, type, detail, parent_id, channel_id, user_id, created_at, last_processed_at)
     values ${values} 
     on conflict(id) do update set
-      details = excluded.details
+      detail = excluded.detail,
+      last_processed_at = excluded.last_processed_at
   `;
 };
 
-const getAddFilesSql = (...files: BottFile[]) => {
+const getAddFilesSql = (
+  ...files: { id: string; file: File; path: string }[]
+) => {
   if (!files.length) {
     return;
   }
 
+  const values = files.map((file) =>
+    sql`(${file.id}, ${file.file.type}, ${file.path})`
+  );
+
+  if (!values.length) {
+    return;
+  }
+
   return sql`
-  insert into files (
-    id,
-    source_url,
-    parent_id
-  ) values ${
-    files.map((f) =>
-      sql`(${f.id}, ${f.source?.toString() ?? null}, ${f.parent?.id})`
-    )
-  } on conflict(id) do update set
-    source_url = excluded.source_url,
-    parent_id = excluded.parent_id
+    insert into files (id, type, path)
+    values ${values}
+    on conflict (id) do update set 
+      type = excluded.type,
+      path = excluded.path
+  `;
+};
+
+const getAddAttachmentsSql = (...attachments: BottEventAttachment[]) => {
+  if (!attachments.length) {
+    return;
+  }
+
+  const values = attachments.map((attachment) =>
+    sql`(${attachment.id}, ${attachment.originalSource.toString()}, ${attachment.raw.id}, ${attachment.compressed.id}, ${attachment.parent.id})`
+  );
+
+  if (!values.length) {
+    return;
+  }
+
+  return sql`
+    insert into attachments (id, source_url, raw_file_id, compressed_file_id, parent_id)
+    values ${values}
+    on conflict (id) do update set 
+      source_url = excluded.source_url,
+      raw_file_id = excluded.raw_file_id,
+      compressed_file_id = excluded.compressed_file_id,
+      parent_id = excluded.parent_id
   `;
 };
 
@@ -118,12 +147,12 @@ const getAddUsersSql = (...users: BottUser[]) => {
   `;
 };
 
-export const addEventData = async (
-  ...inputEvents: BottEvent[]
-): Promise<TransactionResults> => {
+export const addEvents = (
+  ...bottEvents: BottEvent[]
+): TransactionResults => {
   // Extract all unique entities (events, spaces, channels, users)
   const events = new Map<string, BottEvent>();
-  const _queue: BottEvent[] = [...inputEvents];
+  const _queue: BottEvent[] = [...bottEvents];
   const _seenEvents = new Set<string>();
 
   while (_queue.length > 0) {
@@ -144,7 +173,8 @@ export const addEventData = async (
   const spaces = new Map<string, BottSpace>();
   const channels = new Map<string, BottChannel>();
   const users = new Map<string, BottUser>();
-  const files = new Map<string, BottFile>();
+  const attachments: BottEventAttachment[] = [];
+  const files = [];
 
   for (const event of events.values()) {
     if (event.channel) {
@@ -156,31 +186,24 @@ export const addEventData = async (
       users.set(event.user.id, event.user);
     }
 
-    if (event.files) {
-      for (const file of event.files) {
-        try {
-          const resolvedFile = await resolveFile(file);
-
-          files.set(resolvedFile.id, {
-            ...resolvedFile,
-            parent: event,
-          });
-        } catch (e) {
-          log.warn(`Failed to resolve file [${file.id}]: ${e}`);
-        }
+    if (event.attachments) {
+      for (const attachment of event.attachments) {
+        attachments.push(attachment);
+        files.push(attachment.raw, attachment.compressed);
       }
     }
   }
 
-  const results = commit(
+  const statements = [
     getAddSpacesSql(...spaces.values()),
     getAddChannelsSql(...channels.values()),
     getAddUsersSql(...users.values()),
-    getAddEventsSql(
-      ...topologicallySortEvents(...events.values()),
-    ),
-    getAddFilesSql(...files.values()),
-  );
+    getAddFilesSql(...files),
+    getAddEventsSql(...topologicallySortEvents(...events.values())),
+    getAddAttachmentsSql(...attachments),
+  ];
+
+  const results = commit(...statements.filter((smt) => smt !== undefined));
 
   return results;
 };

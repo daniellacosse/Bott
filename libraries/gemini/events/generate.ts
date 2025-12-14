@@ -9,15 +9,15 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottFileType } from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import type {
   BottAction,
   BottChannel,
-  BottEvent,
   BottGlobalSettings,
   BottUser,
 } from "@bott/model";
-import { addEventData } from "@bott/storage";
+import { BottEvent } from "@bott/service";
+import { addEvents } from "@bott/storage";
 import { log } from "@bott/logger";
 
 import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
@@ -30,7 +30,7 @@ import {
   INPUT_FILE_AUDIO_COUNT_LIMIT,
   INPUT_FILE_TOKEN_LIMIT,
   INPUT_FILE_VIDEO_COUNT_LIMIT,
-} from "../constants.ts";
+} from "@bott/constants";
 
 export async function* generateEvents(
   inputEvents: BottEvent[],
@@ -60,44 +60,48 @@ export async function* generateEvents(
 
     const event = structuredClone(inputEvents[i]);
 
-    if (event.timestamp.getTime() < timeCutoff) {
+    if (event.createdAt.getTime() < timeCutoff) {
       break;
     }
 
-    if (event.files) {
-      const filesToKeep = [];
-      for (const file of event.files) {
-        if (!file.compressed) continue;
+    if (event.attachments) {
+      const attachmentsToKeep = [];
+      for (const attachment of event.attachments) {
+        if (!attachment.compressed?.file) continue;
 
         const newTotalTokens = resourceAccumulator.tokens +
-          file.compressed.data.byteLength;
+          attachment.compressed.file.size;
 
         if (newTotalTokens > INPUT_FILE_TOKEN_LIMIT) continue;
 
-        const isAudio = file.compressed.type === BottFileType.MP3 ||
-          file.compressed.type === BottFileType.OPUS ||
-          file.compressed.type === BottFileType.WAV;
+        const isAudio =
+          attachment.compressed.file.type === BottAttachmentType.MP3 ||
+          attachment.compressed.file.type === BottAttachmentType.OPUS ||
+          attachment.compressed.file.type === BottAttachmentType.WAV;
 
         if (
           isAudio &&
           resourceAccumulator.audioFiles >= INPUT_FILE_AUDIO_COUNT_LIMIT
         ) continue;
 
-        const isVideo = file.compressed.type === BottFileType.MP4;
+        const isVideo =
+          attachment.compressed.file.type === BottAttachmentType.MP4;
 
         if (
           isVideo &&
           resourceAccumulator.videoFiles >= INPUT_FILE_VIDEO_COUNT_LIMIT
         ) continue;
 
-        filesToKeep.push(file);
+        attachmentsToKeep.push(attachment);
 
         resourceAccumulator.tokens = newTotalTokens;
         if (isAudio) resourceAccumulator.audioFiles++;
         if (isVideo) resourceAccumulator.videoFiles++;
       }
 
-      event.files = filesToKeep.length > 0 ? filesToKeep : undefined;
+      event.attachments = attachmentsToKeep.length > 0
+        ? attachmentsToKeep
+        : undefined;
     }
 
     prunedInput.unshift(event);
@@ -108,48 +112,47 @@ export async function* generateEvents(
       input: prunedInput,
       output: [],
     },
+    evaluationState: new Map(),
     ...context,
   };
 
   for (const processor of pipeline) {
     try {
-      const start = performance.now();
-      log.perf(`${processor.name}: start`);
+      log.perf(processor.name);
       pipelineContext = await processor(pipelineContext);
-      log.perf(`${processor.name}: end (${performance.now() - start}ms)`);
+      log.perf(processor.name);
     } catch (error) {
       log.error((error as Error).message, (error as Error).stack);
       break;
     }
   }
 
+  // Update input events with lastProcessedAt
   try {
-    // Update the newly scored events
-    await addEventData(...pipelineContext.data.input.map((event) => ({
-      ...event,
-      details: {
-        ...event.details,
-        focus: undefined, // Avoid writing focus to the DB.
-      },
-    })));
+    const processingTime = new Date();
+
+    await addEvents(
+      ...pipelineContext.data.input.map((event) => {
+        event.lastProcessedAt = processingTime;
+        return event;
+      }),
+    );
   } catch (error) {
     log.warn(error);
   }
 
   for (const event of pipelineContext.data.output) {
-    if (event.details.output !== true) {
+    if (!pipelineContext.evaluationState.get(event)?.outputReasons?.length) {
       continue;
     }
 
-    yield {
-      ...event,
-      id: crypto.randomUUID(),
-      timestamp: new Date(),
-      user: context.user,
-      channel: context.channel,
+    yield new BottEvent(event.type, {
+      detail: event.detail,
       // Gemini does not return the full parent event
       parent: event.parent ? (await getEvents(event.parent.id))[0] : undefined,
-    };
+      channel: context.channel,
+      user: context.user,
+    });
   }
 
   return;

@@ -9,12 +9,10 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEvent, BottEventType, BottFile } from "@bott/model";
-import { log } from "@bott/logger";
+import { BottEvent } from "@bott/service";
 
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
-import { resolveFile } from "../../files/resolve.ts";
 
 export const getEvents = async (
   ...ids: string[]
@@ -22,12 +20,14 @@ export const getEvents = async (
   const result = commit(
     sql`
       select
-        e.id as e_id, e.type as e_type, e.details as e_details, e.timestamp as e_timestamp, -- event
+        e.id as e_id, e.type as e_type, e.detail as e_detail, e.created_at as e_created_at, e.last_processed_at as e_last_processed_at, -- event
         c.id as c_id, c.name as c_name, c.description as c_description, c.config as c_config, -- channel
         s.id as s_id, s.name as s_name, s.description as s_description, -- space
         u.id as u_id, u.name as u_name, -- user
         p.id as p_id, -- parent event
-        f.id as f_id, f.source_url as f_source_url -- file
+        a.id as a_id, a.source_url as a_source_url, -- attachment
+        rf.id as rf_id, rf.type as rf_type, rf.path as rf_path, -- raw file
+        cf.id as cf_id, cf.type as cf_type, cf.path as cf_path -- compressed file
       from
         events e
       left join
@@ -39,10 +39,14 @@ export const getEvents = async (
       left join
         users u on e.user_id = u.id
       left join
-        files f on e.id = f.parent_id
+        attachments a on e.id = a.parent_id
+      left join
+        files rf on a.raw_file_id = rf.id
+      left join
+        files cf on a.compressed_file_id = cf.id
       where
         e.id in (${ids})
-      order by e.timestamp asc`,
+      order by e.created_at asc`,
   );
 
   if ("error" in result) {
@@ -55,41 +59,25 @@ export const getEvents = async (
     const {
       e_id: id,
       e_type: type,
-      e_details: details,
-      e_timestamp: timestamp,
+      e_detail: detail,
+      e_created_at: createdAt,
+      e_last_processed_at: lastProcessedAt,
       ...rowData
     } of result.reads
   ) {
-    let fileInRow: BottFile | undefined;
-    if (rowData.f_id) {
-      try {
-        fileInRow = await resolveFile({
-          id: rowData.f_id,
-          source: rowData.f_source_url
-            ? new URL(rowData.f_source_url)
-            : undefined,
-        });
-      } catch (e) {
-        log.warn(`Failed to resolve file [${rowData.f_id}]: ${e}`);
-      }
-    }
-
     if (events.has(id)) {
-      if (fileInRow) {
-        events.get(id)!.files ??= [];
-        events.get(id)!.files!.push(fileInRow);
-      }
-
       continue;
     }
 
-    const event: BottEvent = {
-      id,
-      type: type as BottEventType,
-      details: JSON.parse(details),
-      timestamp: new Date(timestamp),
-      files: fileInRow ? [fileInRow] : undefined,
-    };
+    const event = new BottEvent(type, {
+      detail: JSON.parse(detail),
+    });
+
+    event.id = id;
+    event.createdAt = new Date(createdAt);
+    event.lastProcessedAt = lastProcessedAt
+      ? new Date(lastProcessedAt)
+      : undefined;
 
     if (rowData.c_id) {
       event.channel = {
@@ -111,11 +99,54 @@ export const getEvents = async (
       };
     }
 
-    if (rowData.p_id) {
-      [event.parent] = await getEvents(rowData.p_id);
+    events.set(id, event);
+  }
+
+  // Handle attachments
+  for (const rowData of result.reads) {
+    if (!rowData.a_id || !events.has(rowData.e_id)) {
+      continue;
     }
 
-    events.set(id, event);
+    const event = events.get(rowData.e_id)!;
+
+    if (!event.attachments) {
+      event.attachments = [];
+    }
+
+    if (event.attachments.find((a) => a.id === rowData.a_id)) {
+      continue;
+    }
+
+    event.attachments.push({
+      id: rowData.a_id,
+      originalSource: new URL(rowData.a_source_url),
+      raw: {
+        id: rowData.rf_id,
+        file: new File([Deno.readFileSync(rowData.rf_path)], rowData.rf_path, {
+          type: rowData.rf_type,
+        }),
+        path: rowData.rf_path,
+      },
+      compressed: {
+        id: rowData.cf_id,
+        file: new File([Deno.readFileSync(rowData.cf_path)], rowData.cf_path, {
+          type: rowData.cf_type,
+        }),
+        path: rowData.cf_path,
+      },
+      parent: event,
+    });
+  }
+
+  // Handle parent events
+  for (const rowData of result.reads) {
+    if (rowData.p_id && events.has(rowData.e_id)) {
+      const event = events.get(rowData.e_id)!;
+      if (!event.parent) {
+        [event.parent] = await getEvents(rowData.p_id);
+      }
+    }
   }
 
   return [...events.values()];

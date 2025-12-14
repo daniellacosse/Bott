@@ -15,8 +15,8 @@ content generation capabilities.
 - Install Deno runtime:
   `curl -Lo deno.zip https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip && unzip deno.zip && sudo mv deno /usr/local/bin/`
 - Install dependencies: `sudo apt-get install -y ffmpeg docker.io`
-- Copy environment template: `cp .env.example .env.development`
-- Configure environment variables in `.env.development`:
+- Copy environment template: `cp .env.example .env.test`
+- Configure environment variables in `.env.test`:
   - `GOOGLE_PROJECT_ID` - GCP project ID
   - `GOOGLE_PROJECT_LOCATION` - GCP region (e.g., us-central1)
   - `GOOGLE_ACCESS_TOKEN` - GCP access token
@@ -24,11 +24,11 @@ content generation capabilities.
 
 ### Development Workflow
 
-- Start development server: `deno task start:dev` -- requires configured
+- Start development server: `deno task runApp test` -- requires configured
   environment variables. NEVER CANCEL initial startup - dependency downloads
   take 2-5 minutes.
-- Start production server: `deno task start:prod`
-- Build and run with Docker: `deno task start` -- combines Docker build and run
+- Start production server: `deno task runApp prod`
+- Build and run with Docker: `deno task runApp` -- combines Docker build and run
 
 ## Validation
 
@@ -37,7 +37,7 @@ content generation capabilities.
 - Build succeeds: `docker build -t bott .` completes successfully
 - Format check passes: `deno fmt --check` reports "Checked X files" with exit
   code 0
-- Application starts: `deno task start:dev` begins without TypeScript
+- Application starts: `deno task runApp test` begins without TypeScript
   compilation errors
 - The application requires valid Discord and GCP credentials to run completely
 - Without credentials, the app will start but fail when attempting to connect to
@@ -73,21 +73,25 @@ content generation capabilities.
 ```
 .
 ├── README.md              # Project documentation
+├── constants.ts          # Global configuration and constants
 ├── deno.json             # Deno configuration and tasks
 ├── Dockerfile            # Container build instructions
 ├── Brewfile              # macOS dependencies via Homebrew
 ├── .env.example          # Environment template
 ├── app/                  # Main application
+│   ├── README.md        # Application layer documentation
 │   ├── main.ts          # Entry point
 │   ├── tasks.ts         # Task management
-│   └── requestHandlers/ # Bot command handlers
+│   └── actions/         # Bot tool/action handlers
 ├── libraries/           # Modular libraries
 │   ├── discord/        # Discord integration
 │   ├── gemini/         # AI integration
 │   ├── logger/         # Logging
 │   ├── storage/        # Data persistence
+│   │   └── README.md   # Storage documentation
 │   └── task/           # Task queue
 ├── model/              # Type definitions
+│   └── README.md       # Data model documentation
 └── .github/            # CI/CD workflows
 ```
 
@@ -95,7 +99,7 @@ content generation capabilities.
 
 ### Adding New Features
 
-- Bot commands: Add handlers in `app/requestHandlers/`
+- Bot commands: Add handlers in `app/actions/`
 - New AI capabilities: Extend `libraries/gemini/`
 - Data models: Update `model/types.ts`
 - Storage functionality: Modify `libraries/storage/`
@@ -110,11 +114,5 @@ content generation capabilities.
 
 ### Configuration Options
 
-Key environment variables (see README.md for full list):
-
-- `CONFIG_EVENTS_MODEL` - AI model for chat responses (default:
-  gemini-2.5-flash)
-- `CONFIG_ASSESSMENT_SCORE_THRESHOLD` - Response quality threshold (default: 70)
-- `CONFIG_INPUT_EVENT_LIMIT` - Chat history context limit (default: 2000)
-- `LOG_TOPICS` - Log verbosity control (default: info,warn,error)
-- `PORT` - Health check server port (default: 8080)
+Key environment variables are defined in [constants.ts](../constants.ts). See
+that file for the full list and default values.

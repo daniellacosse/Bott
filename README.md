@@ -1,206 +1,64 @@
-<img width="320" alt="origin_of_bott" src="https://github.com/user-attachments/assets/71c13505-5758-4202-8612-8a7f79f4fba0" />
+<img src="assets/avatar.jpg" width="128" />
 
-# 🤖 `@Bott` [IN DEVELOPMENT]
+# `@Bott`
 
-![in development](https://img.shields.io/badge/in%20development-red)
-![github checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
-[![discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
+![GitHub Checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
+[![Maintainability](https://qlty.sh/gh/daniellacosse-code/projects/Bott/maintainability.svg)](https://qlty.sh/gh/daniellacosse-code/projects/Bott)
+[![Code Coverage](https://qlty.sh/gh/daniellacosse-code/projects/Bott/coverage.svg)](https://qlty.sh/gh/daniellacosse-code/projects/Bott)
+[![Discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
-A Discord bot, powered by Gemini. Currently in development: see the
-[alpha release milestone](https://github.com/daniellacosse-code/Bott/milestone/2).
+An autonomous groupchat agent.
 
-## Features
+> [!CAUTION]
+>
+> 🛑 ![in development](https://img.shields.io/badge/in%20development-red) 🛑
+>
+> **Currently in development:** see the
+> [alpha release milestone](https://github.com/daniellacosse-code/Bott/milestone/2).
+> Use at your own risk.
 
-- Uses judgement on when to engage with server members, taking channel context
-  into consideration.
-- Views and discusses media posted in chat.
-  - Supports reading JPEGs, PNGs, and most websites.
-  - Experimental support for MP4s, GIFs, WAVs and MP3 files.
-- Generates photos, movies, songs and essays as requested.
-- Translates technical errors into user-friendly language, when appropriate.
+## Current Features
 
-<img width="320" src="assets/concept.png" alt="concept" />
+- Bott uses a pre-configured [`Identity`](./app/settings/identity.md.ejs) and
+  [`Reasons`](./app/settings/reasons.ts) to determine when to engage with server
+  members.
+- They view and can discuss most types of media posted in chat. _(See:
+  [Supported Attachment Types](./model/types/events.ts))_
+- They asynchronously perform tasks as requested:
+  - Generates photos, movies, songs and essays as requested.
+  - _(TBD)_
 
-## Development
+### Supported Integrations
 
-> [!NOTE]
-> Interested in contributing? See our [Contribution Guide](./CONTRIBUTING.md)!
+#### Chat Clients
 
-### Getting started
+- [Discord](./libraries/discord)
 
-#### Prerequisites
+#### AI Models
 
-- Homebrew ([https://brew.sh/](https://brew.sh/))
-- GCP Project
-  ([https://developers.google.com/workspace/guides/create-project](https://developers.google.com/workspace/guides/create-project))
-- Discord Application
-  ([https://discord.com/developers/applications](https://discord.com/developers/applications))
+- [Gemini](./libraries/gemini)
 
-#### Instructions
-
-##### Option 1: Using DevContainer (Recommended)
-
-1. Open the project in VS Code or another IDE that supports devcontainers.
-2. When prompted, click "Reopen in Container" or run the "Dev Containers: Reopen
-   in Container" command.
-3. Copy `.env.example` to `.env.dev`:
-
-```sh
-cp .env.example .env.dev
-```
-
-4. Get your GCP information and add it to `.env.dev`.
-5. Get your Discord information and add it to `.env.dev`.
-6. The bot will automatically start via VS Code tasks. To run manually, use:
-
-```sh
-deno run --allow-all --env-file=.env.dev --watch=app/,libraries/,model/ ./app/main.ts
-```
-
-##### Option 2: Local Development
-
-1. Copy `.env.example` to `.env.dev`:
-
-```sh
-cp .env.example .env.dev
-```
-
-2. Get your GCP information and add it to `.env.dev`.
-3. Get your Discord information and add it to `.env.dev`.
-4. Set up the environment with `deno task setup`.
-5. Start the bot with:
-
-```sh
-deno run --allow-all --env-file=.env.dev --watch=app/,libraries/,model/ ./app/main.ts
-```
-
-### Configuring Bott
-
-<details>
-<summary>Bott is configured via a series of environment variables.</summary>
-
-| Name                                | Description                                                                                                               | Default                           |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| `CONFIG_ASSESSMENT_MODEL`           | The AI model used for quality assessment of potential bot responses.                                                      | gemini-2.5-flash-lite             |
-| `CONFIG_ASSESSMENT_SCORE_THRESHOLD` | The minimum score (1-100) a potential response must achieve in quality assessments (e.g., novelty, relevance) to be sent. | 70                                |
-| `CONFIG_ERROR_MODEL`                | The AI model used for generating user-friendly error messages.                                                            | gemini-2.5-flash                  |
-| `CONFIG_ESSAY_MODEL`                | The AI model used for generating essays and long-form text content.                                                       | gemini-2.5-pro                    |
-| `CONFIG_EVENTS_MODEL`               | The AI model used for generating responses to chat events and user messages.                                              | gemini-2.5-flash                  |
-| `CONFIG_INPUT_EVENT_LIMIT`          | The maximum number of past chat events to include in the context for the AI model.                                        | 2000                              |
-| `CONFIG_INPUT_FILE_TOKEN_LIMIT`     | The maximum number of tokens to use for analyzing the content of input files (images, websites).                          | 500000                            |
-| `CONFIG_MOVIE_MODEL`                | The AI model used for generating video content.                                                                           | veo-3.0-generate-preview          |
-| `CONFIG_PHOTO_MODEL`                | The AI model used for generating images.                                                                                  | imagen-4.0-generate-preview-06-06 |
-| `CONFIG_RATE_LIMIT_IMAGES`          | The maximum number of images Bott can generate per month.                                                                 | 100                               |
-| `CONFIG_RATE_LIMIT_MUSIC`           | The maximum number of songs Bott can generate per month.                                                                  | 25                                |
-| `CONFIG_RATE_LIMIT_VIDEOS`          | The maximum number of videos Bott can generate per month.                                                                 | 10                                |
-| `CONFIG_SONG_MODEL`                 | The AI model used for generating music and audio content.                                                                 | lyria-002                         |
-| `DISCORD_TOKEN`                     | The authentication token for your Discord bot application.                                                                | -                                 |
-| `FILE_SYSTEM_ROOT`                  | The root directory on the local file system for storing input and output files.                                           | `./fs_root`                       |
-| `GOOGLE_ACCESS_TOKEN`               | An access token for authenticating with Google Cloud APIs (for local development).                                        | -                                 |
-| `GOOGLE_PROJECT_ID`                 | The ID of your Google Cloud project.                                                                                      | -                                 |
-| `GOOGLE_PROJECT_LOCATION`           | The GCP region where your Vertex AI resources are located.                                                                | -                                 |
-| `LOG_TOPICS`                        | Controls which log topics to display. Comma-separated list of topics: debug, info, warn, error, perf.                     | info,warn,error                   |
-| `PORT`                              | The port of the health check server required for GCP Cloud Run.                                                           | 8080                              |
-
-</details>
-
-### Deploying Bott
-
-Deploying Bott to Google Cloud Run can be done entirely from your command line
-using the `gcloud` CLI.
-
-1. **Install Google Cloud SDK**: First, ensure you have the Google Cloud SDK
-   installed. (e.g. via `brew install google-cloud-sdk`)
-
-```sh
-which gcloud
-```
-
-2. **Authenticate and Set Project**: Log in to your Google Cloud account and set
-   your active project.
-
-```sh
-gcloud auth login
-gcloud config set project <YOUR_PROJECT_ID>
-```
+## High-level Architecture
 
 > [!TIP]
-> If you don't have a project, you can create one with
-> `gcloud projects create <YOUR_PROJECT_ID>`.
-
-3. **Enable Required APIs**: Enable the necessary APIs for Vertex AI, Cloud
-   Storage, and Cloud Run.
-
-```sh
-gcloud services enable \
-  aiplatform.googleapis.com \
-  storage.googleapis.com \
-  run.googleapis.com \
-  artifactregistry.googleapis.com \
-  cloudbuild.googleapis.com
-```
-
-4. **Configure Service Account Permissions**: Find the default service account.
-
-```sh
-gcloud builds get-default-service-account
-```
-
-Then, add the `Vertex AI User` and `Storage Object Admin` roles.
-
-```sh
-gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
-  --member="serviceAccount:<YOUR_SERVICE_ACCOUNT>" \
-  --role="roles/aiplatform.user"
-
-gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
-  --member="serviceAccount:<YOUR_SERVICE_ACCOUNT>" \
-  --role="roles/storage.objectAdmin"
-```
-
-5. **Create a `.env.production` file**: As [above](#instructions), create an
-   `.env.production` file from the provided `.env.example` file and fill it out.
-
-```sh
-cp .env.example .env.production
-```
-
-6. **Deploy the Service**: Deploy the application to Cloud Run from the source
-   repository. You will be prompted to set the region.
-
-```sh
-gcloud run deploy bott-service \
-  --source . \
-  --allow-unauthenticated \
-  --region <YOUR_REGION> \
-  --env-file .env.production
-```
-
-9. **Verify Deployment**: Bott should now be running correctly.
-
-```sh
-gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=bott-service" --limit 50
-```
-
-### High-level Architecture
-
-> [!TIP]
-> Review the code data model annotated in [./model/types.ts](./model/types.ts).
+> Click on the links in the diagram below to navigate to a specific component's
+> documentation.
 
 ```mermaid
-graph TD
-  subgraph "@bott/model"
-    BottDiscord["**@bott/discord**"]
+%%{init: {'theme': 'base', 'themeVariables': { 'lineColor': '#5e5e5e', 'fontSize': '14px' }}}%%
+flowchart TD
+  subgraph Model["<a href='https://github.com/daniellacosse-code/Bott/tree/main/model'>**@bott/model**</a>"]
+    BottDiscord["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/discord'>**@bott/discord**</a>"]
     
-    subgraph App["./app"]
-      BottAppLayer["**@bott/task**"]
-      BottDataLayer["**@bott/storage**<br>Persistence layer"]
+    subgraph App["<a href='https://github.com/daniellacosse-code/Bott/tree/main/app'>./app</a>"]
+      BottAppLayer["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/task'>**@bott/task**</a>"]
+      BottDataLayer["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/storage'>**@bott/storage**</a><br>Persistence layer"]
       
       BottAppLayer --> BottDataLayer
       BottDataLayer --> BottAppLayer
     end
     
-    BottGemini["**@bott/gemini**"]
+    BottGemini["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/gemini'>**@bott/gemini**</a>"]
   end
 
   %% Flow from Discord User to Bot and back
@@ -213,10 +71,47 @@ graph TD
   App -- "BottEvent" --> BottDiscord
   BottDiscord -- "System Message" --> Discord
 
-  style App fill:#5555DD;
+  style App fill:#f2896f,color:black,stroke:#333,stroke-width:2px
+  style Model fill:#c7e2e2,color:black,stroke:#333,stroke-width:2px
 ```
 
----
+### Configuration
+
+Bott is configured via a series of environment variables. For a full list,
+descriptions, and default values, please refer to the
+[constants.ts](./constants.ts) file.
+
+### Event Generation
+
+Bott processes incoming messages and events through a complicated multi-step
+process to avoid undue chatter. For a more detailed breakdown of this process
+_(currently implemented via Gemini - see:
+**[Gemini Event Pipeline documentation](./libraries/gemini/events)**)_.
+
+## Contributing
+
+**Interested in contributing?** See our [Contribution Guide](./CONTRIBUTING.md)!
+
+## Gallery
+
+<table>
+  <tr>
+    <td>
+      <figure>
+        <img width="360" alt="origin_of_bott" src="assets/origin.png" />
+        <br />
+        <figcaption><i>Bott's origin</i></figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <img width="360" src="assets/concept.png" alt="concept" />
+        <br />
+        <figcaption><i>Concept art by <a href="https://DanielLaCos.se">DanielLaCos.se</a></i></figcaption>
+      </figure>
+    </td>
+  </tr>
+</table>
 
 ## Licensing
 

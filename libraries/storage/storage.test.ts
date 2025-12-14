@@ -10,19 +10,23 @@
  */
 
 import { assertEquals, assertExists } from "@std/assert";
+import { stub } from "@std/testing/mock";
 
 import { BottEventType } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { log } from "@bott/logger";
 
-import { addEventData } from "./data/events/add.ts";
+import { STORAGE_DEPLOY_NONCE_PATH } from "@bott/constants";
+import { serviceRegistry } from "@bott/service";
+import { addEvents } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
-import { prepareHtmlAsMarkdown } from "./files/prepare/html.ts";
-import { startStorage } from "./start.ts";
+import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
+import { startStorageService } from "./service.ts";
 
 Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();
 
-  startStorage(tempDir);
+  await startStorageService({ root: tempDir });
 
   // spaces
   const spaceChatWorld = {
@@ -30,41 +34,32 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
     name: "Chat World",
   };
 
-  const channelMain = { id: "1", name: "main", space: spaceChatWorld };
+  const channel = { id: "1", name: "main", space: spaceChatWorld };
 
-  const userNancy = { id: "1", name: "Nancy" };
-  const userBob = { id: "2", name: "Bob" };
+  const nancy = { id: "1", name: "Nancy" };
+  const bob = { id: "2", name: "Bob" };
 
-  const nancyGreeting = {
-    id: "1",
-    type: BottEventType.MESSAGE,
-    user: userNancy,
-    channel: channelMain,
-    details: { content: "Hello" },
-    timestamp: new Date(),
-  };
-  const bobReply = {
-    id: "2",
-    type: BottEventType.REPLY,
-    user: userBob,
-    channel: channelMain,
+  const nancyGreeting = new BottEvent(BottEventType.MESSAGE, {
+    detail: { content: "Hello, world!" },
+    user: nancy,
+    channel,
+  });
+  const bobReply = new BottEvent(BottEventType.REPLY, {
+    detail: { content: "Hi Nancy!" },
+    user: bob,
+    channel,
     parent: nancyGreeting,
-    details: { content: "Hi" },
-    timestamp: new Date(),
-  };
-  const nancyReaction = {
-    id: "3",
-    type: BottEventType.REACTION,
-    user: userNancy,
-    channel: channelMain,
+  });
+  const nancyReaction = new BottEvent(BottEventType.REACTION, {
+    detail: { content: "👍" },
+    user: nancy,
+    channel,
     parent: bobReply,
-    details: { content: "👍" },
-    timestamp: new Date(),
-  };
+  });
 
   log.debug("Adding events.");
 
-  addEventData(nancyGreeting, bobReply, nancyReaction);
+  addEvents(nancyGreeting, bobReply, nancyReaction);
 
   log.debug("Getting events.");
 
@@ -74,8 +69,8 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
 
   assertExists(dbResult.id);
   assertExists(dbResult.type);
-  assertExists(dbResult.details);
-  assertExists(dbResult.timestamp);
+  assertExists(dbResult.detail);
+  assertExists(dbResult.createdAt);
   assertExists(dbResult.channel);
   assertExists(dbResult.channel.id);
   assertExists(dbResult.channel.name);
@@ -88,8 +83,8 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
   assertExists(dbResult.parent);
   assertExists(dbResult.parent.id);
   assertExists(dbResult.parent.type);
-  assertExists(dbResult.parent.details);
-  assertExists(dbResult.parent.timestamp);
+  assertExists(dbResult.parent.detail);
+  assertExists(dbResult.parent.createdAt);
 });
 
 const htmlInput = `
@@ -133,15 +128,51 @@ body { color: blue; }
 
 Deno.test("Storage - prepareHtml", async () => {
   const tempDir = Deno.makeTempDirSync();
-  startStorage(tempDir);
+  await startStorageService({ root: tempDir });
 
   const inputData = new TextEncoder().encode(htmlInput);
-
-  const { data } = await prepareHtmlAsMarkdown(inputData);
-  const resultMarkdown = new TextDecoder().decode(data);
+  const result = await prepareHtmlAsMarkdown(
+    new File([inputData], "test.html"),
+    "1",
+  );
+  const data = new Uint8Array(await result.arrayBuffer());
+  const markdownContent = new TextDecoder().decode(data);
 
   assertEquals(
-    resultMarkdown,
+    markdownContent,
     expectedMarkdownOutput,
   );
+});
+
+Deno.test("Storage - Global Listener Persistence", async () => {
+  const tempDir = Deno.makeTempDirSync();
+  await startStorageService({ root: tempDir });
+
+  // Setup nonce to ensure listener fires
+  const nonce = "test-nonce";
+  serviceRegistry.nonce = nonce;
+
+  using _readStub = stub(
+    Deno,
+    "readTextFileSync",
+    (path: string | URL) => {
+      if (path === STORAGE_DEPLOY_NONCE_PATH) return nonce;
+      throw new Deno.errors.NotFound();
+    },
+  );
+
+  const event = new BottEvent(BottEventType.MESSAGE, {
+    detail: { content: "Global dispatch test" },
+    user: { id: "listener-test", name: "Tester" },
+    channel: { id: "1", name: "main", space: { id: "1", name: "space" } },
+  });
+
+  globalThis.dispatchEvent(event);
+
+  // Allow next tick for persistence (though it's sync in listener, better safe)
+  await new Promise((r) => setTimeout(r, 10));
+
+  const [dbResult] = await getEvents(event.id);
+  assertExists(dbResult);
+  assertEquals(dbResult.id, event.id);
 });

@@ -13,7 +13,7 @@ import { type Schema, Type } from "@google/genai";
 
 import { log } from "@bott/logger";
 
-import { CLASSIFIER_MODEL } from "../../../constants.ts";
+import { RATING_MODEL } from "@bott/constants";
 import { queryGemini } from "../../utilities/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 import { BottEventType } from "@bott/model";
@@ -27,41 +27,41 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
     return context;
   }
 
-  const output = structuredClone(context.data.output);
+  const output = context.data.output;
   const outputReasons = context.settings.reasons.output;
-  const outputClassifiers = outputReasons.flatMap((reason) =>
-    reason.classifiers ?? []
-  );
+  const outputRatingScales = [
+    ...new Set(outputReasons.flatMap((reason) => reason.ratingScales ?? [])),
+  ];
 
-  if (!outputClassifiers.length) {
+  if (!outputRatingScales.length) {
     return context;
   }
 
   const responseSchema = {
     type: Type.OBJECT,
-    properties: outputClassifiers.reduce(
-      (properties, classifier) => {
-        properties[classifier.name] = {
+    properties: outputRatingScales.reduce(
+      (properties, ratingScale) => {
+        properties[ratingScale.name] = {
           type: Type.OBJECT,
           properties: {
-            score: {
+            rating: {
               type: Type.STRING,
-              description: classifier.definition,
+              description: ratingScale.definition,
               enum: ["1", "2", "3", "4", "5"],
             },
             rationale: {
               type: Type.STRING,
-              description: "A 1-2 sentence rationale for the score given.",
+              description: "A 1-2 sentence rationale for the rating given.",
             },
           },
-          required: ["score"],
+          required: ["rating"],
         };
 
         return properties;
       },
       {} as Record<string, Schema>,
     ),
-    required: outputClassifiers.map((classifier) => classifier.name),
+    required: outputRatingScales.map((ratingScale) => ratingScale.name),
   };
 
   const geminiCalls: Promise<void>[] = [];
@@ -70,7 +70,7 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
   while (pointer < output.length) {
     const event = output[pointer];
 
-    if (event.details.scores) {
+    if (event.lastProcessedAt) {
       pointer++;
       continue;
     }
@@ -83,7 +83,7 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
 
     geminiCalls.push((async () => {
       const scoresWithRationale = await queryGemini<
-        Record<string, { score: string; rationale: string | undefined }>
+        Record<string, { rating: string; rationale: string | undefined }>
       >(
         // Provide the current event and all subsequent events as context for scoring.
         output.slice(pointer),
@@ -91,34 +91,43 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
           systemPrompt,
           responseSchema,
           context,
-          model: CLASSIFIER_MODEL,
+          model: RATING_MODEL,
           useIdentity: false,
         },
       );
 
-      const scores: Record<string, number> = {};
+      const ratings: Record<string, number> = {};
       let logMessage = `Message Candidate:\n`;
 
-      logMessage += `  Content: ${event.details.content}\n`;
-      logMessage += `  Name: ${event.details.name}\n`;
+      logMessage += `  Content: ${event.detail?.content ?? "n/a"}\n`;
+      logMessage += `  Name: ${event.detail?.name ?? "n/a"}\n`;
 
-      for (const classifier in scoresWithRationale) {
-        const { score, rationale } = scoresWithRationale[classifier];
+      for (const ratingScale in scoresWithRationale) {
+        const { rating, rationale } = scoresWithRationale[ratingScale];
         if (rationale) {
           logMessage +=
-            `    ${classifier}: ${score}. Rationale: ${rationale}\n`;
+            `    ${ratingScale}: ${rating}. Rationale: ${rationale}\n`;
         }
 
-        scores[classifier] = Number(score);
+        ratings[ratingScale] = Number(rating);
       }
 
-      event.details.scores = scores;
-      event.details.output = Object.values(outputReasons).some((reason) =>
-        reason.validator(event)
-      );
+      const metadata = { ratings };
+      const triggeredOutputReasons = Object.values(outputReasons)
+        .filter((reason) => reason.validator(metadata));
+
+      context.evaluationState.set(event, {
+        ratings,
+        outputReasons: triggeredOutputReasons,
+      });
 
       log.debug(
-        logMessage + "      Marked for output: " + event.details.output,
+        logMessage +
+          (triggeredOutputReasons.length > 0
+            ? `    [TRIGGERED OUTPUT REASONS]: ${
+              triggeredOutputReasons.map(({ name }) => name).join(", ")
+            }`
+            : ""),
       );
     })());
 

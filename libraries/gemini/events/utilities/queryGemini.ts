@@ -21,7 +21,7 @@ import type { BottEvent } from "@bott/model";
 
 import type { EventPipelineContext } from "../pipeline/types.ts";
 import gemini from "../../client.ts";
-import { EVENT_MODEL } from "../../constants.ts";
+import { EVENT_MODEL } from "@bott/constants";
 
 const eventStructure = await Deno.readTextFile(
   new URL("./eventStructure.md.ejs", import.meta.url),
@@ -71,11 +71,9 @@ export const queryGemini = async <O>(
 
   const response = await gemini.models.generateContent({
     model,
-    contents: typeof input === "string"
-      ? [input]
-      : input.map((event) =>
-        _transformBottEventToContent(event, context.user.id)
-      ),
+    contents: typeof input === "string" ? [input] : await Promise.all(
+      input.map((event) => _transformBottEventToContent(event, context)),
+    ),
     config,
   });
 
@@ -84,62 +82,78 @@ export const queryGemini = async <O>(
     .map((part: Part) => (part as { text: string }).text)
     .join("") ?? "";
 
+  // Despite the schema, Gemini may still return a code block.
+  const cleanedResult = result.replace(/^```json\s*/i, "").replace(
+    /^```\s*/,
+    "",
+  ).replace(/```\s*$/, "");
+
   try {
-    return JSON.parse(result) as O;
+    return JSON.parse(cleanedResult) as O;
   } catch {
     return result as O;
   }
 };
 
-export const _transformBottEventToContent = (
+export const _transformBottEventToContent = async (
   event: BottEvent,
-  modelUserId: string,
-): Content => {
-  const { files: _files, parent, timestamp, ...rest } = event;
+  context: EventPipelineContext,
+): Promise<Content> => {
+  const {
+    attachments: _attachments,
+    parent: _parent,
+    createdAt,
+    ...rest
+  } = structuredClone(event);
 
-  let serializedParent;
-  if (parent) {
-    const {
-      files: _pFiles,
-      parent: _pParent,
-      timestamp: pTimestamp,
-      ...pRest
-    } = parent;
+  let parent;
 
-    serializedParent = {
-      ...structuredClone(pRest),
-      timestamp: _formatTimestampAsRelative(
-        pTimestamp ? pTimestamp : new Date(),
-      ),
+  if (_parent) {
+    parent = {
+      ..._parent,
+      createdAt: _formatTimestampAsRelative(_parent.createdAt),
     };
+
+    delete parent.parent;
+    delete parent.attachments;
   }
 
+  const metadata = context.evaluationState.get(event);
+
   const eventToSerialize = {
-    ...structuredClone(rest),
-    timestamp: _formatTimestampAsRelative(
-      timestamp ? timestamp : new Date(),
-    ),
-    parent: serializedParent,
+    ...rest,
+    createdAt: _formatTimestampAsRelative(createdAt),
+    parent,
+    _pipelineEvaluationMetadata: {
+      focusReasons: metadata?.focusReasons?.map(({ name, instruction }) => ({
+        name,
+        instruction,
+      })),
+      outputReasons: metadata?.outputReasons?.map(({ name }) => name),
+      ratings: metadata?.ratings,
+    },
   };
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
   const content: Content = {
-    role: (event.user && event.user.id === modelUserId) ? "model" : "user",
+    role: (event.user && event.user.id === context.user.id) ? "model" : "user",
     parts,
   };
 
-  if (event.files && event.files.length) {
-    parts.push({ text: "--- Attached Files ---" });
+  if (event.attachments && event.attachments.length) {
+    parts.push({ text: "--- Attachments ---" });
 
-    for (const file of event.files) {
-      if (!file.compressed) {
+    for (const attachment of event.attachments) {
+      if (!attachment.compressed?.file) {
         continue;
       }
 
       parts.push({
         inlineData: {
-          mimeType: file.compressed.type,
-          data: encodeBase64(file.compressed.data!),
+          mimeType: attachment.compressed.file.type,
+          data: encodeBase64(
+            new Uint8Array(await attachment.compressed.file.arrayBuffer()),
+          ),
         },
       });
     }
@@ -154,8 +168,12 @@ export const _transformBottEventToContent = (
  * @internal Exported for testing purposes only
  */
 export const _formatTimestampAsRelative = (
-  timestamp: Date | string,
-): string => {
+  timestamp: Date | string | undefined,
+): string | undefined => {
+  if (!timestamp) {
+    return undefined;
+  }
+
   const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
