@@ -80,7 +80,8 @@ setup_project() {
     # Update .env file with the project ID
     if [ -f "$ENV_FILE" ]; then
       if grep -q "^GOOGLE_PROJECT_ID=" "$ENV_FILE"; then
-        sed -i.bak "s/^GOOGLE_PROJECT_ID=.*/GOOGLE_PROJECT_ID=$project_id/" "$ENV_FILE"
+        # Use | as delimiter to avoid issues with special characters
+        sed -i.bak "s|^GOOGLE_PROJECT_ID=.*|GOOGLE_PROJECT_ID=$project_id|" "$ENV_FILE"
       else
         echo "GOOGLE_PROJECT_ID=$project_id" >> "$ENV_FILE"
       fi
@@ -128,14 +129,16 @@ enable_apis() {
 configure_service_account() {
   log_info "Configuring service account permissions..."
   
-  local service_account
-  service_account=$(gcloud builds get-default-service-account --project="$GOOGLE_PROJECT_ID" --format="value(email)" 2>/dev/null || echo "")
+  # Get the Cloud Build service account
+  local project_number
+  project_number=$(gcloud projects describe "$GOOGLE_PROJECT_ID" --format="value(projectNumber)" 2>/dev/null || echo "")
   
-  if [ -z "$service_account" ]; then
-    log_warn "Could not determine default service account. Skipping IAM configuration."
+  if [ -z "$project_number" ]; then
+    log_warn "Could not determine project number. Skipping IAM configuration."
     return 0
   fi
   
+  local service_account="${project_number}@cloudbuild.gserviceaccount.com"
   log_info "Service account: $service_account"
   
   local roles=(
@@ -148,7 +151,6 @@ configure_service_account() {
     gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT_ID" \
       --member="serviceAccount:$service_account" \
       --role="$role" \
-      --condition=None \
       2>/dev/null || log_warn "Failed to add role $role (may already exist)"
   done
 }
