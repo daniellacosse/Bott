@@ -1,5 +1,5 @@
 .devcontainer
-.dockerignore
+.containerignore
 .env.*
 .git
 .github
@@ -7,4 +7,4 @@
 .vscode
 assets
 Brewfile
-Dockerfile
+Containerfile

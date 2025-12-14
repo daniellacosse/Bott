@@ -1,6 +1,6 @@
 {
   "name": "Bott Development Container",
-  "dockerFile": "../Dockerfile",
+  "dockerFile": "../Containerfile",
   "context": "..",
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
