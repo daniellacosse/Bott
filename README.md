@@ -77,23 +77,9 @@ flowchart TD
 
 ### Configuration
 
-> [!NOTE]
-> **Configuration has moved to YAML!** If you're upgrading from `.env` files,
-> see the [Migration Guide](./MIGRATION_ENV_TO_YAML.md).
-
-Bott is configured via YAML configuration files (`config.test.yml`,
-`config.production.yml`). These files set environment variables used by the
-application.
-
-To get started:
-
-1. Copy the example: `cp config.example.yml config.test.yml`
-2. Fill in your credentials (Discord token, GCP project details)
-3. Run: `deno task runApp test`
-
-For a full list of configuration options, descriptions, and default values,
-please refer to the [constants.ts](./constants.ts) file or see the
-[Migration Guide](./MIGRATION_ENV_TO_YAML.md).
+Bott is configured via a series of environment variables. For a full list,
+descriptions, and default values, please refer to the
+[constants.ts](./constants.ts) file.
 
 ### Event Generation
 
