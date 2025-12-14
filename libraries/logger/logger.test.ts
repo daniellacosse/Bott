@@ -9,60 +9,22 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { assert, assertEquals } from "@std/assert";
-import { log } from "./module.ts";
-import { BaseHandler, ConsoleHandler, setup } from "@std/log";
-import { allowedTopics } from "./module.ts";
+import { assert } from "@std/assert";
+import { addLogTopic, log, setupTestLogger, testHandler } from "./module.ts";
 
-interface TestLogRecord {
-  msg: string;
-  datetime: Date;
-}
-
-class TestHandler extends BaseHandler {
-  public logs: TestLogRecord[] = [];
-
-  override log(msg: string): void {
-    this.logs.push({
-      msg,
-      datetime: new Date(),
-    });
-  }
-
-  clear(): void {
-    this.logs = [];
-  }
-}
-
-const testHandler = new TestHandler("NOTSET");
-
-try {
-  setup({
-    handlers: {
-      console: new ConsoleHandler("NOTSET"),
-      test: testHandler,
-    },
-    loggers: {
-      default: {
-        level: "NOTSET",
-        handlers: ["console", "test"],
-      },
-    },
-  });
-} catch {
-  // Already setup
-}
+// Setup test logger
+setupTestLogger();
 
 // Enable perf logging for tests
-allowedTopics.add("perf");
+addLogTopic("perf");
 
 Deno.test("Logger exports expected methods", () => {
   // Verify the logger exports the expected methods
-  assertEquals(typeof log.debug, "function");
-  assertEquals(typeof log.info, "function");
-  assertEquals(typeof log.warn, "function");
-  assertEquals(typeof log.error, "function");
-  assertEquals(typeof log.perf, "function");
+  assert(typeof log.debug === "function");
+  assert(typeof log.info === "function");
+  assert(typeof log.warn === "function");
+  assert(typeof log.error === "function");
+  assert(typeof log.perf === "function");
 });
 
 Deno.test("Logger methods can be called without errors", () => {
