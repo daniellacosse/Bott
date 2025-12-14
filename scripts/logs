@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# @license
+# This file is part of Bott.
+#
+# This project is dual-licensed:
+# - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+# - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+#
+# Copyright (C) 2025 DanielLaCos.se
+
+set -euo pipefail
+
+# Color codes for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Default values
+SERVICE_NAME="${SERVICE_NAME:-bott-service}"
+LIMIT="${LIMIT:-50}"
+
+# Helper functions
+log_info() {
+  echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_error() {
+  echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if gcloud is installed
+check_gcloud() {
+  if ! command -v gcloud &> /dev/null; then
+    log_error "gcloud CLI is not installed. Please install it from https://cloud.google.com/sdk/docs/install"
+    exit 1
+  fi
+}
+
+# Main execution
+main() {
+  check_gcloud
+  
+  log_info "Fetching logs for service: $SERVICE_NAME (limit: $LIMIT)"
+  
+  gcloud logging read \
+    "resource.type=cloud_run_revision AND resource.labels.service_name=$SERVICE_NAME" \
+    --limit "$LIMIT" \
+    --format="table(timestamp,severity,textPayload)"
+}
+
+# Run main function
+main "$@"

@@ -56,8 +56,9 @@ helps protect both you as a contributor and the project.
 
 ### Deploying Bott
 
-Deploying Bott to Google Cloud Run can be done entirely from your command line
-using the `gcloud` CLI.
+Deploying Bott to Google Cloud Run is fully automated. The deployment script
+will handle authentication, project setup, API enablement, service account
+configuration, and deployment.
 
 1. **Install Google Cloud SDK**: First, ensure you have the Google Cloud SDK
    installed. (e.g. via `brew install google-cloud-sdk`)
@@ -66,77 +67,31 @@ using the `gcloud` CLI.
 which gcloud
 ```
 
-2. **Authenticate and Set Project**: Log in to your Google Cloud account and set
-   your active project.
-
-```sh
-gcloud auth application-default login
-gcloud config set project <YOUR_PROJECT_ID>
-```
-
-> [!TIP]
-> If you don't have a project, you can create one with
-> `gcloud projects create <YOUR_PROJECT_ID>`.
-
-3. **Enable Required APIs**: Enable the necessary APIs for Vertex AI, Cloud
-   Storage, and Cloud Run.
-
-```sh
-gcloud services enable \
-  aiplatform.googleapis.com \
-  storage.googleapis.com \
-  run.googleapis.com \
-  artifactregistry.googleapis.com \
-  cloudbuild.googleapis.com
-```
-
-4. **Configure Service Account Permissions**: Find the default service account.
-
-```sh
-gcloud builds get-default-service-account
-```
-
-Then, add the `Vertex AI User` and `Storage Object Admin` roles.
-
-```sh
-gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
-  --member="serviceAccount:<YOUR_SERVICE_ACCOUNT>" \
-  --role="roles/aiplatform.user"
-
-gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
-  --member="serviceAccount:<YOUR_SERVICE_ACCOUNT>" \
-  --role="roles/storage.objectAdmin"
-```
-
-5. **Create a `.env.production` file**: As [above](#instructions), create an
-   `.env.production` file from the provided `.env.example` file and fill it out.
+2. **Create a `.env.production` file**: Create a `.env.production` file from the
+   provided `.env.example` file and fill in your configuration values.
 
 ```sh
 cp .env.example .env.production
+# Edit .env.production with your configuration
 ```
 
-6. **Deploy the Service**: Deploy the application to Cloud Run using the
-   provided deployment script. You will be prompted to set the region if not
-   provided via the `REGION` environment variable.
+3. **Deploy**: Run the deployment script. It will guide you through any
+   remaining setup steps.
 
 ```sh
-# Using the deployment script (recommended)
 ./scripts/deploy
-
-# Or specify the region as an environment variable
-REGION=<YOUR_REGION> ./scripts/deploy
-
-# Manual deployment (alternative)
-gcloud run deploy bott-service \
-  --source . \
-  --allow-unauthenticated \
-  --region <YOUR_REGION> \
-  --project <YOUR_PROJECT_ID> \
-  --env-vars-file .env.production.yaml
 ```
 
-9. **Verify Deployment**: Bott should now be running correctly.
+The script will automatically:
+- Authenticate with Google Cloud (if needed)
+- Create or verify your GCP project
+- Enable required APIs (Vertex AI, Cloud Storage, Cloud Run, etc.)
+- Configure service account permissions
+- Deploy your application to Cloud Run
+- Provide you with the service URL
+
+4. **View Logs**: After deployment, you can view your application logs:
 
 ```sh
-gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=bott-service" --limit 50
+./scripts/logs
 ```
