@@ -37,7 +37,7 @@ export const startStorageService: BottServiceFactory = (
     assetSizeCautionBytes = 100_000,
   }: { root?: string; assetSizeCautionBytes?: number },
 ): Promise<BottService> => {
-  const saveEvent = (event: BottEvent) => {
+  const _createStorage = () => {
     if (!STORAGE_ROOT) {
       const fileRoot = join(root, "files");
 
@@ -55,6 +55,12 @@ export const startStorageService: BottServiceFactory = (
 
       STORAGE_DATA_CLIENT.exec(dbClientSchema);
     }
+  };
+
+  _createStorage();
+
+  const saveEvent = (event: BottEvent) => {
+    _createStorage();
 
     const result = addEvents(event);
 

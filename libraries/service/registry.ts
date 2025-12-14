@@ -12,8 +12,8 @@
 import type { BottService } from "@bott/model";
 
 export class BottServiceRegistry {
-  private services = new Map<string, BottService>();
-  nonce?: string;
+  services = new Map<string, BottService>();
+  nonce?: string | null;
 
   register(service: BottService): void {
     if (this.services.has(service.user.id)) {
@@ -31,4 +31,4 @@ export class BottServiceRegistry {
   }
 }
 
-export const serviceRegistry = new BottServiceRegistry();
+export const serviceRegistry: BottServiceRegistry = new BottServiceRegistry();

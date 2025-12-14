@@ -27,7 +27,7 @@ const _getCurrentDeployNonce = () => {
 export const addEventListener = <E extends BottEvent>(
   eventType: BottEventType,
   handler: (event: E, service?: BottService) => void,
-) => {
+): void => {
   globalThis.addEventListener(eventType, (event) => {
     const bottEvent = event as E;
 

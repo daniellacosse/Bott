@@ -17,7 +17,6 @@ import {
   Client,
   Events as DiscordEvents,
   GatewayIntentBits,
-  type InteractionReplyOptions,
   type Message,
   type MessageCreateOptions,
   REST,
@@ -27,7 +26,6 @@ import {
 import {
   BOTT_ATTACHMENT_TYPE_LOOKUP,
   type BottAction,
-  type BottActionResultEvent,
   BottEventType,
   type BottService,
   type BottServiceFactory,

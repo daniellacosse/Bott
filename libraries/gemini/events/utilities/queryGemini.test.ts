@@ -15,7 +15,8 @@ import {
   _transformBottEventToContent,
 } from "./queryGemini.ts";
 import { createMockContext, createMockUser } from "../pipeline/e2e.ts";
-import { BottEvent, BottEventType } from "@bott/model";
+import { BottEventType } from "@bott/model";
+import { BottEvent } from "@bott/service";
 
 Deno.test("_formatTimestampAsRelative - just now", () => {
   const now = new Date();

@@ -15,10 +15,23 @@ import { BottEventType } from "@bott/model";
 import { BottEvent } from "@bott/service";
 import { log } from "@bott/logger";
 
+import { STORAGE_DEPLOY_NONCE_PATH } from "@bott/constants";
+import { serviceRegistry } from "@bott/service";
 import { addEvents } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
 import { startStorageService } from "./service.ts";
+
+// Initialize nonce to match file system state for tests
+try {
+  serviceRegistry.nonce = Deno.readTextFileSync(STORAGE_DEPLOY_NONCE_PATH);
+} catch (error) {
+  if (error instanceof Deno.errors.NotFound) {
+    serviceRegistry.nonce = null;
+  } else {
+    throw error;
+  }
+}
 
 Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();
