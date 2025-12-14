@@ -12,9 +12,9 @@
 import {
   type BottActionCallEvent,
   type BottChannel,
-  BottEvent,
   BottEventType,
 } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { addEvents } from "@bott/storage";
 import {
   ApplicationCommandOptionType,

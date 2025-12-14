@@ -13,13 +13,13 @@ import { join } from "@std/path";
 import { DatabaseSync } from "node:sqlite";
 
 import {
-  BottEvent,
+  type BottEvent,
   BottEventType,
-  BottService,
-  BottServiceFactory,
+  type BottService,
+  type BottServiceFactory,
 } from "@bott/model";
 import { log } from "@bott/logger";
-import { STORAGE_DEPLOY_NONCE_PATH } from "@bott/constants";
+import { addEventListener } from "@bott/service";
 import { addEvents } from "./data/events/add.ts";
 
 const dbClientSchema = Deno.readTextFileSync(
@@ -31,83 +31,49 @@ export let STORAGE_FILE_ROOT: string;
 export let STORAGE_FILE_SIZE_CAUTION: number;
 export let STORAGE_DATA_CLIENT: DatabaseSync;
 
-const _getCurrentDeployNonce = () => {
-  try {
-    return Deno.readTextFileSync(STORAGE_DEPLOY_NONCE_PATH);
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return null;
-    }
-    throw error;
-  }
-};
-
-type StorageServiceOptions = {
-  root: string;
-  assetSizeCautionBytes?: number;
-};
-
-export const startStorageService: BottServiceFactory<StorageServiceOptions> = (
+export const startStorageService: BottServiceFactory = (
   {
-    root,
+    root = "",
     assetSizeCautionBytes = 100_000,
-    deployNonce,
-    events,
-  },
+  }: { root?: string; assetSizeCautionBytes?: number },
 ): Promise<BottService> => {
-  // Create asset cache folder:
-  const fileRoot = join(root, "files");
+  const saveEvent = (event: BottEvent) => {
+    if (!STORAGE_ROOT) {
+      const fileRoot = join(root, "files");
 
-  Deno.mkdirSync(fileRoot, { recursive: true });
+      Deno.mkdirSync(fileRoot, { recursive: true });
 
-  STORAGE_ROOT = root;
-  STORAGE_FILE_ROOT = fileRoot;
-  STORAGE_FILE_SIZE_CAUTION = assetSizeCautionBytes;
-
-  // Create database file:
-  STORAGE_DATA_CLIENT = new DatabaseSync(
-    join(root, "data.db"),
-  );
-
-  // Initialize database tables:
-  STORAGE_DATA_CLIENT.exec(dbClientSchema);
-
-  const storageUser = { id: "system:storage", name: "Storage" };
-
-  // Listen for all events to persist them
-  const handleEventPersistence = (event: Event) => {
-    const bottEvent = event as BottEvent;
-
-    // Standard gate: Deploy Nonce
-    if (deployNonce && _getCurrentDeployNonce() !== deployNonce) {
-      return;
+      STORAGE_ROOT = root;
+      STORAGE_FILE_ROOT = fileRoot;
+      STORAGE_FILE_SIZE_CAUTION = assetSizeCautionBytes;
     }
 
-    // Persist
-    const result = addEvents(bottEvent);
+    if (!STORAGE_DATA_CLIENT) {
+      STORAGE_DATA_CLIENT = new DatabaseSync(
+        join(STORAGE_ROOT, "data.db"),
+      );
+
+      STORAGE_DATA_CLIENT.exec(dbClientSchema);
+    }
+
+    const result = addEvents(event);
+
     if ("error" in result) {
       log.error("Failed to add event to database:", result);
     }
-
-    // Call specific handler if provided
-    if (
-      events && Object.prototype.hasOwnProperty.call(events, bottEvent.type)
-    ) {
-      events[bottEvent.type as keyof typeof events]!(bottEvent);
-    }
   };
 
-  globalThis.addEventListener(BottEventType.MESSAGE, handleEventPersistence);
-  globalThis.addEventListener(BottEventType.REPLY, handleEventPersistence);
-  globalThis.addEventListener(BottEventType.REACTION, handleEventPersistence);
-  globalThis.addEventListener(
+  addEventListener(BottEventType.MESSAGE, saveEvent);
+  addEventListener(BottEventType.REPLY, saveEvent);
+  addEventListener(BottEventType.REACTION, saveEvent);
+  addEventListener(
     BottEventType.ACTION_CALL,
-    handleEventPersistence,
+    saveEvent,
   );
-  globalThis.addEventListener(
+  addEventListener(
     BottEventType.ACTION_RESULT,
-    handleEventPersistence,
+    saveEvent,
   );
 
-  return Promise.resolve({ user: storageUser });
+  return Promise.resolve({ user: { id: "system:storage", name: "Storage" } });
 };

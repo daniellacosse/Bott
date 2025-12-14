@@ -13,9 +13,9 @@ import { Buffer } from "node:buffer";
 import {
   AttachmentBuilder,
   ChannelType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   Client,
-  Events,
+  Events as DiscordEvents,
   GatewayIntentBits,
   type InteractionReplyOptions,
   type Message,
@@ -25,18 +25,17 @@ import {
 } from "discord.js";
 
 import {
-  type AnyShape,
   BOTT_ATTACHMENT_TYPE_LOOKUP,
   type BottAction,
-  BottEvent,
+  type BottActionResultEvent,
   BottEventType,
-  BottServiceFactory,
+  type BottService,
+  type BottServiceFactory,
   type BottUser,
 } from "@bott/model";
-
+import { addEventListener, BottEvent } from "@bott/service";
 import { log } from "@bott/logger";
-import { STORAGE_DEPLOY_NONCE_PATH } from "@bott/constants";
-import { createErrorEmbed } from "./message/embed/error.ts";
+
 import { resolveBottEventFromMessage } from "./message/event.ts";
 import { getCommandJson } from "./command/json.ts";
 import { resolveCommandRequestEvent } from "./command/request.ts";
@@ -49,102 +48,49 @@ const REQUIRED_INTENTS = [
   GatewayIntentBits.MessageContent,
 ];
 
-type DiscordBotOptions<
-  O extends Record<string, unknown> = Record<string, unknown>,
-> = {
-  actions?: Record<string, BottAction<O, AnyShape>>;
-  identityToken: string;
-  mount?: (client: Client) => void;
-};
+export const startDiscordService: BottServiceFactory = async ({
+  identityToken: token = "",
+  actions = {},
+}: { identityToken?: string; actions?: Record<string, BottAction> }) => {
+  const client = new Client({ intents: REQUIRED_INTENTS });
+  const pendingInteractions = new Map<string, ChatInputCommandInteraction>();
 
-const _getCurrentDeployNonce = () => {
-  try {
-    return Deno.readTextFileSync(STORAGE_DEPLOY_NONCE_PATH);
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return null;
-    }
-    throw error;
+  await client.login(token);
+
+  if (!client.user) {
+    throw new Error("Discord user is not set!");
   }
-};
+  const serviceUser = client.user;
 
-export const startDiscordService: BottServiceFactory<DiscordBotOptions> =
-  async ({
-    identityToken: token,
-    actions: commands,
-    mount: handleMount,
-    deployNonce,
-    events,
-  }) => {
-    const client = new Client({ intents: REQUIRED_INTENTS });
-    const pendingInteractions = new Map<string, ChatInputCommandInteraction>();
+  client.on(DiscordEvents.MessageCreate, async (message) => {
+    if (message.channel.type !== ChannelType.GuildText) return;
 
-    await client.login(token);
-    log.debug("Logged in.");
+    const event = (await resolveBottEventFromMessage(
+      message as Message<true>,
+    )) as BottEvent;
 
-    if (!client.user) {
-      throw new Error("Bot user is not set!");
-    }
-    const botUser = client.user;
+    globalThis.dispatchEvent(event);
+  });
 
-    // Hydrate DB
-    (async () => {
-      for (const space of client.guilds.cache.values()) {
-        for (const channel of space.channels.cache.values()) {
-          if (channel.type !== ChannelType.GuildText) continue;
-          try {
-            for (const [_, message] of await channel.messages.fetch()) {
-              await resolveBottEventFromMessage(message);
-            }
-          } catch (_) {
-            // Likely don't have access to this channel
-          }
-        }
-      }
-    })();
+  client.on(DiscordEvents.MessageReactionAdd, async (reaction) => {
+    const currentChannel = reaction.message.channel;
+    if (currentChannel.type !== ChannelType.GuildText) return;
 
-    if (handleMount) {
-      handleMount(client);
+    const reactor = reaction.users.cache.first();
+    let user: BottUser | undefined;
+    if (reactor) {
+      user = { id: reactor.id, name: reactor.username };
     }
 
-    // Incoming: Message
-    client.on(Events.MessageCreate, async (message) => {
-      if (deployNonce && _getCurrentDeployNonce() !== deployNonce) return;
-      if (message.channel.type !== ChannelType.GuildText) return;
+    let parent: BottEvent | undefined;
+    if (reaction.message.content) {
+      parent = await resolveBottEventFromMessage(
+        reaction.message as Message<true>,
+      );
+    }
 
-      const event = (await resolveBottEventFromMessage(
-        message as Message<true>,
-      )) as BottEvent;
-
-      // Dispatch to global event bus
-      globalThis.dispatchEvent(event);
-
-      // Call specific handler
-      if (events && Object.prototype.hasOwnProperty.call(events, event.type)) {
-        events[event.type as keyof typeof events]!(event);
-      }
-    });
-
-    // Incoming: Reaction
-    client.on(Events.MessageReactionAdd, async (reaction) => {
-      if (deployNonce && _getCurrentDeployNonce() !== deployNonce) return;
-      const currentChannel = reaction.message.channel;
-      if (currentChannel.type !== ChannelType.GuildText) return;
-
-      const reactor = reaction.users.cache.first();
-      let user: BottUser | undefined;
-      if (reactor) {
-        user = { id: reactor.id, name: reactor.username };
-      }
-
-      let parent: BottEvent | undefined;
-      if (reaction.message.content) {
-        parent = await resolveBottEventFromMessage(
-          reaction.message as Message<true>,
-        );
-      }
-
-      const event = new BottEvent(BottEventType.REACTION, {
+    globalThis.dispatchEvent(
+      new BottEvent(BottEventType.REACTION, {
         detail: { content: reaction.emoji.toString() },
         channel: {
           id: currentChannel.id,
@@ -156,166 +102,111 @@ export const startDiscordService: BottServiceFactory<DiscordBotOptions> =
         },
         user,
         parent,
-      });
+      }),
+    );
+  });
 
-      globalThis.dispatchEvent(event);
+  client.on(DiscordEvents.InteractionCreate, async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
 
-      // Call specific handler
-      if (events && events[event.type]) {
-        events[event.type]!(event);
-      }
-    });
-
-    // Incoming: Command Interaction
-    if (commands) {
-      client.on(Events.InteractionCreate, async (interaction) => {
-        if (deployNonce && _getCurrentDeployNonce() !== deployNonce) return;
-        if (!interaction.isChatInputCommand()) return;
-
-        const command = Object.values(commands).find(
-          ({ name }) => interaction.commandName === name,
-        );
-
-        if (!command) return;
-
-        await interaction.deferReply();
-
-        try {
-          const requestEvent = await resolveCommandRequestEvent(interaction);
-          // Track the interaction using the event ID so we can reply later
-          pendingInteractions.set(requestEvent.id, interaction);
-
-          globalThis.dispatchEvent(requestEvent);
-
-          if (
-            events &&
-            Object.prototype.hasOwnProperty.call(events, requestEvent.type)
-          ) {
-            events[requestEvent.type as keyof typeof events]!(requestEvent);
-          }
-        } catch (error) {
-          interaction.editReply({
-            embeds: [createErrorEmbed(error as Error)],
-          });
-        }
-      });
-
-      // Register commands
-      const body = Object.values(commands).map((cmd) => getCommandJson(cmd));
-      await new REST({ version: "10" }).setToken(token).put(
-        Routes.applicationCommands(String(botUser.id)),
-        { body },
-      );
-    }
-
-    // Outgoing: Listen for events from the app to send to Discord
-    const handleOutgoingEvent = async (event: Event) => {
-      // Check gate
-      if (deployNonce && _getCurrentDeployNonce() !== deployNonce) return;
-
-      const bottEvent = event as BottEvent;
-
-      // Only handle events relevant to Discord or Action Results
-
-      if (bottEvent.type === BottEventType.ACTION_RESULT) {
-        // Handle Action Result
-        if (!bottEvent.parent) return; // Should have a parent (the request)
-
-        const interaction = pendingInteractions.get(bottEvent.parent.id);
-        if (interaction) {
-          pendingInteractions.delete(bottEvent.parent.id);
-
-          try {
-            // Explicitly cast to unknown then string/payload/options
-            await interaction.followUp(
-              bottEvent.detail as unknown as InteractionReplyOptions,
-            );
-          } catch (e) {
-            log.error("Failed to follow up interaction", e);
-          }
-        }
-        return;
-      }
-
-      if (
-        bottEvent.type === BottEventType.MESSAGE ||
-        bottEvent.type === BottEventType.REPLY ||
-        bottEvent.type === BottEventType.REACTION
-      ) {
-        if (!bottEvent.channel) return;
-
-        try {
-          const channel = await client.channels.fetch(bottEvent.channel.id);
-          if (!channel || channel.type !== ChannelType.GuildText) return;
-
-          // Check if the user is US?
-          if (bottEvent.user?.id !== botUser.id) return;
-
-          if (bottEvent.type === BottEventType.REACTION) {
-            // Handle reaction
-            if (bottEvent.parent) {
-              try {
-                const message = await channel.messages.fetch(
-                  bottEvent.parent.id,
-                );
-                await message.react(bottEvent.detail.content as string);
-              } catch (e) {
-                log.warn("Failed to react", e);
-              }
-            }
-          } else {
-            // Message or Reply
-            const content = bottEvent.detail.content as string;
-            const attachments = bottEvent.attachments || [];
-
-            if (!content && attachments.length === 0) return;
-
-            const files = [];
-
-            for (const attachment of attachments) {
-              if (!attachment.raw?.file) {
-                continue;
-              }
-
-              files.push(
-                new AttachmentBuilder(
-                  Buffer.from(
-                    new Uint8Array(await attachment.raw.file.arrayBuffer()),
-                  ),
-                  {
-                    name: `${attachment.id}.${
-                      BOTT_ATTACHMENT_TYPE_LOOKUP[
-                        attachment.raw.file
-                          .type as keyof typeof BOTT_ATTACHMENT_TYPE_LOOKUP
-                      ].toLowerCase()
-                    }`,
-                  },
-                ),
-              );
-            }
-
-            const payload: MessageCreateOptions = { content, files };
-
-            if (bottEvent.type === BottEventType.REPLY && bottEvent.parent) {
-              payload.reply = { messageReference: bottEvent.parent.id };
-            }
-
-            await channel.send(payload);
-          }
-        } catch (error) {
-          log.error("Failed to send event to Discord", error);
-        }
-      }
-    };
-
-    // Subscribe
-    globalThis.addEventListener(BottEventType.MESSAGE, handleOutgoingEvent);
-    globalThis.addEventListener(BottEventType.REPLY, handleOutgoingEvent);
-    globalThis.addEventListener(BottEventType.REACTION, handleOutgoingEvent);
-    globalThis.addEventListener(
-      BottEventType.ACTION_RESULT,
-      handleOutgoingEvent,
+    const action = Object.values(actions).find(
+      ({ name }) => interaction.commandName === name,
     );
 
-    return { user: { id: botUser.id, name: botUser.username } };
+    if (!action) return;
+
+    await interaction.deferReply();
+
+    try {
+      const requestEvent = await resolveCommandRequestEvent(interaction);
+      // Track the interaction using the event ID so we can reply later
+      pendingInteractions.set(requestEvent.id, interaction);
+
+      globalThis.dispatchEvent(requestEvent);
+    } catch (error) {
+      log.error("Failed to resolve command request event", error);
+
+      // TODO: dispatch error event
+    }
+  });
+
+  const forwardSystemEvent = async (
+    event: BottEvent,
+    service?: BottService,
+  ) => {
+    if (!event.channel) return;
+    if (service?.user?.id === serviceUser.id) return;
+    if (!service) return;
+
+    try {
+      const channel = await client.channels.fetch(event.channel.id);
+      if (!channel || channel.type !== ChannelType.GuildText) return;
+
+      if (event.type === BottEventType.REACTION) {
+        try {
+          const message = await channel.messages.fetch(
+            event.parent!.id,
+          );
+          await message.react(event.detail.content as string);
+        } catch (e) {
+          log.warn("Failed to react", e);
+        }
+      } else {
+        // Message or Reply
+        const content = event.detail.content as string;
+        const attachments = event.attachments || [];
+
+        if (!content && attachments.length === 0) return;
+
+        const files = [];
+
+        for (const attachment of attachments) {
+          if (!attachment.raw?.file) {
+            continue;
+          }
+
+          files.push(
+            new AttachmentBuilder(
+              Buffer.from(
+                new Uint8Array(await attachment.raw.file.arrayBuffer()),
+              ),
+              {
+                name: `${attachment.id}.${
+                  BOTT_ATTACHMENT_TYPE_LOOKUP[
+                    attachment.raw.file
+                      .type as keyof typeof BOTT_ATTACHMENT_TYPE_LOOKUP
+                  ].toLowerCase()
+                }`,
+              },
+            ),
+          );
+        }
+
+        const payload: MessageCreateOptions = { content, files };
+
+        if (event.type === BottEventType.REPLY && event.parent) {
+          payload.reply = { messageReference: event.parent.id };
+        }
+
+        await channel.send(payload);
+      }
+    } catch (error) {
+      log.error("Failed to send event to Discord", error);
+    }
   };
+
+  addEventListener(BottEventType.MESSAGE, forwardSystemEvent);
+  addEventListener(BottEventType.REPLY, forwardSystemEvent);
+  addEventListener(BottEventType.REACTION, forwardSystemEvent);
+
+  if (actions) {
+    // Register actions as commands
+    const body = Object.values(actions).map((cmd) => getCommandJson(cmd));
+    await new REST({ version: "10" }).setToken(token).put(
+      Routes.applicationCommands(String(serviceUser.id)),
+      { body },
+    );
+  }
+
+  return { user: { id: serviceUser.id, name: serviceUser.username } };
+};

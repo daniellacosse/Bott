@@ -16,7 +16,7 @@ import type {
   BottGlobalSettings,
   BottUser,
 } from "@bott/model";
-import { BottEvent } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { addEvents } from "@bott/storage";
 import { log } from "@bott/logger";
 

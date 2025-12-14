@@ -39,6 +39,7 @@
     "./libraries/task",
     "./libraries/gemini",
     "./libraries/discord",
+    "./libraries/service",
     "./app"
   ]
 }

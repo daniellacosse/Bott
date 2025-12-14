@@ -9,9 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { serviceRegistry } from "@bott/service";
 import { startStorageService } from "@bott/storage";
 import { startDiscordService } from "@bott/discord";
-import { log } from "@bott/logger";
 import {
   DISCORD_TOKEN,
   PORT,
@@ -21,34 +21,30 @@ import {
 import * as actions from "./actions/main.ts";
 import { startMainService } from "./service.ts";
 
-// Set up deploy check:
-const deployNonce = crypto.randomUUID();
-Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deployNonce);
+const deploymentNonce = crypto.randomUUID();
+Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deploymentNonce);
 
-// 1. Start Storage
-await startStorageService({
-  root: STORAGE_ROOT,
-  deployNonce,
-});
+serviceRegistry.nonce = deploymentNonce;
 
-// 2. Start Discord to get Bot Identity
-const { user: botUser } = await startDiscordService({
-  // TODO(#63): Unify action infrastructure
-  actions: { help: actions.help },
-  identityToken: DISCORD_TOKEN!,
-  mount(client) {
-    log.info(
-      `Running bot "${client.user?.username}" at user id "<@${client.user?.id}>"`,
-    );
-  },
-  deployNonce,
-});
+serviceRegistry.register(
+  await startStorageService({
+    root: STORAGE_ROOT,
+  }),
+);
 
-// 3. Start Main Application Logic
-await startMainService({
-  botUser,
-  deployNonce,
-});
+if (DISCORD_TOKEN) {
+  serviceRegistry.register(
+    await startDiscordService({
+      // TODO(#64): Unify action infrastructure
+      actions: { help: actions.help },
+      identityToken: DISCORD_TOKEN,
+    }),
+  );
+}
+
+serviceRegistry.register(
+  await startMainService({ actions }),
+);
 
 // Need to respond to GCP health probe:
 Deno.serve(

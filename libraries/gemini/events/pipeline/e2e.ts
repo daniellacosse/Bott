@@ -15,12 +15,12 @@ import {
   type BottAction,
   BottActionOptionType,
   type BottChannel,
-  BottEvent,
   BottEventType,
   type BottRatingScale,
   type BottReason,
   type BottUser,
 } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { log } from "@bott/logger";
 
 import type { EventPipelineContext, EventPipelineProcessor } from "./types.ts";

@@ -13,11 +13,11 @@ import {
   type AnyShape,
   type BottActionCallEvent,
   type BottChannel,
-  BottEvent,
   BottEventType,
   type BottGlobalSettings,
   type BottUser,
 } from "@bott/model";
+import { BottEvent } from "@bott/service";
 
 import gemini from "../client.ts";
 import { ERROR_MODEL } from "@bott/constants";

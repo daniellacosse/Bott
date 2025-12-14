@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottEvent } from "@bott/model";
+import { BottEvent } from "@bott/service";
 
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";

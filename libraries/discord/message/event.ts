@@ -11,7 +11,8 @@
 
 import type { Message } from "discord.js";
 
-import { BottEvent, BottEventType } from "@bott/model";
+import { BottEventType } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { addEvents, getEvents, prepareAttachmentFromUrl } from "@bott/storage";
 import { log } from "@bott/logger";
 

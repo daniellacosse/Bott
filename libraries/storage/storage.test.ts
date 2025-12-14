@@ -11,7 +11,8 @@
 
 import { assertEquals, assertExists } from "@std/assert";
 
-import { BottEvent, BottEventType } from "@bott/model";
+import { BottEventType } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { log } from "@bott/logger";
 
 import { addEvents } from "./data/events/add.ts";

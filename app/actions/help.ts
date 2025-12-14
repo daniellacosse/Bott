@@ -12,9 +12,9 @@
 import {
   type BottAction,
   type BottActionResultEvent,
-  BottEvent,
   BottEventType,
 } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { createInfoEmbed } from "@bott/discord";
 
 export const help: BottAction = Object.assign(

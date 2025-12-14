@@ -9,18 +9,16 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export type { BottChannel, BottUser } from "./types/entities.ts";
-export { BottEventType } from "./types/events.ts";
-
-import type { BottChannel, BottUser } from "./types/entities.ts";
-import { BottEventType } from "./types/events.ts";
-import type {
-  BottActionCallEvent,
-  BottActionResultEvent,
-  BottEvent as BottEventInterface,
-  BottEventAttachment,
-} from "./types/events.ts";
-import type { AnyShape } from "./types/utility.ts";
+import {
+  type AnyShape,
+  type BottActionCallEvent,
+  type BottActionResultEvent,
+  type BottChannel,
+  type BottEvent as BottEventInterface,
+  type BottEventAttachment,
+  BottEventType,
+  type BottUser,
+} from "@bott/model";
 
 /**
  * Represents a generic event in Bott.

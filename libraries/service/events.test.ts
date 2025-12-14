@@ -11,8 +11,8 @@
 
 import { assert, assertEquals, assertExists } from "@std/assert";
 import { BottEvent } from "./events.ts";
-import { BottEventType } from "./types/events.ts";
-import type { BottChannel, BottUser } from "./types/entities.ts";
+import { BottEventType } from "@bott/model";
+import type { BottChannel, BottUser } from "@bott/model";
 
 Deno.test("BottEvent - constructor initializes required properties", () => {
   const event = new BottEvent(BottEventType.MESSAGE);

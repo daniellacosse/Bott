@@ -14,9 +14,9 @@ import {
   type BottActionCallEvent,
   BottActionOptionType,
   type BottActionResultEvent,
-  BottEvent,
   BottEventType,
 } from "@bott/model";
+import { BottEvent } from "@bott/service";
 import { createTask } from "@bott/task";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
