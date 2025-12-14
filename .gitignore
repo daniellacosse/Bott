@@ -2,8 +2,7 @@
 !.env.example
 
 .signatures/
-fs_root/
-.build-hash
+.output/
 
 
 # for agents

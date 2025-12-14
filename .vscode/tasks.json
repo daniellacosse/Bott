@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Bott (Development)",
+      "type": "shell",
+      "command": "deno",
+      "args": [
+        "run",
+        "--allow-all",
+        "--env-file=.env.dev",
+        "--watch=app/,libraries/,model/",
+        "./app/main.ts"
+      ],
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}

@@ -37,15 +37,15 @@ jobs:
 
       - name: Run Tests
         run: |
-          deno test --allow-all --coverage=cov_profile
-          mkdir -p coverage
-          deno coverage cov_profile --lcov --output=coverage/lcov.info
+          deno test --allow-all --coverage=.output/cov_profile
+          mkdir -p .output/coverage
+          deno coverage .output/cov_profile --lcov --output=.output/coverage/lcov.info
 
       - name: Upload Coverage
         uses: qltysh/qlty-action/coverage@v2
         with:
           token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
-          files: coverage/lcov.info
+          files: .output/coverage/lcov.info
 
   licensing:
     name: License Headers

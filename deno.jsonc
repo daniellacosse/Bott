@@ -29,9 +29,8 @@
     "@bott/constants": "./constants.ts"
   },
   "tasks": {
-    "reset": "rm -rf ./fs_root",
-    "setup": "brew bundle && gcloud auth login",
-    "runApp": "deno run --allow-all --watch=app,libraries,model,scripts ./scripts/runApp.ts"
+    "reset": "rm -rf ./.output",
+    "setup": "brew bundle && gcloud auth application-default login"
   },
   "workspace": [
     "./model",

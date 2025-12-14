@@ -1,9 +1,0 @@
-{
-  "deno.enable": true,
-  "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno",
-  },
-  "yaml.schemas": {
-    "https://json.schemastore.org/github-issue-config.json": "./.github/ISSUE_TEMPLATE/config.yml"
-  }
-}

@@ -2,6 +2,7 @@ FROM denoland/deno:latest
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
     ffmpeg \
     libmp3lame-dev \
     libx265-dev && \

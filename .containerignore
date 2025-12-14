@@ -1,0 +1,10 @@
+.devcontainer
+.containerignore
+.env.*
+.git
+.github
+.output
+.vscode
+assets
+Brewfile
+Containerfile
