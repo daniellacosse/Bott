@@ -34,7 +34,9 @@ export const STORAGE_MAX_ATTACHMENT_DIMENSION = 480;
 // Logger
 export const LOGGER_TOPICS =
   (Deno.env.get("LOGGER_TOPICS") ?? "info,warn,error")
-    .split(",");
+    .split(",")
+    .map((topic) => topic.trim().toLowerCase())
+    .filter((topic) => topic.length > 0);
 export const LOGGER_TRUNCATE_LENGTH = 100;
 
 // -- Actions --
