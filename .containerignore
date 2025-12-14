@@ -1,6 +1,8 @@
 .devcontainer
 .containerignore
 .env.*
+config*.yml
+!config.example.yml
 .git
 .github
 .output

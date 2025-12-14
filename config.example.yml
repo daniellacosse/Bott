@@ -1,0 +1,9 @@
+# Learn how to create a GCP project:
+# https://developers.google.com/workspace/guides/create-project
+GOOGLE_PROJECT_ID: ""
+GOOGLE_PROJECT_LOCATION: ""
+GOOGLE_ACCESS_TOKEN: ""
+
+# Create a Discord application here:
+# https://discord.com/developers/applications
+DISCORD_TOKEN: ""

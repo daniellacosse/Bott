@@ -32,14 +32,14 @@ please open an issue to discuss it!
 
 #### Instructions
 
-1. Copy `.env.example` to `.env.dev`:
+1. Copy `config.example.yml` to `config.dev.yml`:
 
 ```sh
-cp .env.example .env.dev
+cp config.example.yml config.dev.yml
 ```
 
-2. Get your GCP information and add it to `.env.dev`.
-3. Get your Discord information and add it to `.env.dev`.
+2. Get your GCP information and add it to `config.dev.yml`.
+3. Get your Discord information and add it to `config.dev.yml`.
 4. Set up the environment with `deno task setup`.
 5. Open the project in VS Code with the devcontainer. The bot will start
    automatically.

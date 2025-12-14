@@ -1,5 +1,7 @@
 .env*
 !.env.example
+config*.yml
+!config.example.yml
 
 .signatures/
 .output/
