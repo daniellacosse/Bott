@@ -37,7 +37,7 @@ export function budgetedStringify(value: unknown, totalBudget: number): string {
     if (typeof value === "number") return { size: String(value).length };
     if (typeof value === "string") return { size: `"${value}"`.length };
     if (
-      typeof value === undefined || typeof value === "function" ||
+      value === undefined || typeof value === "function" ||
       typeof value === "symbol"
     ) return { size: 0 };
 
