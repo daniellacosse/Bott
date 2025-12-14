@@ -1,4 +1,4 @@
-# Learn how to create a GCP project: 
+# Learn how to create a GCP project:
 # https://developers.google.com/workspace/guides/create-project
 GOOGLE_PROJECT_ID: ""
 GOOGLE_PROJECT_LOCATION: ""

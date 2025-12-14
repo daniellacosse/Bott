@@ -37,8 +37,8 @@ content generation capabilities.
 ### Development Workflow
 
 - Start development server: `deno task runApp test` -- requires configured
-  settings. NEVER CANCEL initial startup - dependency downloads
-  take 2-5 minutes.
+  settings. NEVER CANCEL initial startup - dependency downloads take 2-5
+  minutes.
 - Start production server: `deno task runApp prod`
 - Build and run with Docker: `deno task runApp` -- combines Docker build and run
 

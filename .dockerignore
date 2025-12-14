@@ -1,5 +1,7 @@
 .git
 .env.*
+config*.yml
+!config.example.yml
 .dockerignore
 Brewfile
 Dockerfile

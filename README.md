@@ -19,10 +19,9 @@ An autonomous groupchat agent.
 
 ## Current Features
 
-- Bott uses a pre-configured
-  [`Identity`](./app/settings/identity.md.ejs) and
-  [`Reasons`](./app/settings/reasons.ts) to determine when to
-  engage with server members.
+- Bott uses a pre-configured [`Identity`](./app/settings/identity.md.ejs) and
+  [`Reasons`](./app/settings/reasons.ts) to determine when to engage with server
+  members.
 - They view and can discuss most types of media posted in chat. _(See:
   [Supported Attachment Types](./model/types/events.ts))_
 - They asynchronously perform tasks as requested:

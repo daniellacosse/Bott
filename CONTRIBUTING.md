@@ -108,8 +108,9 @@ gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
   --role="roles/storage.objectAdmin"
 ```
 
-5. **Create a `config.production.yml` file**: As [above](#instructions), create a
-   `config.production.yml` file from the provided `config.example.yml` file and fill it out.
+5. **Create a `config.production.yml` file**: As [above](#instructions), create
+   a `config.production.yml` file from the provided `config.example.yml` file
+   and fill it out.
 
 ```sh
 cp config.example.yml config.production.yml
@@ -119,8 +120,9 @@ cp config.example.yml config.production.yml
    repository. You will be prompted to set the region.
 
 > [!NOTE]
-> Cloud Run requires environment variables to be set via `--set-env-vars` or `--env-vars-file` flags.
-> The YAML config format is for local development. For deployment, convert your config to env vars:
+> Cloud Run requires environment variables to be set via `--set-env-vars` or
+> `--env-vars-file` flags. The YAML config format is for local development. For
+> deployment, convert your config to env vars:
 
 ```sh
 # Convert YAML to env vars format for deployment
