@@ -43,6 +43,8 @@ const REQUIRED_INTENTS = [
   GatewayIntentBits.GuildMessages,
   GatewayIntentBits.Guilds,
   GatewayIntentBits.MessageContent,
+  GatewayIntentBits.DirectMessages,
+  GatewayIntentBits.DirectMessageReactions,
 ];
 
 export const startDiscordService: BottServiceFactory = async ({
@@ -65,7 +67,10 @@ export const startDiscordService: BottServiceFactory = async ({
   };
 
   client.on(DiscordEvents.MessageCreate, async (message) => {
-    if (message.channel.type !== ChannelType.GuildText) return;
+    if (
+      message.channel.type !== ChannelType.GuildText &&
+      message.channel.type !== ChannelType.DM
+    ) return;
 
     const event = (await resolveBottEventFromMessage(
       message as Message<true>,
@@ -76,7 +81,10 @@ export const startDiscordService: BottServiceFactory = async ({
 
   client.on(DiscordEvents.MessageReactionAdd, async (reaction) => {
     const currentChannel = reaction.message.channel;
-    if (currentChannel.type !== ChannelType.GuildText) return;
+    if (
+      currentChannel.type !== ChannelType.GuildText &&
+      currentChannel.type !== ChannelType.DM
+    ) return;
 
     const reactor = reaction.users.cache.first();
     let user: BottUser | undefined;
@@ -96,10 +104,14 @@ export const startDiscordService: BottServiceFactory = async ({
         detail: { content: reaction.emoji.toString() },
         channel: {
           id: currentChannel.id,
-          name: currentChannel.name,
+          name: (currentChannel.type === ChannelType.DM
+            ? "Direct Messages"
+            : currentChannel.name) as string,
           space: {
-            id: currentChannel.guild.id,
-            name: currentChannel.guild.name,
+            id: currentChannel.isDMBased() ? "dm" : currentChannel.guild.id,
+            name: currentChannel.isDMBased()
+              ? "Direct Messages"
+              : currentChannel.guild.name,
           },
         },
         user,
@@ -135,8 +147,13 @@ export const startDiscordService: BottServiceFactory = async ({
 
     const content = event.detail.content as string;
 
-    const channel = await client.channels.fetch(event.channel.id);
-    if (!channel || channel.type !== ChannelType.GuildText) return;
+    // deno-lint-ignore no-explicit-any
+    const channel = await client.channels.fetch(event.channel.id) as any;
+    if (
+      !channel ||
+      (channel.type !== ChannelType.GuildText &&
+        channel.type !== ChannelType.DM)
+    ) return;
 
     if (event.type === BottEventType.REACTION && event.parent) {
       const message = await channel.messages.fetch(
