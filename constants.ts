@@ -63,7 +63,7 @@ export const RATE_LIMIT_VIDEOS = Number(
 export const ENABLED_SERVICES =
   (Deno.env.get("ENABLED_SERVICES") ?? "main,discord")
     .split(/,\s*/)
-    .map((s) => s.trim());
+    .filter((s) => s.length > 0);
 
 export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
 
