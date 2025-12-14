@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+# @license
+# This file is part of Bott.
+#
+# This project is dual-licensed:
+# - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+# - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+#
+# Copyright (C) 2025 DanielLaCos.se
+
+set -euo pipefail
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Default values
+SERVICE_NAME="${SERVICE_NAME:-bott-service}"
+ENV_FILE="${ENV_FILE:-.env.production}"
+ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-true}"
+
+# Helper functions
+log_info() {
+  echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+  echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+  echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if gcloud is installed
+check_gcloud() {
+  if ! command -v gcloud &> /dev/null; then
+    log_error "gcloud CLI is not installed. Please install it from https://cloud.google.com/sdk/docs/install"
+    exit 1
+  fi
+  log_info "gcloud CLI found"
+}
+
+# Check if .env.production file exists
+check_env_file() {
+  if [ ! -f "$ENV_FILE" ]; then
+    log_error "Environment file '$ENV_FILE' not found."
+    log_info "Please create it from .env.example:"
+    log_info "  cp .env.example $ENV_FILE"
+    exit 1
+  fi
+  log_info "Environment file '$ENV_FILE' found"
+}
+
+# Validate required environment variables in .env file
+validate_env_vars() {
+  local required_vars=("DISCORD_TOKEN" "GOOGLE_PROJECT_ID" "GOOGLE_PROJECT_LOCATION")
+  local missing_vars=()
+
+  # Source the env file to check for required variables
+  while IFS='=' read -r key value; do
+    # Skip comments and empty lines
+    [[ $key =~ ^#.*$ ]] && continue
+    [[ -z $key ]] && continue
+    
+    # Export the variable
+    export "$key=$value"
+  done < "$ENV_FILE"
+
+  for var in "${required_vars[@]}"; do
+    if [ -z "${!var:-}" ]; then
+      missing_vars+=("$var")
+    fi
+  done
+
+  if [ ${#missing_vars[@]} -gt 0 ]; then
+    log_error "Missing required environment variables in $ENV_FILE:"
+    for var in "${missing_vars[@]}"; do
+      echo "  - $var"
+    done
+    exit 1
+  fi
+
+  log_info "All required environment variables are set"
+}
+
+# Get or prompt for region
+get_region() {
+  if [ -z "${REGION:-}" ]; then
+    log_info "No REGION environment variable set."
+    read -r -p "Enter GCP region for deployment (e.g., us-central1): " REGION
+    export REGION
+  fi
+  log_info "Deploying to region: $REGION"
+}
+
+# Convert .env file to YAML format for gcloud
+convert_env_to_yaml() {
+  local yaml_file="/tmp/bott-deploy-env-$$.yaml"
+  
+  # Create YAML file from .env
+  while IFS='=' read -r key value; do
+    # Skip comments and empty lines
+    [[ $key =~ ^#.*$ ]] && continue
+    [[ -z $key ]] && continue
+    
+    # Remove leading/trailing whitespace and quotes from value
+    value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/")
+    
+    # Write to YAML file
+    echo "$key: \"$value\"" >> "$yaml_file"
+  done < "$ENV_FILE"
+  
+  echo "$yaml_file"
+}
+
+# Deploy to Cloud Run
+deploy() {
+  log_info "Starting deployment to Google Cloud Run..."
+  log_info "Service: $SERVICE_NAME"
+  log_info "Region: $REGION"
+  
+  # Convert env file to YAML
+  log_info "Converting $ENV_FILE to YAML format..."
+  local yaml_env_file
+  yaml_env_file=$(convert_env_to_yaml)
+  
+  local deploy_args=(
+    "run" "deploy" "$SERVICE_NAME"
+    "--source" "."
+    "--region" "$REGION"
+    "--project" "$GOOGLE_PROJECT_ID"
+    "--env-vars-file" "$yaml_env_file"
+  )
+
+  # Add platform and other options from app.json
+  deploy_args+=(
+    "--platform" "managed"
+    "--cpu" "1"
+    "--memory" "1.5Gi"
+    "--max-instances" "1"
+    "--port" "8080"
+  )
+
+  if [ "$ALLOW_UNAUTHENTICATED" = "true" ]; then
+    deploy_args+=("--allow-unauthenticated")
+  fi
+
+  log_info "Executing: gcloud ${deploy_args[*]}"
+  
+  local exit_code=0
+  if gcloud "${deploy_args[@]}"; then
+    log_info "Deployment successful!"
+    
+    # Get the service URL
+    SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --region="$REGION" --format="value(status.url)" 2>/dev/null || echo "")
+    if [ -n "$SERVICE_URL" ]; then
+      log_info "Service URL: $SERVICE_URL"
+    fi
+  else
+    log_error "Deployment failed!"
+    exit_code=1
+  fi
+  
+  # Clean up temporary file
+  rm -f "$yaml_env_file"
+  
+  return $exit_code
+}
+
+# View logs
+view_logs() {
+  log_info "To view logs, run:"
+  echo "  gcloud logging read \"resource.type=cloud_run_revision AND resource.labels.service_name=$SERVICE_NAME\" --limit 50"
+}
+
+# Main execution
+main() {
+  log_info "Bott Deployment Script"
+  log_info "======================"
+  
+  check_gcloud
+  check_env_file
+  validate_env_vars
+  get_region
+  
+  if deploy; then
+    echo ""
+    view_logs
+    exit 0
+  else
+    exit 1
+  fi
+}
+
+# Run main function
+main "$@"
