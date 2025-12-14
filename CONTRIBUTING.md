@@ -115,15 +115,24 @@ gcloud projects add-iam-policy-binding <YOUR_PROJECT_ID> \
 cp .env.example .env.production
 ```
 
-6. **Deploy the Service**: Deploy the application to Cloud Run from the source
-   repository. You will be prompted to set the region.
+6. **Deploy the Service**: Deploy the application to Cloud Run using the
+   provided deployment script. You will be prompted to set the region if not
+   provided via the `REGION` environment variable.
 
 ```sh
+# Using the deployment script (recommended)
+./scripts/deploy
+
+# Or specify the region as an environment variable
+REGION=<YOUR_REGION> ./scripts/deploy
+
+# Manual deployment (alternative)
 gcloud run deploy bott-service \
   --source . \
   --allow-unauthenticated \
   --region <YOUR_REGION> \
-  --env-file .env.production
+  --project <YOUR_PROJECT_ID> \
+  --env-vars-file .env.production.yaml
 ```
 
 9. **Verify Deployment**: Bott should now be running correctly.
