@@ -13,44 +13,44 @@ set -euo pipefail
 # Get script directory and source utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/utils/log.sh"
-source "$SCRIPT_DIR/utils/gcloud.sh"
+source "$SCRIPT_DIR/utils/checks.sh"
 
 # Main setup function
 main() {
-  log_info "Bott Setup Script"
-  log_info "================="
+  info_log "Bott Setup Script"
+  info_log "================="
   
   # Default environment to devcontainer for setup
   local env="${ENV:-devcontainer}"
   
   # Check if running on macOS
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    log_info "Detected macOS"
+    info_log "Detected macOS"
     
     # Check if brew is installed
     if ! check_homebrew; then
       read -r -p "Homebrew is not installed. Would you like to install it? (y/N): " install_brew
       if [[ "$install_brew" =~ ^[Yy]$ ]]; then
-        log_info "Installing Homebrew..."
+        info_log "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       else
-        log_error "Homebrew is required. Please install it from https://brew.sh"
+        error_log "Homebrew is required. Please install it from https://brew.sh"
         exit 1
       fi
     fi
     
-    log_info "Installing dependencies via Homebrew..."
+    info_log "Installing dependencies via Homebrew..."
     brew bundle
   elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    log_info "Detected Linux"
+    info_log "Detected Linux"
     
     # Check if apt-get is available (Debian/Ubuntu)
     if command -v apt-get &> /dev/null; then
-      log_info "Installing dependencies via apt-get..."
+      info_log "Installing dependencies via apt-get..."
       
       # Install gcloud if not present
       if ! command -v gcloud &> /dev/null; then
-        log_info "Installing Google Cloud SDK..."
+        info_log "Installing Google Cloud SDK..."
         sudo apt-get update
         sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
         curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
@@ -61,59 +61,59 @@ main() {
       
       # Install Deno if not present
       if ! command -v deno &> /dev/null; then
-        log_info "Installing Deno..."
+        info_log "Installing Deno..."
         curl -fsSL https://deno.land/install.sh | sh
-        log_info "Please add Deno to your PATH: export PATH=\"\$HOME/.deno/bin:\$PATH\""
+        info_log "Please add Deno to your PATH: export PATH=\"\$HOME/.deno/bin:\$PATH\""
       fi
     else
-      log_info "Please manually install the following:"
-      log_info "  - Google Cloud SDK (gcloud)"
-      log_info "  - Deno runtime"
-      log_info ""
-      log_info "For more info: https://cloud.google.com/sdk/docs/install"
+      info_log "Please manually install the following:"
+      info_log "  - Google Cloud SDK (gcloud)"
+      info_log "  - Deno runtime"
+      info_log ""
+      info_log "For more info: https://cloud.google.com/sdk/docs/install"
     fi
   else
-    log_info "Detected other system: $OSTYPE"
-    log_warn "Please manually install dependencies:"
-    log_warn "  - Google Cloud SDK (gcloud)"
-    log_warn "  - Deno runtime"
+    info_log "Detected other system: $OSTYPE"
+    warn_log "Please manually install dependencies:"
+    warn_log "  - Google Cloud SDK (gcloud)"
+    warn_log "  - Deno runtime"
   fi
   
   # Check if gcloud is installed
   check_gcloud
-  log_info "gcloud CLI found"
+  info_log "gcloud CLI found"
   
   # Authenticate with gcloud
-  log_info "Authenticating with Google Cloud..."
+  info_log "Authenticating with Google Cloud..."
   if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null | grep -q .; then
-    log_info "Running: gcloud auth application-default login"
+    info_log "Running: gcloud auth application-default login"
     gcloud auth application-default login
   else
-    log_info "Already authenticated with gcloud"
+    info_log "Already authenticated with gcloud"
   fi
   
   # Create environment file
-  local env_file=".env.$env"
+  local env_file=".env.$env.yml"
   if [ ! -f "$env_file" ]; then
-    log_info "Creating $env_file from .env.example..."
-    cp .env.example "$env_file"
-    log_info "Created $env_file"
+    info_log "Creating $env_file from .env.example.yml..."
+    cp .env.example.yml "$env_file"
+    info_log "Created $env_file"
     
     # Ask if user wants to edit the file
     read -r -p "Would you like to open $env_file in your editor? (y/N): " open_editor
     if [[ "$open_editor" =~ ^[Yy]$ ]]; then
       local editor="${EDITOR:-${VISUAL:-vi}}"
-      log_info "Opening $env_file in $editor..."
+      info_log "Opening $env_file in $editor..."
       "$editor" "$env_file"
     else
-      log_info "Please edit $env_file with your configuration"
+      info_log "Please edit $env_file with your configuration"
     fi
   else
-    log_info "$env_file already exists"
+    info_log "$env_file already exists"
   fi
   
-  log_info ""
-  log_info "Setup complete!"
+  info_log ""
+  info_log "Setup complete!"
 }
 
 # Run main function

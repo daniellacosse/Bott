@@ -26,7 +26,8 @@
     "turndown": "npm:turndown@^7.2.0",
     "unist-util-visit": "npm:unist-util-visit@^5.0.0",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.2",
-    "@bott/constants": "./constants.ts"
+    "@bott/constants": "./constants.ts",
+    "logger.sh": "./scripts/utils/log.sh"
   },
   "tasks": {
     "reset": "rm -rf ./.output",

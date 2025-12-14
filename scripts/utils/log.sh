@@ -108,8 +108,4 @@ error_log() {
   log "ERROR" "$RED" "$@"
 }
 
-# Backward compatibility aliases
-log_debug() { debug_log "$@"; }
-log_info() { info_log "$@"; }
-log_warn() { warn_log "$@"; }
-log_error() { error_log "$@"; }
+

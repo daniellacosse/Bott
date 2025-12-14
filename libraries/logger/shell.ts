@@ -14,33 +14,35 @@
  * Provides integration between TypeScript and bash log.sh
  */
 
-import { fromFileUrl } from "@std/path";
-
-const SCRIPT_PATH = fromFileUrl(
-  new URL("../../scripts/utils/log.sh", import.meta.url),
-);
+import type { Logger } from "./logging.ts";
+import loggerSh from "logger.sh" with { type: "text" };
 
 /**
  * Execute a bash log command
  */
-async function execLog(level: string, ...args: unknown[]): Promise<void> {
-  const message = args.map((arg) => String(arg)).join(" ");
-
+async function execLog(fnName: string, ...args: unknown[]): Promise<void> {
   // Use separate arguments to avoid shell injection
   const command = new Deno.Command("bash", {
     args: [
       "-c",
-      `source "$1" && shift && "${2}_log" "$@"`,
+      `source /dev/stdin && "${1}" "$@"`,
       "--",
-      SCRIPT_PATH,
-      level,
+      fnName,
       ...args.map((arg) => String(arg)),
     ],
+    stdin: "piped",
     stdout: "piped",
     stderr: "piped",
   });
 
-  const { stdout, stderr } = await command.output();
+  const process = command.spawn();
+  
+  // Write the logger script to stdin
+  const writer = process.stdin.getWriter();
+  await writer.write(new TextEncoder().encode(loggerSh));
+  await writer.close();
+
+  const { stdout, stderr } = await process.output();
 
   // Write output to console
   if (stdout.length > 0) {
@@ -52,70 +54,41 @@ async function execLog(level: string, ...args: unknown[]): Promise<void> {
 }
 
 /**
- * Raw log function for performance logging
+ * Shell logger that wraps bash log.sh functions and conforms to Logger interface
  */
-async function rawLog(level: string, color: string, ...args: unknown[]): Promise<void> {
-  const command = new Deno.Command("bash", {
-    args: [
-      "-c",
-      `source "$1" && shift && log "$@"`,
-      "--",
-      SCRIPT_PATH,
-      level,
-      color,
-      ...args.map((arg) => String(arg)),
-    ],
-    stdout: "piped",
-    stderr: "piped",
-  });
-
-  const { stdout, stderr } = await command.output();
-
-  if (stdout.length > 0) {
-    await Deno.stdout.write(stdout);
-  }
-  if (stderr.length > 0) {
-    await Deno.stderr.write(stderr);
-  }
-}
-
-/**
- * Shell logger that wraps bash log.sh functions
- */
-export const shellLog = {
+export const shellLog: Logger = {
   /**
    * Log debug message via bash logger
    */
-  debug_log(...args: unknown[]): Promise<void> {
-    return execLog("debug", ...args);
+  debug(...args: unknown[]): void {
+    execLog("debug_log", ...args);
   },
 
   /**
    * Log info message via bash logger
    */
-  info_log(...args: unknown[]): Promise<void> {
-    return execLog("info", ...args);
+  info(...args: unknown[]): void {
+    execLog("info_log", ...args);
   },
 
   /**
    * Log warning message via bash logger
    */
-  warn_log(...args: unknown[]): Promise<void> {
-    return execLog("warn", ...args);
+  warn(...args: unknown[]): void {
+    execLog("warn_log", ...args);
   },
 
   /**
    * Log error message via bash logger
    */
-  error_log(...args: unknown[]): Promise<void> {
-    return execLog("error", ...args);
+  error(...args: unknown[]): void {
+    execLog("error_log", ...args);
   },
 
   /**
-   * Raw log function for performance logging
-   * Usage: shellLog.log("PERF", "\033[0;35m", "message")
+   * Performance logging - not implemented for shell logger
    */
-  log(level: string, color: string, ...args: unknown[]): Promise<void> {
-    return rawLog(level, color, ...args);
+  perf(_label?: string): void {
+    // Shell logger doesn't support perf logging
   },
 };

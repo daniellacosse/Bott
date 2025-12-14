@@ -24,10 +24,10 @@ please open an issue to discuss it!
 
 #### Prerequisites
 
-- Homebrew ([https://brew.sh/](https://brew.sh/)) - for macOS users (the setup script can install this for you)
-- A GCP Project (the setup script can help create this)
 - A Registered Discord Application
   ([https://discord.com/developers/applications](https://discord.com/developers/applications))
+
+Note: The setup script will automatically install all required dependencies (Homebrew on macOS, gcloud SDK, Deno) and help you create a GCP project if needed.
 
 #### Instructions
 

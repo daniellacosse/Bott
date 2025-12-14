@@ -13,7 +13,7 @@ set -euo pipefail
 # Get script directory and source utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/utils/log.sh"
-source "$SCRIPT_DIR/utils/gcloud.sh"
+source "$SCRIPT_DIR/utils/checks.sh"
 
 # Default values
 ENV="${ENV:-production}"
@@ -24,7 +24,7 @@ LIMIT="${LIMIT:-50}"
 main() {
   check_gcloud
   
-  log_info "Fetching logs for service: $GCP_SERVICE_NAME (limit: $LIMIT)"
+  info_log "Fetching logs for service: $GCP_SERVICE_NAME (limit: $LIMIT)"
   
   gcloud logging read \
     "resource.type=cloud_run_revision AND resource.labels.service_name=$GCP_SERVICE_NAME" \

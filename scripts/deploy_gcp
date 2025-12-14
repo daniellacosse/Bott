@@ -13,7 +13,7 @@ set -euo pipefail
 # Get script directory and source utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/utils/log.sh"
-source "$SCRIPT_DIR/utils/gcloud.sh"
+source "$SCRIPT_DIR/utils/checks.sh"
 
 # Default values
 ENV="${ENV:-production}"
@@ -25,11 +25,11 @@ DEFAULT_REGION="us-central1"
 # Ensure user is authenticated
 ensure_authenticated() {
   if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null | grep -q .; then
-    log_warn "Not authenticated with gcloud."
-    log_info "Running: gcloud auth application-default login"
+    warn_log "Not authenticated with gcloud."
+    info_log "Running: gcloud auth application-default login"
     gcloud auth application-default login
   else
-    log_info "Already authenticated with gcloud"
+    info_log "Already authenticated with gcloud"
   fi
 }
 
@@ -38,7 +38,7 @@ setup_project() {
   local project_id="${GOOGLE_PROJECT_ID:-}"
   
   if [ -z "$project_id" ]; then
-    log_warn "GOOGLE_PROJECT_ID not set in environment file."
+    warn_log "GOOGLE_PROJECT_ID not set in environment file."
     read -r -p "Enter your GCP Project ID (or press Enter to auto-generate): " project_id
     
     if [ -z "$project_id" ]; then
@@ -46,13 +46,13 @@ setup_project() {
       local unique_suffix
       unique_suffix=$(openssl rand -hex 4 2>/dev/null || echo "$RANDOM$RANDOM")
       project_id="bott-$(date +%s)-${unique_suffix}"
-      log_info "Auto-generating project ID: $project_id"
-      log_info "Creating new project: $project_id"
+      info_log "Auto-generating project ID: $project_id"
+      info_log "Creating new project: $project_id"
       
       if gcloud projects create "$project_id" 2>/dev/null; then
-        log_info "Project created successfully: $project_id"
+        info_log "Project created successfully: $project_id"
       else
-        log_error "Failed to create project. You may need to provide a unique project ID."
+        error_log "Failed to create project. You may need to provide a unique project ID."
         read -r -p "Enter a unique GCP Project ID: " project_id
       fi
     fi
@@ -68,26 +68,26 @@ setup_project() {
         echo "GOOGLE_PROJECT_ID=$project_id" >> "$ENV_FILE"
       fi
       rm -f "${ENV_FILE}.bak"
-      log_info "Updated $ENV_FILE with GOOGLE_PROJECT_ID=$project_id"
+      info_log "Updated $ENV_FILE with GOOGLE_PROJECT_ID=$project_id"
     fi
   fi
   
   # Set the project
-  log_info "Setting active project to: $GOOGLE_PROJECT_ID"
+  info_log "Setting active project to: $GOOGLE_PROJECT_ID"
   gcloud config set project "$GOOGLE_PROJECT_ID" 2>/dev/null || true
   
   # Check if project exists
   if ! gcloud projects describe "$GOOGLE_PROJECT_ID" &>/dev/null; then
-    log_error "Project $GOOGLE_PROJECT_ID does not exist or you don't have access to it."
+    error_log "Project $GOOGLE_PROJECT_ID does not exist or you don't have access to it."
     exit 1
   fi
   
-  log_info "Project verified: $GOOGLE_PROJECT_ID"
+  info_log "Project verified: $GOOGLE_PROJECT_ID"
 }
 
 # Enable required APIs
 enable_apis() {
-  log_info "Enabling required APIs..."
+  info_log "Enabling required APIs..."
   
   local apis=(
     "aiplatform.googleapis.com"
@@ -99,16 +99,16 @@ enable_apis() {
   
   for api in "${apis[@]}"; do
     if gcloud services list --enabled --filter="name:$api" --format="value(name)" 2>/dev/null | grep -q "$api"; then
-      log_info "API already enabled: $api"
+      info_log "API already enabled: $api"
     else
-      log_info "Enabling API: $api"
+      info_log "Enabling API: $api"
       if ! gcloud services enable "$api" --project="$GOOGLE_PROJECT_ID" 2>&1; then
-        log_warn "Failed to enable $api"
-        log_warn "This may be due to:"
-        log_warn "  - Billing not enabled on the project"
-        log_warn "  - Insufficient permissions"
-        log_warn "  - API not available in your region"
-        log_warn "You may need to enable this manually in the GCP Console"
+        warn_log "Failed to enable $api"
+        warn_log "This may be due to:"
+        warn_log "  - Billing not enabled on the project"
+        warn_log "  - Insufficient permissions"
+        warn_log "  - API not available in your region"
+        warn_log "You may need to enable this manually in the GCP Console"
       fi
     fi
   done
@@ -116,19 +116,19 @@ enable_apis() {
 
 # Configure service account permissions
 configure_service_account() {
-  log_info "Configuring service account permissions..."
+  info_log "Configuring service account permissions..."
   
   # Get the Cloud Build service account
   local project_number
   project_number=$(gcloud projects describe "$GOOGLE_PROJECT_ID" --format="value(projectNumber)" 2>/dev/null || echo "")
   
   if [ -z "$project_number" ]; then
-    log_warn "Could not determine project number. Skipping IAM configuration."
+    warn_log "Could not determine project number. Skipping IAM configuration."
     return 0
   fi
   
   local service_account="${project_number}@cloudbuild.gserviceaccount.com"
-  log_info "Service account: $service_account"
+  info_log "Service account: $service_account"
   
   local roles=(
     "roles/aiplatform.user"
@@ -136,23 +136,23 @@ configure_service_account() {
   )
   
   for role in "${roles[@]}"; do
-    log_info "Adding role: $role"
+    info_log "Adding role: $role"
     gcloud projects add-iam-policy-binding "$GOOGLE_PROJECT_ID" \
       --member="serviceAccount:$service_account" \
       --role="$role" \
-      2>/dev/null || log_warn "Failed to add role $role (may already exist)"
+      2>/dev/null || warn_log "Failed to add role $role (may already exist)"
   done
 }
 
 # Check if .env.production file exists
 check_env_file() {
   if [ ! -f "$ENV_FILE" ]; then
-    log_error "Environment file '$ENV_FILE' not found."
-    log_info "Please create it from .env.example:"
-    log_info "  cp .env.example $ENV_FILE"
+    error_log "Environment file '$ENV_FILE' not found."
+    info_log "Please create it from .env.example:"
+    info_log "  cp .env.example $ENV_FILE"
     exit 1
   fi
-  log_info "Environment file '$ENV_FILE' found"
+  info_log "Environment file '$ENV_FILE' found"
 }
 
 # Validate required environment variables in .env file
@@ -180,31 +180,31 @@ validate_env_vars() {
   done
 
   if [ ${#missing_vars[@]} -gt 0 ]; then
-    log_error "Missing required environment variables in $ENV_FILE:"
+    error_log "Missing required environment variables in $ENV_FILE:"
     for var in "${missing_vars[@]}"; do
       echo "  - $var"
     done
     exit 1
   fi
 
-  log_info "All required environment variables are set"
+  info_log "All required environment variables are set"
 }
 
 # Get or prompt for region
 get_region() {
   if [ -z "${REGION:-}" ]; then
-    log_info "No REGION environment variable set. Using default: $DEFAULT_REGION"
+    info_log "No REGION environment variable set. Using default: $DEFAULT_REGION"
     REGION="$DEFAULT_REGION"
     export REGION
   fi
-  log_info "Deploying to region: $REGION"
+  info_log "Deploying to region: $REGION"
 }
 
 # Deploy to Cloud Run
 deploy() {
-  log_info "Starting deployment to Google Cloud Run..."
-  log_info "Service: $GCP_SERVICE_NAME"
-  log_info "Region: $REGION"
+  info_log "Starting deployment to Google Cloud Run..."
+  info_log "Service: $GCP_SERVICE_NAME"
+  info_log "Region: $REGION"
   
   local deploy_args=(
     "run" "deploy" "$GCP_SERVICE_NAME"
@@ -229,19 +229,19 @@ deploy() {
     deploy_args+=("--allow-unauthenticated")
   fi
 
-  log_info "Executing: gcloud ${deploy_args[*]}"
+  info_log "Executing: gcloud ${deploy_args[*]}"
   
   local exit_code=0
   if gcloud "${deploy_args[@]}"; then
-    log_info "Deployment successful!"
+    info_log "Deployment successful!"
     
     # Get the service URL
     SERVICE_URL=$(gcloud run services describe "$GCP_SERVICE_NAME" --region="$REGION" --project="$GOOGLE_PROJECT_ID" --format="value(status.url)" 2>/dev/null || echo "")
     if [ -n "$SERVICE_URL" ]; then
-      log_info "Service URL: $SERVICE_URL"
+      info_log "Service URL: $SERVICE_URL"
     fi
   else
-    log_error "Deployment failed!"
+    error_log "Deployment failed!"
     exit_code=1
   fi
   
@@ -250,11 +250,11 @@ deploy() {
 
 # Main execution
 main() {
-  log_info "Bott Deployment Script"
-  log_info "======================"
+  info_log "Bott Deployment Script"
+  info_log "======================"
   
   check_gcloud
-  log_info "gcloud CLI found"
+  info_log "gcloud CLI found"
   ensure_authenticated
   check_env_file
   validate_env_vars
@@ -265,8 +265,8 @@ main() {
   
   if deploy; then
     echo ""
-    log_info "Deployment complete!"
-    log_info "To view logs, run: ./scripts/logs"
+    info_log "Deployment complete!"
+    info_log "To view logs, run: ./scripts/logs"
     exit 0
   else
     exit 1
