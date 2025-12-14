@@ -30,7 +30,8 @@ export const STORAGE_DEPLOY_NONCE_PATH = join(
  * Currently supported: "discord".
  */
 export const ENABLED_SERVICES = (Deno.env.get("ENABLED_SERVICES") ?? "discord")
-  .split(",");
+  .split(",")
+  .map(s => s.trim());
 
 export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
 export const DISCORD_MESSAGE_LIMIT = 2000;
