@@ -29,6 +29,7 @@ import { log } from "@bott/logger";
 
 import { taskManager } from "../tasks.ts";
 import {
+  ACTION_MAX_PROMPT_LENGTH,
   RATE_LIMIT_IMAGES,
   RATE_LIMIT_MUSIC,
   RATE_LIMIT_VIDEOS,
@@ -36,8 +37,6 @@ import {
 } from "@bott/constants";
 
 // Constants for AI prompt processing
-const MAX_AI_PROMPT_LENGTH = 10000;
-const LOG_TRUNCATE_LENGTH = 100;
 
 /**
  * Sanitizes user input for AI prompts to prevent injection
@@ -49,7 +48,7 @@ function sanitizeAIPrompt(input: string): string {
     // Remove control characters except newlines and tabs
     // deno-lint-ignore no-control-regex
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-    .substring(0, MAX_AI_PROMPT_LENGTH);
+    .substring(0, ACTION_MAX_PROMPT_LENGTH);
 }
 
 enum GeneratedMediaType {
@@ -79,8 +78,7 @@ export const generateMedia: BottAction<
 
     log.debug("generateMedia() called with options:", {
       type,
-      prompt: prompt.substring(0, LOG_TRUNCATE_LENGTH) +
-        (prompt.length > LOG_TRUNCATE_LENGTH ? "…" : ""),
+      prompt,
     });
 
     if (!taskManager.has(type)) {

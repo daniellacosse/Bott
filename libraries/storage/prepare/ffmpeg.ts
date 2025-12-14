@@ -11,12 +11,14 @@
 
 import { BottAttachmentType } from "@bott/model";
 import { throwIfUnsafeFileSize } from "../validation.ts";
+import {
+  STORAGE_FFMPEG_TIMEOUT_MS,
+  STORAGE_MAX_ATTACHMENT_DIMENSION,
+} from "@bott/constants";
 
 // Security Note: _ffmpeg is not exported and all arguments are hardcoded below.
 // If this function is ever modified to accept user input, implement proper
 // argument validation to prevent command injection attacks.
-
-const FFMPEG_TIMEOUT_MS = 5 * 60 * 1000;
 
 const _ffmpeg = async (
   args: string[],
@@ -52,7 +54,7 @@ const _ffmpeg = async (
       stdout: "null",
       stderr: "piped",
       // Security: Set timeout to prevent long-running processes
-      signal: AbortSignal.timeout(FFMPEG_TIMEOUT_MS),
+      signal: AbortSignal.timeout(STORAGE_FFMPEG_TIMEOUT_MS),
     });
 
     const { success, code, stderr: ffmpegStderr } = await command
@@ -86,8 +88,6 @@ const _ffmpeg = async (
   }
 };
 
-const MAX_DIMENSION = 480;
-
 export const prepareStaticImageAsWebp = async (
   file: File,
   attachmentId: string,
@@ -96,9 +96,9 @@ export const prepareStaticImageAsWebp = async (
     "-y",
     "-i",
     "{{INPUT_FILE}}",
-    // Scale down, fitting within MAX_DIMENSION box, using Lanczos for quality
+    // Scale down, fitting within STORAGE_MAX_ATTACHMENT_DIMENSION box, using Lanczos for quality
     "-vf",
-    `scale=${MAX_DIMENSION}:${MAX_DIMENSION}:force_original_aspect_ratio=decrease:sws_flags=lanczos`,
+    `scale=${STORAGE_MAX_ATTACHMENT_DIMENSION}:${STORAGE_MAX_ATTACHMENT_DIMENSION}:force_original_aspect_ratio=decrease:sws_flags=lanczos`,
     "-frames:v",
     "1", // Ensure only one frame (static image)
     "-c:v",
@@ -169,7 +169,7 @@ export const prepareDynamicImageAsMp4 = async (
     String(DURATION_SECONDS),
     // Pixel dimensions must be even.
     "-vf",
-    `fps=${FRAME_RATE},scale=w='trunc(iw*min(${MAX_DIMENSION}/iw,${MAX_DIMENSION}/ih)/2)*2':h='trunc(ih*min(${MAX_DIMENSION}/iw,${MAX_DIMENSION}/ih)/2)*2':sws_flags=lanczos,format=yuv420p`,
+    `fps=${FRAME_RATE},scale=w='trunc(iw*min(${STORAGE_MAX_ATTACHMENT_DIMENSION}/iw,${STORAGE_MAX_ATTACHMENT_DIMENSION}/ih)/2)*2':h='trunc(ih*min(${STORAGE_MAX_ATTACHMENT_DIMENSION}/iw,${STORAGE_MAX_ATTACHMENT_DIMENSION}/ih)/2)*2':sws_flags=lanczos,format=yuv420p`,
     "-c:v",
     "libx265",
     "-an", // Strip audio.

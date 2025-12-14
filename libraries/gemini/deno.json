@@ -8,6 +8,6 @@
     ]
   },
   "tasks": {
-    "eventPipelineTest": "LOG_TOPICS=debug,perf deno --allow-all --env-file=../../.env.development ./events/pipeline/e2e.ts"
+    "eventPipelineTest": "LOGGER_TOPICS=debug,perf deno --allow-all --env-file=../../.env.development ./events/pipeline/e2e.ts"
   }
 }

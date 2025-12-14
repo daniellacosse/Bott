@@ -24,7 +24,12 @@ import { getEventIdsForChannel, getEvents } from "@bott/storage";
 import { createTask } from "@bott/task";
 import { generateEvents } from "@bott/gemini";
 
-import { BOTT_USER } from "@bott/constants";
+import {
+  ACTION_DEFAULT_RESPONSE_SWAPS,
+  BOTT_SERVICE,
+  TYPING_MAX_TIME_MS,
+  TYPING_WORDS_PER_MINUTE,
+} from "@bott/constants";
 import { taskManager } from "./tasks.ts";
 import { defaultSettings } from "./settings/main.ts";
 import {
@@ -32,14 +37,7 @@ import {
   GenerateMediaOptions,
 } from "./actions/generateMedia.ts";
 
-const WORDS_PER_MINUTE = 200;
 const MS_IN_MINUTE = 60 * 1000;
-const MAX_TYPING_TIME_MS = 3000;
-const DEFAULT_RESPONSE_SWAPS = 6;
-
-const mainService: BottService = {
-  user: BOTT_USER,
-};
 
 export const startMainService: BottServiceFactory = ({
   actions = {},
@@ -52,10 +50,10 @@ export const startMainService: BottServiceFactory = ({
     if (!taskManager.has(event.channel.name)) {
       taskManager.add({
         name: event.channel.name,
-        remainingSwaps: DEFAULT_RESPONSE_SWAPS,
+        remainingSwaps: ACTION_DEFAULT_RESPONSE_SWAPS,
         completions: [],
         config: {
-          maximumSequentialSwaps: DEFAULT_RESPONSE_SWAPS,
+          maximumSequentialSwaps: ACTION_DEFAULT_RESPONSE_SWAPS,
         },
       });
     }
@@ -68,7 +66,7 @@ export const startMainService: BottServiceFactory = ({
         );
         const channelHistory = await getEvents(...eventHistoryIds);
         const channelContext = {
-          user: mainService.user,
+          user: BOTT_SERVICE.user,
           channel: event.channel!,
           actions,
           settings: defaultSettings,
@@ -88,8 +86,11 @@ export const startMainService: BottServiceFactory = ({
           // Typing simulation logic
           const words =
             (generatedEvent.detail.content as string).split(/\s+/).length;
-          const delayMs = (words / WORDS_PER_MINUTE) * MS_IN_MINUTE;
-          const cappedDelayMs = Math.min(delayMs, MAX_TYPING_TIME_MS);
+          const delayMs = (words / TYPING_WORDS_PER_MINUTE) * MS_IN_MINUTE;
+          const cappedDelayMs = Math.min(
+            delayMs,
+            TYPING_MAX_TIME_MS,
+          );
           await delay(cappedDelayMs, { signal: abortSignal });
 
           if (abortSignal.aborted) {
@@ -153,5 +154,5 @@ export const startMainService: BottServiceFactory = ({
     globalThis.dispatchEvent(replyEvent);
   });
 
-  return Promise.resolve(mainService);
+  return Promise.resolve(BOTT_SERVICE);
 };
