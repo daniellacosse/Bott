@@ -18,18 +18,25 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Log file configuration
+# Logger configuration
 # Use process-specific log file to avoid race conditions between concurrent processes
-LOG_FILE="${LOG_FILE:-/tmp/bott-script-$$.log}"
-LOG_BUFFER=()
-LOG_DEBOUNCE_SECONDS="${LOG_DEBOUNCE_SECONDS:-2}"
+# Default to STORAGE_ROOT/.output directory, scoped by ENV
+ENV="${ENV:-production}"
+STORAGE_ROOT="${FILE_SYSTEM_ROOT:-./fs_root}"
+LOGGER_FILE="${LOGGER_FILE:-$STORAGE_ROOT/.output/logs/$ENV/script-$$.log}"
+LOGGER_BUFFER=()
+LOGGER_DEBOUNCE_SECONDS="${LOGGER_DEBOUNCE_SECONDS:-2}"
+LOGGER_TOPICS="${LOGGER_TOPICS:-info,warn,error}"
 LAST_FLUSH_TIME=0
+
+# Create log directory if it doesn't exist
+mkdir -p "$(dirname "$LOGGER_FILE")"
 
 # Flush log buffer to file
 flush_logs() {
-  if [ ${#LOG_BUFFER[@]} -gt 0 ]; then
-    printf "%s\n" "${LOG_BUFFER[@]}" >> "$LOG_FILE"
-    LOG_BUFFER=()
+  if [ ${#LOGGER_BUFFER[@]} -gt 0 ]; then
+    printf "%s\n" "${LOGGER_BUFFER[@]}" >> "$LOGGER_FILE"
+    LOGGER_BUFFER=()
   fi
 }
 
@@ -38,7 +45,7 @@ schedule_flush() {
   local current_time=$(date +%s)
   local time_since_flush=$((current_time - LAST_FLUSH_TIME))
   
-  if [ $time_since_flush -ge $LOG_DEBOUNCE_SECONDS ]; then
+  if [ $time_since_flush -ge $LOGGER_DEBOUNCE_SECONDS ]; then
     flush_logs
     LAST_FLUSH_TIME=$current_time
   fi
@@ -47,8 +54,15 @@ schedule_flush() {
 # Trap to flush logs on exit
 trap flush_logs EXIT
 
+# Check if a log level is enabled
+is_log_level_enabled() {
+  local level="$1"
+  echo ",$LOGGER_TOPICS," | grep -qi ",$level,"
+}
+
 # Base logging function that all other log functions call
 # Usage: log "LEVEL" "color" "message parts..."
+# Exported for performance logging
 log() {
   local level="$1"
   local color="$2"
@@ -56,35 +70,46 @@ log() {
   local message="$*"
   local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   
+  # Check if this log level is enabled
+  if ! is_log_level_enabled "$level"; then
+    return 0
+  fi
+  
   # Output to console with color
   echo -e "${color}${level}${NC} ${message}"
   
   # Append to buffer without color codes
-  LOG_BUFFER+=("${timestamp} ${level} ${message}")
+  LOGGER_BUFFER+=("${timestamp} ${level} ${message}")
   
   # Schedule flush
   schedule_flush
 }
 
 # Logging functions matching application logger API
-# Usage: log_info "message" or log_info "message" "with" "multiple" "parts"
+# Usage: debug_log "message" or debug_log "message" "with" "multiple" "parts"
 
 # DEBUG: Detailed diagnostic information for troubleshooting
-log_debug() {
+debug_log() {
   log "DEBUG" "$BLUE" "$@"
 }
 
 # INFO: General informational messages about script progress
-log_info() {
+info_log() {
   log "INFO" "$GREEN" "$@"
 }
 
 # WARN: Warning messages about potential issues that don't prevent execution
-log_warn() {
+warn_log() {
   log "WARN" "$YELLOW" "$@"
 }
 
 # ERROR: Error messages indicating failures that may stop execution
-log_error() {
+error_log() {
   log "ERROR" "$RED" "$@"
 }
+
+# Backward compatibility aliases
+log_debug() { debug_log "$@"; }
+log_info() { info_log "$@"; }
+log_warn() { warn_log "$@"; }
+log_error() { error_log "$@"; }

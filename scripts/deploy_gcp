@@ -200,44 +200,18 @@ get_region() {
   log_info "Deploying to region: $REGION"
 }
 
-# Convert .env file to YAML format for gcloud
-convert_env_to_yaml() {
-  local yaml_file
-  yaml_file=$(mktemp /tmp/bott-deploy-env-XXXXXX.yaml)
-  
-  # Create YAML file from .env
-  while IFS='=' read -r key value; do
-    # Skip comments and empty lines
-    [[ $key =~ ^#.*$ ]] && continue
-    [[ -z $key ]] && continue
-    
-    # Remove leading/trailing whitespace and quotes from value
-    value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/")
-    
-    # Write to YAML file
-    echo "$key: \"$value\"" >> "$yaml_file"
-  done < "$ENV_FILE"
-  
-  echo "$yaml_file"
-}
-
 # Deploy to Cloud Run
 deploy() {
   log_info "Starting deployment to Google Cloud Run..."
   log_info "Service: $GCP_SERVICE_NAME"
   log_info "Region: $REGION"
   
-  # Convert env file to YAML
-  log_info "Converting $ENV_FILE to YAML format..."
-  local yaml_env_file
-  yaml_env_file=$(convert_env_to_yaml)
-  
   local deploy_args=(
     "run" "deploy" "$GCP_SERVICE_NAME"
     "--source" "."
     "--region" "$REGION"
     "--project" "$GOOGLE_PROJECT_ID"
-    "--env-vars-file" "$yaml_env_file"
+    "--env-vars-file" "$ENV_FILE"
   )
 
   # Add platform and other options from app.json
@@ -270,9 +244,6 @@ deploy() {
     log_error "Deployment failed!"
     exit_code=1
   fi
-  
-  # Clean up temporary file
-  rm -f "$yaml_env_file"
   
   return $exit_code
 }
