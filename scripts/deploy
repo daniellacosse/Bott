@@ -65,6 +65,9 @@ validate_env_vars() {
     [[ $key =~ ^#.*$ ]] && continue
     [[ -z $key ]] && continue
     
+    # Remove leading/trailing whitespace and quotes from value
+    value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/")
+    
     # Export the variable
     export "$key=$value"
   done < "$ENV_FILE"
@@ -98,7 +101,8 @@ get_region() {
 
 # Convert .env file to YAML format for gcloud
 convert_env_to_yaml() {
-  local yaml_file="/tmp/bott-deploy-env-$$.yaml"
+  local yaml_file
+  yaml_file=$(mktemp /tmp/bott-deploy-env-XXXXXX.yaml)
   
   # Create YAML file from .env
   while IFS='=' read -r key value; do
@@ -155,7 +159,7 @@ deploy() {
     log_info "Deployment successful!"
     
     # Get the service URL
-    SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --region="$REGION" --format="value(status.url)" 2>/dev/null || echo "")
+    SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --region="$REGION" --project="$GOOGLE_PROJECT_ID" --format="value(status.url)" 2>/dev/null || echo "")
     if [ -n "$SERVICE_URL" ]; then
       log_info "Service URL: $SERVICE_URL"
     fi
