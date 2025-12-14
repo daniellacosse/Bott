@@ -30,11 +30,13 @@ if (import.meta.main) {
 
   serviceRegistry.nonce = deploymentNonce;
 
-  serviceRegistry.register(
-    await startStorageService({
-      root: STORAGE_ROOT,
-    }),
-  );
+  if (ENABLED_SERVICES.includes("storage")) {
+    serviceRegistry.register(
+      await startStorageService({
+        root: STORAGE_ROOT,
+      }),
+    );
+  }
 
   if (ENABLED_SERVICES.includes("discord") && DISCORD_TOKEN) {
     serviceRegistry.register(
