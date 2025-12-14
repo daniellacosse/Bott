@@ -83,7 +83,7 @@ export const GOOGLE_PROJECT_ID = Deno.env.get("GOOGLE_PROJECT_ID") ??
   Deno.env.get("GCP_PROJECT");
 export const GOOGLE_PROJECT_LOCATION =
   Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
-  Deno.env.get("GCP_LOCATION");
+    Deno.env.get("GCP_LOCATION");
 export const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN");
 
 const isGeminiAvailable = ["gemini", "auto"].includes(MODEL_PROVIDER) &&
