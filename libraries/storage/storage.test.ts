@@ -17,12 +17,12 @@ import { log } from "@bott/logger";
 import { addEvents } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
-import { startStorage } from "./start.ts";
+import { startStorageService } from "./service.ts";
 
 Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();
 
-  startStorage(tempDir);
+  await startStorageService({ root: tempDir });
 
   // spaces
   const spaceChatWorld = {
@@ -124,7 +124,7 @@ body { color: blue; }
 
 Deno.test("Storage - prepareHtml", async () => {
   const tempDir = Deno.makeTempDirSync();
-  startStorage(tempDir);
+  await startStorageService({ root: tempDir });
 
   const inputData = new TextEncoder().encode(htmlInput);
   const result = await prepareHtmlAsMarkdown(
@@ -138,4 +138,24 @@ Deno.test("Storage - prepareHtml", async () => {
     markdownContent,
     expectedMarkdownOutput,
   );
+});
+
+Deno.test("Storage - Global Listener Persistence", async () => {
+  const tempDir = Deno.makeTempDirSync();
+  await startStorageService({ root: tempDir });
+
+  const event = new BottEvent(BottEventType.MESSAGE, {
+    detail: { content: "Global dispatch test" },
+    user: { id: "listener-test", name: "Tester" },
+    channel: { id: "1", name: "main", space: { id: "1", name: "space" } },
+  });
+
+  globalThis.dispatchEvent(event);
+
+  // Allow next tick for persistence (though it's sync in listener, better safe)
+  await new Promise((r) => setTimeout(r, 10));
+
+  const [dbResult] = await getEvents(event.id);
+  assertExists(dbResult);
+  assertEquals(dbResult.id, event.id);
 });

@@ -13,7 +13,7 @@ import { extractFromHtml } from "@extractus/article-extractor";
 import TurndownService from "turndown";
 import { BottAttachmentType } from "@bott/model";
 
-import { STORAGE_FILE_SIZE_CAUTION } from "../start.ts";
+import { STORAGE_FILE_SIZE_CAUTION } from "../service.ts";
 
 const turndownService = new TurndownService({
   headingStyle: "atx", // Use # for headings.

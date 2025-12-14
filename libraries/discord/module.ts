@@ -9,5 +9,5 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export * from "./bot/start.ts";
+export * from "./service.ts";
 export * from "./message/embed/info.ts";

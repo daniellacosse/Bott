@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export { startStorage } from "./start.ts";
+export { startStorageService } from "./service.ts";
 export { addEvents } from "./data/events/add.ts";
 export { getEventIdsForChannel, getEvents } from "./data/events/get.ts";
 export {

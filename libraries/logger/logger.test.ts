@@ -10,7 +10,7 @@
  */
 
 import { assert, assertEquals } from "@std/assert";
-import { addLogTopic, log, testHandler } from "./main.ts";
+import { addLogTopic, log, testHandler } from "./module.ts";
 
 // Enable perf logging for tests
 addLogTopic("perf");

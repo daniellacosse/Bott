@@ -10,7 +10,7 @@
  */
 
 import { BottAttachmentType } from "@bott/model";
-import { throwIfUnsafeFileSize } from "@bott/storage";
+import { throwIfUnsafeFileSize } from "../validation.ts";
 
 // Security Note: _ffmpeg is not exported and all arguments are hardcoded below.
 // If this function is ever modified to accept user input, implement proper

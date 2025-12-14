@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { STORAGE_DATA_CLIENT as client } from "../start.ts";
+import { STORAGE_DATA_CLIENT as client } from "../service.ts";
 import type { SqlInstructions } from "./sql.ts";
 
 const QUERY_DEBUG_MAX_LENGTH = 250;

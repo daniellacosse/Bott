@@ -1,6 +1,6 @@
 {
   "name": "@bott/gemini",
-  "exports": "./main.ts",
+  "exports": "./module.ts",
   "compilerOptions": {
     "lib": [
       "deno.ns",

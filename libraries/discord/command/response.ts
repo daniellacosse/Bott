@@ -17,7 +17,6 @@ import type {
   BottActionResultEvent,
 } from "@bott/model";
 import { addEvents } from "@bott/storage";
-import { callWithContext } from "../context.ts";
 import { log } from "@bott/logger";
 
 type DiscordResponseEvent = BottActionResultEvent<
@@ -28,17 +27,11 @@ export const resolveCommandResponseEvent = async <
   O extends Record<string, unknown>,
 >(
   command: BottAction<O, AnyShape>,
-  { client, request, channel }: {
-    client: Client;
+  { request }: {
     request: BottActionCallEvent<O>;
-    channel: GuildTextBasedChannel;
   },
 ): Promise<DiscordResponseEvent> => {
-  const response = await callWithContext(command, {
-    client,
-    channel,
-    arguments: [request],
-  }) as DiscordResponseEvent;
+  const response = await command(request);
 
   const result = addEvents(response);
   if ("error" in result) {
@@ -48,5 +41,5 @@ export const resolveCommandResponseEvent = async <
     );
   }
 
-  return response;
+  return response as DiscordResponseEvent;
 };

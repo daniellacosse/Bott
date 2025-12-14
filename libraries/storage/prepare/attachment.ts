@@ -19,7 +19,7 @@ import {
 import { throwIfUnsafeFileSize, throwIfUnsafeUrl } from "../validation.ts";
 import { log } from "@bott/logger";
 
-import { STORAGE_FILE_ROOT } from "../start.ts";
+import { STORAGE_FILE_ROOT } from "../service.ts";
 import { prepareHtmlAsMarkdown } from "./html.ts";
 import {
   prepareAudioAsOpus,

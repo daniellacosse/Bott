@@ -9,6 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+export type { BottChannel, BottUser } from "./types/entities.ts";
+export { BottEventType } from "./types/events.ts";
+
 import type { BottChannel, BottUser } from "./types/entities.ts";
 import { BottEventType } from "./types/events.ts";
 import type {
