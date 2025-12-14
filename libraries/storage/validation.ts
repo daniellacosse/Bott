@@ -9,11 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { STORAGE_MAX_FILE_SIZE } from "@bott/constants";
+
 /**
  * Storage validation utilities for security
  */
-
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 /**
  * Validates file size and throws if unsafe
@@ -21,9 +21,9 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024;
  * @throws Error if file size exceeds maximum
  */
 export function throwIfUnsafeFileSize(data: Uint8Array): void {
-  if (data.length > MAX_FILE_SIZE) {
+  if (data.length > STORAGE_MAX_FILE_SIZE) {
     throw new Error(
-      `File size ${data.length} exceeds maximum allowed size ${MAX_FILE_SIZE}`,
+      `File size ${data.length} exceeds maximum allowed size ${STORAGE_MAX_FILE_SIZE}`,
     );
   }
 }

@@ -9,6 +9,10 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import {
+  STORAGE_FETCH_TIMEOUT_MS,
+  STORAGE_MAX_TEXT_FILE_WORDS,
+} from "@bott/constants";
 import { join } from "@std/path";
 import {
   BOTT_ATTACHMENT_TYPE_LOOKUP,
@@ -26,9 +30,6 @@ import {
   prepareDynamicImageAsMp4,
   prepareStaticImageAsWebp,
 } from "./ffmpeg.ts";
-
-const FETCH_TIMEOUT_MS = 30 * 1000;
-const MAX_TXT_WORDS = 600;
 
 /**
  * Prepares an attachment from a remote URL by downloading, storing raw, and compressing.
@@ -49,7 +50,7 @@ export async function prepareAttachmentFromUrl(
   log.debug(`Fetching attachment from URL: ${sourceUrl}`);
 
   const response = await fetch(sourceUrl, {
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    signal: AbortSignal.timeout(STORAGE_FETCH_TIMEOUT_MS),
     redirect: "follow",
     headers: {
       "User-Agent": "Bott",
@@ -205,8 +206,8 @@ async function compressFile(
       const words = textContent.split(/\s+/);
 
       let data;
-      if (words.length > MAX_TXT_WORDS) {
-        textContent = words.slice(0, MAX_TXT_WORDS).join(" ") +
+      if (words.length > STORAGE_MAX_TEXT_FILE_WORDS) {
+        textContent = words.slice(0, STORAGE_MAX_TEXT_FILE_WORDS).join(" ") +
           "\n\n...(truncated)";
         data = new TextEncoder().encode(textContent);
       } else {

@@ -11,9 +11,12 @@
 
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { delay } from "@std/async/delay";
+import { setupTestLogger, testHandler } from "@bott/logger";
 import { TaskManager } from "./manager.ts";
 import { createTask, type Task } from "./create.ts";
-import { testHandler } from "@bott/logger";
+
+// Initialize test logger
+setupTestLogger();
 
 // Helper function to create a versatile test task
 const createTestTask = (
@@ -363,7 +366,7 @@ Deno.test("TaskManager - should handle task errors gracefully", async () => {
   assertEquals(bucket.remainingSwaps, maxSwaps, "Swaps reset after failure");
 
   // Verify the warning was logged using the test handler
-  const warningLogs = testHandler.logs.filter((log) =>
+  const warningLogs = testHandler.logs.filter((log: { msg: string }) =>
     log.msg.includes("Task failed:")
   );
   assert(warningLogs.length > 0, "Warning should have been logged");

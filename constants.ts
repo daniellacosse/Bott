@@ -11,119 +11,131 @@
 
 import { join } from "@std/path";
 
-// Application Constants
-export const BOTT_NAME = Deno.env.get("BOTT_NAME") ?? "Bott";
-export const BOTT_ID = Deno.env.get("BOTT_ID") ?? "system:bott";
-
-export const BOTT_USER = {
-  id: BOTT_ID,
-  name: BOTT_NAME,
-};
-
-export const DISCORD_MESSAGE_LIMIT = 2000;
-
-/** The port of the health check server required for GCP Cloud Run. */
+// -- Infrastructure & Environment --
 export const PORT = Number(Deno.env.get("PORT") ?? 8080);
+export const OUTPUT_ROOT = Deno.env.get("OUTPUT_ROOT") ?? "./.output";
 
-/** Controls which log topics to display. Comma-separated list of topics: debug, info, warn, error, perf. */
-export const LOG_TOPICS = Deno.env.get("LOG_TOPICS") ?? "info,warn,error";
-
-// Cloud Configuration
-
-/** The authentication token for your Discord bot application. */
-export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
-
-/** The ID of your Google Cloud project. */
-export const GOOGLE_PROJECT_ID = Deno.env.get("GOOGLE_PROJECT_ID") ??
-  Deno.env.get("GCP_PROJECT");
-
-/** The GCP region where your Vertex AI resources are located. */
-export const GOOGLE_PROJECT_LOCATION =
-  Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
-    Deno.env.get("GCP_LOCATION");
-
-/** An access token for authenticating with Google Cloud APIs (for local development). */
-export const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN");
-
-/** The root directory on the local file system for storing input and output files. */
-export const STORAGE_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ?? "./fs_root";
+// Storage
+export const STORAGE_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ??
+  join(OUTPUT_ROOT, "fs_root");
 export const STORAGE_DEPLOY_NONCE_PATH = join(
   STORAGE_ROOT,
   ".deploy-nonce",
 );
+const MEGABYTE = 1024 * 1024;
+const SECOND_TO_MS = 1000;
+const MINUTE_TO_MS = 60 * SECOND_TO_MS;
+export const STORAGE_MAX_FILE_SIZE = 50 * MEGABYTE;
+export const STORAGE_FETCH_TIMEOUT_MS = 30 * SECOND_TO_MS;
+export const STORAGE_MAX_TEXT_FILE_WORDS = 600;
+export const STORAGE_FFMPEG_TIMEOUT_MS = 5 * MINUTE_TO_MS;
+export const STORAGE_MAX_ATTACHMENT_DIMENSION = 480;
+
+// Logger
+export const LOGGER_TOPICS =
+  (Deno.env.get("LOGGER_TOPICS") ?? "info,warn,error")
+    .split(/,\s*/)
+    .map((topic) => topic.trim().toLowerCase())
+    .filter((topic) => topic.length > 0);
+export const LOGGER_MAX_CHARACTER_LENGTH = 256;
+
+// -- Actions --
+export const ACTION_DEFAULT_RESPONSE_SWAPS = 6;
+export const ACTION_MAX_PROMPT_LENGTH = 10000;
 
 // Rate Limits
-const FOUR_WEEKS_MS = 4 * 7 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * MINUTE_TO_MS;
+const FOUR_WEEKS_MS = 4 * 7 * DAY_MS;
 export const RATE_LIMIT_WINDOW_MS = FOUR_WEEKS_MS;
 
-/** The maximum number of images Bott can generate per month. */
 export const RATE_LIMIT_IMAGES = Number(
-  Deno.env.get("CONFIG_RATE_LIMIT_IMAGES") ?? 100,
+  Deno.env.get("RATE_LIMIT_IMAGES") ?? 100,
 );
-
-/** The maximum number of songs Bott can generate per month. */
 export const RATE_LIMIT_MUSIC = Number(
-  Deno.env.get("CONFIG_RATE_LIMIT_MUSIC") ?? 25,
+  Deno.env.get("RATE_LIMIT_MUSIC") ?? 25,
+);
+export const RATE_LIMIT_VIDEOS = Number(
+  Deno.env.get("RATE_LIMIT_VIDEOS") ?? 10,
 );
 
-/** The maximum number of videos Bott can generate per month. */
-export const RATE_LIMIT_VIDEOS = Number(
-  Deno.env.get("CONFIG_RATE_LIMIT_VIDEOS") ?? 10,
-);
+// -- Services --
+
+export const ENABLED_SERVICES =
+  (Deno.env.get("ENABLED_SERVICES") ?? "main,storage,discord")
+    .split(/,\s*/)
+    .filter((s) => s.length > 0);
+
+export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
+
+// -- Models --
+
+/**
+ * The model provider to use.
+ * - "gemini": Explicitly select Gemini (requires GCP credentials).
+ * - "auto": Automatically select the best available provider (currently behaves the same as "gemini" and uses Gemini if GCP credentials are present).
+ *
+ * Note: Both "gemini" and "auto" currently use Gemini if GCP credentials are present.
+ * The "auto" option is reserved for future extensibility, where additional providers may be supported.
+ */
+export const MODEL_PROVIDER = Deno.env.get("MODEL_PROVIDER") ?? "auto";
+
+export const GOOGLE_PROJECT_ID = Deno.env.get("GOOGLE_PROJECT_ID") ??
+  Deno.env.get("GCP_PROJECT");
+export const GOOGLE_PROJECT_LOCATION =
+  Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
+    Deno.env.get("GCP_LOCATION");
+export const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN");
+
+const isGeminiAvailable = ["gemini", "auto"].includes(MODEL_PROVIDER) &&
+  GOOGLE_PROJECT_ID && GOOGLE_PROJECT_LOCATION && GOOGLE_ACCESS_TOKEN;
+
+export const ERROR_MODEL = Deno.env.get("ERROR_MODEL") ??
+  (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
+
+export const EVENT_MODEL = Deno.env.get("EVENT_MODEL") ??
+  (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
+
+export const RATING_MODEL = Deno.env.get("RATING_MODEL") ??
+  (isGeminiAvailable ? "gemini-2.5-flash-lite" : "not_available");
+
+export const ESSAY_MODEL = Deno.env.get("ESSAY_MODEL") ??
+  (isGeminiAvailable ? "gemini-3-pro-preview" : "not_available");
+
+export const PHOTO_MODEL = Deno.env.get("PHOTO_MODEL") ??
+  (isGeminiAvailable ? "gemini-3-pro-image-preview" : "not_available");
+
+export const SONG_MODEL = Deno.env.get("SONG_MODEL") ??
+  (isGeminiAvailable ? "lyria-002" : "not_available");
+
+export const MOVIE_MODEL = Deno.env.get("MOVIE_MODEL") ??
+  (isGeminiAvailable ? "veo-3.1-fast-generate-001" : "not_available");
 
 // Input processing limits
-
-/** The maximum number of tokens to use for analyzing the content of input files. */
 export const INPUT_FILE_TOKEN_LIMIT = Number(
-  Deno.env.get("CONFIG_INPUT_FILE_TOKEN_LIMIT") ?? 500_000,
+  Deno.env.get("INPUT_FILE_TOKEN_LIMIT") ?? 500_000,
 );
-
-/** The maximum number of audio files to analyze per input. */
 export const INPUT_FILE_AUDIO_COUNT_LIMIT = Number(
-  Deno.env.get("CONFIG_INPUT_FILE_AUDIO_COUNT_LIMIT") ?? 1,
+  Deno.env.get("INPUT_FILE_AUDIO_COUNT_LIMIT") ?? 1,
 );
-
-/** The maximum number of video files to analyze per input. */
 export const INPUT_FILE_VIDEO_COUNT_LIMIT = Number(
-  Deno.env.get("CONFIG_INPUT_FILE_VIDEO_COUNT_LIMIT") ?? 10,
+  Deno.env.get("INPUT_FILE_VIDEO_COUNT_LIMIT") ?? 10,
 );
-
-/** The maximum number of past chat events to include in the context for the AI model. */
 export const INPUT_EVENT_COUNT_LIMIT = Number(
-  Deno.env.get("CONFIG_INPUT_EVENT_COUNT_LIMIT") ?? 2000,
+  Deno.env.get("INPUT_EVENT_COUNT_LIMIT") ?? 2000,
 );
-
-/** The maximum age (in ms) of past chat events to include in the context. */
 export const INPUT_EVENT_TIME_LIMIT_MS = Number(
-  Deno.env.get("CONFIG_INPUT_EVENT_TIME_LIMIT_MS") ?? 24 * 60 * 60 * 1000,
+  Deno.env.get("INPUT_EVENT_TIME_LIMIT_MS") ?? DAY_MS,
 );
 
-// Models
+// -- App --
+export const BOTT_NAME = Deno.env.get("BOTT_NAME") ?? "Bott";
+const BOTT_ID = Deno.env.get("BOTT_ID") ?? "system:bott";
+export const BOTT_SERVICE = {
+  user: {
+    id: BOTT_ID,
+    name: BOTT_NAME,
+  },
+};
 
-/** The AI model used for generating user-friendly error messages. */
-export const ERROR_MODEL = Deno.env.get("CONFIG_ERROR_MODEL") ??
-  "gemini-2.5-flash";
-
-/** The AI model used for generating responses to chat events and user messages. */
-export const EVENT_MODEL = Deno.env.get("CONFIG_EVENTS_MODEL") ??
-  "gemini-2.5-flash";
-
-/** The AI model used for rating events and potential responses. */
-export const RATING_MODEL = Deno.env.get("CONFIG_RATING_MODEL") ??
-  "gemini-2.5-flash-lite";
-
-/** The AI model used for generating essays and long-form text content. */
-export const ESSAY_MODEL = Deno.env.get("CONFIG_ESSAY_MODEL") ??
-  "gemini-3-pro-preview";
-
-/** The AI model used for generating images. */
-export const PHOTO_MODEL = Deno.env.get("CONFIG_PHOTO_MODEL") ??
-  "gemini-3-pro-image-preview";
-
-/** The AI model used for generating music and audio content. */
-export const SONG_MODEL = Deno.env.get("CONFIG_SONG_MODEL") ??
-  "lyria-002";
-
-/** The AI model used for generating video content. */
-export const MOVIE_MODEL = Deno.env.get("CONFIG_MOVIE_MODEL") ??
-  "veo-3.1-fast-generate-001";
+export const TYPING_WORDS_PER_MINUTE = 200;
+export const TYPING_MAX_TIME_MS = 3 * SECOND_TO_MS;
