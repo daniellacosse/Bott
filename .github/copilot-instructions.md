@@ -12,11 +12,8 @@ content generation capabilities.
 
 ### Initial Setup
 
-- Install Deno runtime:
-  `curl -Lo deno.zip https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip && unzip deno.zip && sudo mv deno /usr/local/bin/`
-- Install dependencies: `sudo apt-get install -y ffmpeg docker.io`
-- Copy environment template: `cp .env.example .env.test`
-- Configure environment variables in `.env.test`:
+- Copy configuration template: `cp .env.example.yml .env.dev.yml`
+- Configure settings in `.env.dev.yml`:
   - `GOOGLE_PROJECT_ID` - GCP project ID
   - `GOOGLE_PROJECT_LOCATION` - GCP region (e.g., us-central1)
   - `GOOGLE_ACCESS_TOKEN` - GCP access token
@@ -24,20 +21,21 @@ content generation capabilities.
 
 ### Development Workflow
 
-- Start development server: `deno task runApp test` -- requires configured
-  environment variables. NEVER CANCEL initial startup - dependency downloads
-  take 2-5 minutes.
-- Start production server: `deno task runApp prod`
-- Build and run with Docker: `deno task runApp` -- combines Docker build and run
+- The project uses a devcontainer for development
+- Open the project in VS Code with the devcontainer extension
+- The bot starts automatically when the devcontainer opens
+- NEVER CANCEL initial startup - dependency downloads take 2-5 minutes
+- The development server watches for changes in `app/`, `libraries/`, and
+  `model/` directories
 
 ## Validation
 
 ### Manual Validation Steps
 
-- Build succeeds: `docker build -t bott .` completes successfully
+- Container builds successfully when opening the devcontainer
 - Format check passes: `deno fmt --check` reports "Checked X files" with exit
   code 0
-- Application starts: `deno task runApp test` begins without TypeScript
+- Application starts automatically in the devcontainer without TypeScript
   compilation errors
 - The application requires valid Discord and GCP credentials to run completely
 - Without credentials, the app will start but fail when attempting to connect to
@@ -75,9 +73,10 @@ content generation capabilities.
 ├── README.md              # Project documentation
 ├── constants.ts          # Global configuration and constants
 ├── deno.json             # Deno configuration and tasks
-├── Dockerfile            # Container build instructions
+├── Containerfile         # Container build instructions
 ├── Brewfile              # macOS dependencies via Homebrew
-├── .env.example          # Environment template
+├── .env.example.yml      # Environment configuration template
+├── .devcontainer/        # Devcontainer configuration
 ├── app/                  # Main application
 │   ├── README.md        # Application layer documentation
 │   ├── main.ts          # Entry point
@@ -106,8 +105,8 @@ content generation capabilities.
 
 ### Debugging
 
-- Check logs via console output when running `deno task start:dev`
-- Verify environment variables are set correctly in `.env.development`
+- Check logs in the VS Code terminal where the bot is running
+- Verify configuration is set correctly in `.env.dev.yml`
 - Test network connectivity to Discord API and Google Cloud APIs
 - Validate file permissions for `FILE_SYSTEM_ROOT` directory (default:
   `./fs_root`)
