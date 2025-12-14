@@ -60,11 +60,15 @@ setup_project() {
   
   if [ -z "$project_id" ]; then
     log_warn "GOOGLE_PROJECT_ID not set in environment file."
-    read -r -p "Enter your GCP Project ID (or press Enter to create a new one): " project_id
+    read -r -p "Enter your GCP Project ID (or press Enter to be prompted for a name): " project_id
     
     if [ -z "$project_id" ]; then
-      # Generate a project ID
-      project_id="bott-$(date +%s)"
+      # Prompt for a project name
+      read -r -p "Enter a unique project ID (e.g., my-bott-bot): " project_id
+      if [ -z "$project_id" ]; then
+        log_error "Project ID is required"
+        exit 1
+      fi
       log_info "Creating new project: $project_id"
       
       if gcloud projects create "$project_id" 2>/dev/null; then
@@ -120,7 +124,14 @@ enable_apis() {
       log_info "API already enabled: $api"
     else
       log_info "Enabling API: $api"
-      gcloud services enable "$api" --project="$GOOGLE_PROJECT_ID" 2>/dev/null || log_warn "Failed to enable $api (may require manual intervention)"
+      if ! gcloud services enable "$api" --project="$GOOGLE_PROJECT_ID" 2>&1; then
+        log_warn "Failed to enable $api"
+        log_warn "This may be due to:"
+        log_warn "  - Billing not enabled on the project"
+        log_warn "  - Insufficient permissions"
+        log_warn "  - API not available in your region"
+        log_warn "You may need to enable this manually in the GCP Console"
+      fi
     fi
   done
 }
