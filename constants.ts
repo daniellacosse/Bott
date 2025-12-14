@@ -35,8 +35,9 @@ export const STORAGE_MAX_ATTACHMENT_DIMENSION = 480;
 export const LOGGER_TOPICS =
   (Deno.env.get("LOGGER_TOPICS") ?? "info,warn,error")
     .split(/,\s*/)
-    .map((s) => s.trim());
-export const LOGGER_TRUNCATE_LENGTH = 100;
+    .map((topic) => topic.trim().toLowerCase())
+    .filter((topic) => topic.length > 0);
+export const LOGGER_MAX_CHARACTER_LENGTH = 256;
 
 // -- Actions --
 export const ACTION_DEFAULT_RESPONSE_SWAPS = 6;
@@ -91,7 +92,7 @@ const isGeminiAvailable = ["gemini", "auto"].includes(MODEL_PROVIDER) &&
 export const ERROR_MODEL = Deno.env.get("ERROR_MODEL") ??
   (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
 
-export const EVENT_MODEL = Deno.env.get("EVENTS_MODEL") ??
+export const EVENT_MODEL = Deno.env.get("EVENT_MODEL") ??
   (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
 
 export const RATING_MODEL = Deno.env.get("RATING_MODEL") ??

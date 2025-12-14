@@ -10,10 +10,51 @@
  */
 
 import { assert, assertEquals } from "@std/assert";
-import { addLogTopic, log, testHandler } from "./module.ts";
+import { log } from "./module.ts";
+import { BaseHandler, ConsoleHandler, setup } from "@std/log";
+import { allowedTopics } from "./module.ts";
+
+interface TestLogRecord {
+  msg: string;
+  datetime: Date;
+}
+
+class TestHandler extends BaseHandler {
+  public logs: TestLogRecord[] = [];
+
+  override log(msg: string): void {
+    this.logs.push({
+      msg,
+      datetime: new Date(),
+    });
+  }
+
+  clear(): void {
+    this.logs = [];
+  }
+}
+
+const testHandler = new TestHandler("NOTSET");
+
+try {
+  setup({
+    handlers: {
+      console: new ConsoleHandler("NOTSET"),
+      test: testHandler,
+    },
+    loggers: {
+      default: {
+        level: "NOTSET",
+        handlers: ["console", "test"],
+      },
+    },
+  });
+} catch {
+  // Already setup
+}
 
 // Enable perf logging for tests
-addLogTopic("perf");
+allowedTopics.add("perf");
 
 Deno.test("Logger exports expected methods", () => {
   // Verify the logger exports the expected methods

@@ -46,9 +46,11 @@ if (import.meta.main) {
     );
   }
 
-  serviceRegistry.register(
-    await startMainService({ actions }),
-  );
+  if (ENABLED_SERVICES.includes("main")) {
+    serviceRegistry.register(
+      await startMainService({ actions }),
+    );
+  }
 }
 
 // Need to respond to GCP health probe:
