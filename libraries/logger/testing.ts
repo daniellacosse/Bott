@@ -41,6 +41,8 @@ export function addLogTopic(topic: string): void {
 }
 
 export function setupTestLogger(): void {
+  allowedTopics.clear();
+
   // Enable standard log levels for tests
   addLogTopic("debug");
   addLogTopic("info");
