@@ -42,8 +42,10 @@ setup_project() {
     read -r -p "Enter your GCP Project ID (or press Enter to auto-generate): " project_id
     
     if [ -z "$project_id" ]; then
-      # Auto-generate a unique project ID
-      project_id="bott-$(date +%s)-$RANDOM"
+      # Auto-generate a unique project ID using timestamp and openssl for better uniqueness
+      local unique_suffix
+      unique_suffix=$(openssl rand -hex 4 2>/dev/null || echo "$RANDOM$RANDOM")
+      project_id="bott-$(date +%s)-${unique_suffix}"
       log_info "Auto-generating project ID: $project_id"
       log_info "Creating new project: $project_id"
       

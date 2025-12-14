@@ -55,10 +55,15 @@ main() {
   log_info "Setup complete!"
   log_info ""
   log_info "Next steps:"
-  log_info "  1. Create your environment file: cp .env.example .env.test"
-  log_info "  2. Edit .env.test with your configuration"
-  log_info "  3. Run the bot: deno task runApp test"
-  log_info "  4. Deploy to production: ENV=production ./scripts/deploy_gcp"
+  log_info "  For local development:"
+  log_info "    1. Create: cp .env.example .env.test"
+  log_info "    2. Edit .env.test with your configuration"
+  log_info "    3. Run: deno task runApp test"
+  log_info ""
+  log_info "  For production deployment:"
+  log_info "    1. Create: cp .env.example .env.production"
+  log_info "    2. Edit .env.production with your configuration"
+  log_info "    3. Deploy: ./scripts/deploy_gcp"
 }
 
 # Run main function
