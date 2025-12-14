@@ -60,7 +60,7 @@ export const RATE_LIMIT_VIDEOS = Number(
  */
 export const ENABLED_SERVICES = (Deno.env.get("ENABLED_SERVICES") ?? "discord")
   .split(",")
-  .map(s => s.trim());
+  .map((s) => s.trim());
 
 export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
 export const DISCORD_MESSAGE_LIMIT = 2000;
@@ -68,7 +68,7 @@ export const DISCORD_MESSAGE_LIMIT = 2000;
 // -- Models --
 
 /**
- * The AI model provider to use.
+ * The model provider to use.
  * - "gemini": Explicitly select Gemini (requires GCP credentials).
  * - "auto": Automatically select the best available provider (currently behaves the same as "gemini" and uses Gemini if GCP credentials are present).
  *
