@@ -61,7 +61,11 @@ setup_project() {
     
     if [ -f "$ENV_FILE" ]; then
       if grep -q "^GCP_PROJECT_ID=" "$ENV_FILE"; then
-        sed -i.bak "s|^GCP_PROJECT_ID=.*|GCP_PROJECT_ID=$project_id|" "$ENV_FILE"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          sed -i .bak "s|^GCP_PROJECT_ID=.*|GCP_PROJECT_ID=$project_id|" "$ENV_FILE"
+        else
+          sed -i.bak "s|^GCP_PROJECT_ID=.*|GCP_PROJECT_ID=$project_id|" "$ENV_FILE"
+        fi
       else
         echo "GCP_PROJECT_ID=$project_id" >> "$ENV_FILE"
       fi

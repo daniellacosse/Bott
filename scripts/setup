@@ -68,6 +68,8 @@ EOF
     cp .env.example.yml "$env_file"
     
     local editor="${EDITOR:-${VISUAL:-vi}}"
+    read -r -p "Complete $env_file in $editor? [Y/n] " open_editor
+    open_editor=${open_editor:-Y}
     if [[ "$editor" && "$open_editor" =~ ^[Yy]$ ]]; then
       "$editor" "$env_file"
     else

@@ -1,1 +1,1 @@
-libraries/logger/logger.sh
+../../libraries/logger/logger.sh
