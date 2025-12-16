@@ -35,9 +35,8 @@ please open an issue to discuss it!
 cp .env.example.yml .env.devcontainer.yml
 ```
 
-2. Get your GCP information and add it to `.env.devcontainer.yml`.
-3. Get your Discord information and add it to `.env.devcontainer.yml`.
-4. Open the project in VS Code with the devcontainer. Bott will start
+2. Open the `.env.devcontainer.yml` file and add the relevant credentials.
+3. Open the project in VSCode with the devcontainer. Bott should start
    automatically.
 
 ### Pull Requests
@@ -53,4 +52,24 @@ helps protect both you as a contributor and the project.
 
 ### Deploying Bott
 
-TODO: update this section
+At present, we only support deploying Bott via Google Cloud Run.
+
+1. Create a `.env.production.yml` file:
+
+```sh
+cp .env.example.yml .env.production.yml
+```
+
+2. Open the `.env.production.yml` file and add the relevant credentials.
+
+3. Execute the deployment task:
+
+```sh
+ENV=production ./exec task deploy_gcp
+```
+
+4. Verify your new deployment by tailing the logs:
+
+```sh
+ENV=production ./exec task logs
+```

@@ -10,28 +10,24 @@
  */
 
 import { loadEnv } from "./common/env.ts";
-import { spawnGcloud } from "./common/gcloud.ts";
-import { log } from "@bott/logger";
+import { gcloud } from "./common/gcloud.ts";
+import {
+  ENV,
+  GCP_PROJECT,
+  GCP_REGION,
+  GCP_SERVICE_NAME,
+} from "@bott/constants";
 
-const env = Deno.env.get("ENV") ?? "production";
+await loadEnv(ENV);
+await gcloud.auth.ensure();
 
-await loadEnv(env);
-
-const projectId = Deno.env.get("GCP_PROJECT_ID");
-const serviceName = Deno.env.get("GCP_SERVICE_NAME") ?? `bott-${env}`;
-const region = Deno.env.get("GCP_REGION") ?? "us-central1";
-
-if (!projectId) {
-  log.error("GCP_PROJECT_ID not found. Please set it in your env file.");
+if (!GCP_PROJECT) {
+  console.error("GCP_PROJECT is not set. Please ensure it is deployed.");
   Deno.exit(1);
 }
 
-log.info(`Tailing logs for ${serviceName} in ${projectId}...`);
-
-const process = spawnGcloud([
-  "beta", "run", "services", "logs", "tail", serviceName,
-  "--project", projectId,
-  "--region", region
-]);
-
-await process.status;
+await gcloud.run.logs({
+  service: GCP_SERVICE_NAME,
+  region: GCP_REGION,
+  project: GCP_PROJECT,
+});

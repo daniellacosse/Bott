@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# @license
+# This file is part of Bott.
+#
+# This project is dual-licensed:
+# - Non-commercial use: AGPLv3 (see LICENSE file for full text).
+# - Commercial use: Proprietary License (contact D@nielLaCos.se for details).
+#
+# Copyright (C) 2025 DanielLaCos.se
+
+set -o pipefail
+
+RUNNER="${CONTAINER_RUNNER:-docker}"
+IMAGE="bott:latest"
+
+if [[ "$($RUNNER images -q $IMAGE 2> /dev/null)" == "" ]]; then
+  $RUNNER build -t $IMAGE .
+fi
+
+# If arguments are provided, prepend 'deno'
+CMD=""
+if [ "$#" -gt 0 ]; then
+  CMD="deno $@"
+fi
+
+$RUNNER run -it --rm \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  -e ENV="${ENV:-devcontainer}" \
+  --env-file ".env.${ENV:-devcontainer}.yml" \
+  $IMAGE \
+  $CMD

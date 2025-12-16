@@ -12,19 +12,33 @@
 import { join } from "@std/path";
 
 // -- Infrastructure & Environment --
+export const ENV = Deno.env.get("ENV") ?? "devcontainer";
 export const PORT = Number(Deno.env.get("PORT") ?? 8080);
 export const OUTPUT_ROOT = Deno.env.get("OUTPUT_ROOT") ?? "./.output";
 
+// GCP
+export const GCP_PROJECT = Deno.env.get("GCP_PROJECT");
+export const GCP_REGION = Deno.env.get("GCP_REGION") ??
+  Deno.env.get("GCP_LOCATION") ?? "us-central1";
+
+export const GCP_ALLOW_UNAUTHENTICATED =
+  Deno.env.get("GCP_ALLOW_UNAUTHENTICATED") ?? true;
+
+export const GCP_SERVICE_NAME = Deno.env.get("GCP_SERVICE_NAME") ??
+  `bott-${ENV}`;
+
 // Storage
+const MEGABYTE = 1024 * 1024;
+const SECOND_TO_MS = 1000;
+const MINUTE_TO_MS = 60 * SECOND_TO_MS;
+
 export const STORAGE_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ??
   join(OUTPUT_ROOT, "fs_root");
 export const STORAGE_DEPLOY_NONCE_PATH = join(
   STORAGE_ROOT,
   ".deploy-nonce",
 );
-const MEGABYTE = 1024 * 1024;
-const SECOND_TO_MS = 1000;
-const MINUTE_TO_MS = 60 * SECOND_TO_MS;
+
 export const STORAGE_MAX_FILE_SIZE = 50 * MEGABYTE;
 export const STORAGE_FETCH_TIMEOUT_MS = 30 * SECOND_TO_MS;
 export const STORAGE_MAX_TEXT_FILE_WORDS = 600;
@@ -46,6 +60,7 @@ export const ACTION_MAX_PROMPT_LENGTH = 10000;
 // Rate Limits
 const DAY_MS = 24 * 60 * MINUTE_TO_MS;
 const FOUR_WEEKS_MS = 4 * 7 * DAY_MS;
+
 export const RATE_LIMIT_WINDOW_MS = FOUR_WEEKS_MS;
 
 export const RATE_LIMIT_IMAGES = Number(
@@ -59,7 +74,6 @@ export const RATE_LIMIT_VIDEOS = Number(
 );
 
 // -- Services --
-
 export const ENABLED_SERVICES =
   (Deno.env.get("ENABLED_SERVICES") ?? "main,storage,discord")
     .split(/,\s*/)
@@ -79,15 +93,9 @@ export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
  */
 export const MODEL_PROVIDER = Deno.env.get("MODEL_PROVIDER") ?? "auto";
 
-export const GCP_PROJECT_ID = Deno.env.get("GCP_PROJECT_ID") ??
-  Deno.env.get("GCP_PROJECT");
-export const GCP_PROJECT_LOCATION =
-  Deno.env.get("GCP_PROJECT_LOCATION") ??
-  Deno.env.get("GCP_LOCATION");
-
 export const GEMINI_ACCESS_TOKEN = Deno.env.get("GEMINI_ACCESS_TOKEN");
 const isGeminiAvailable = ["gemini", "auto"].includes(MODEL_PROVIDER) &&
-  GCP_PROJECT_ID && GCP_PROJECT_LOCATION;
+  GCP_PROJECT;
 
 export const ERROR_MODEL = Deno.env.get("ERROR_MODEL") ??
   (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");

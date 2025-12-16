@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { parse } from "@std/yaml";
+import { parse, stringify } from "@std/yaml";
 import { AnyShape } from "@bott/model";
 
 export async function loadEnv(envName: string) {
@@ -21,6 +21,19 @@ export async function loadEnv(envName: string) {
       continue;
     }
 
-    Deno.env.set(key, value);
+    Deno.env.set(key.trim(), value.trim());
   }
+}
+
+export async function updateEnv(envName: string, updates: Record<string, string>) {
+  const path = `.env.${envName}.yml`;
+  const data = parse(await Deno.readTextFile(path)) as AnyShape;
+
+  for (const [key, value] of Object.entries(updates)) {
+    const trimKey = key.trim();
+    data[trimKey] = value.trim();
+    Deno.env.set(trimKey, data[trimKey] as string);
+  }
+
+  await Deno.writeTextFile(path, stringify(data));
 }

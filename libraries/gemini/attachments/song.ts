@@ -15,7 +15,7 @@ import { BottAttachmentType } from "@bott/model";
 import {
   GEMINI_ACCESS_TOKEN,
   GCP_PROJECT_ID,
-  GCP_PROJECT_LOCATION,
+  GCP_REGION,
   SONG_MODEL,
 } from "@bott/constants";
 
@@ -24,7 +24,7 @@ import type { BottAttachmentDataGenerator } from "./types.ts";
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
 const VERTEX_API_URL =
-  `https://${GCP_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_PROJECT_LOCATION}/publishers/google/models/${SONG_MODEL}:predict`;
+  `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/${SONG_MODEL}:predict`;
 
 export const generateSongData: BottAttachmentDataGenerator = async (
   prompt,

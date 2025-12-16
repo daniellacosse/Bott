@@ -12,9 +12,9 @@ content generation capabilities.
 
 ### Initial Setup
 
-- Copy configuration template: `cp .env.example.yml .env.dev.yml`
-- Configure settings in `.env.dev.yml`:
-  - `GCP_PROJECT_ID` - GCP project ID
+- Copy configuration template: `cp .env.example.yml .env.devcontainer.yml`
+- Configure settings in `.env.devcontainer.yml`:
+  - `GCP_PROJECT` - GCP project ID
   - `GCP_REGION` - GCP region (e.g., us-central1)
   - `GEMINI_ACCESS_TOKEN` - GCP access token
   - `DISCORD_TOKEN` - Discord bot token
@@ -33,7 +33,7 @@ content generation capabilities.
 ### Manual Validation Steps
 
 - Container builds successfully when opening the devcontainer
-- Format check passes: `deno fmt --check` reports "Checked X files" with exit
+- Format check passes: `./exec fmt --check` reports "Checked X files" with exit
   code 0
 - Application starts automatically in the devcontainer without TypeScript
   compilation errors
@@ -45,13 +45,13 @@ content generation capabilities.
 
 ### Testing Requirements
 
-- ALWAYS run `deno fmt --check` and `deno lint` before committing changes
-- ALWAYS run `deno test --allow-all` to validate unit tests
+- ALWAYS run `./exec fmt --check` and `./exec lint` before committing changes
+- ALWAYS run `./exec test --allow-all` to validate unit tests
 - Test files are located in: `**/**.test.ts`
 
 ### CI/CD Validation
 
-- Always run `deno fmt --check && deno lint` before committing - this matches
+- Always run `./exec fmt --check && ./exec lint` before committing - this matches
   the GitHub Actions workflow
 - License header check: All `.ts` and `.sql` files must contain "This project is
   dual-licensed:" in their header
@@ -106,10 +106,10 @@ content generation capabilities.
 ### Debugging
 
 - Check logs in the VS Code terminal where the bot is running
-- Verify configuration is set correctly in `.env.dev.yml`
+- Verify configuration is set correctly in `.env.devcontainer.yml`
 - Test network connectivity to Discord API and Google Cloud APIs
 - Validate file permissions for `FILE_SYSTEM_ROOT` directory (default:
-  `./fs_root`)
+  `./.output/fs_root`)
 
 ### Configuration Options
 

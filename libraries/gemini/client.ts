@@ -10,10 +10,10 @@
  */
 
 import { GoogleGenAI } from "@google/genai";
-import { GCP_PROJECT_ID, GCP_PROJECT_LOCATION } from "@bott/constants";
+import { GCP_PROJECT_ID, GCP_REGION } from "@bott/constants";
 
 export default new GoogleGenAI({
   vertexai: true,
   project: GCP_PROJECT_ID,
-  location: GCP_PROJECT_LOCATION,
+  location: GCP_REGION,
 });
