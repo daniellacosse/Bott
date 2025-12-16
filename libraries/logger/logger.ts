@@ -30,35 +30,51 @@ try {
   // Setup already called
 }
 
+/** @internal - for testing only*/
+let _loggerTopics = LOGGER_TOPICS;
+
+/** @internal - for testing only */
+export function _setLoggerTopics(topics: string[]) {
+  _loggerTopics = topics;
+}
+
+export interface Logger {
+  debug(...args: unknown[]): void;
+  info(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+  perf(label?: string): void;
+}
+
 const perfTimers = new Map<string, number>();
 
-export const log = {
+export const log: Logger = {
   debug(...args: unknown[]): void {
-    if (LOGGER_TOPICS.includes("debug")) {
+    if (_loggerTopics.includes("debug")) {
       getLogger().debug(budgetedStringify(args, LOGGER_MAX_CHARACTER_LENGTH));
     }
   },
 
   info(...args: unknown[]): void {
-    if (LOGGER_TOPICS.includes("info")) {
+    if (_loggerTopics.includes("info")) {
       getLogger().info(budgetedStringify(args, LOGGER_MAX_CHARACTER_LENGTH));
     }
   },
 
   warn(...args: unknown[]): void {
-    if (LOGGER_TOPICS.includes("warn")) {
+    if (_loggerTopics.includes("warn")) {
       getLogger().warn(budgetedStringify(args, LOGGER_MAX_CHARACTER_LENGTH));
     }
   },
 
   error(...args: unknown[]): void {
-    if (LOGGER_TOPICS.includes("error")) {
+    if (_loggerTopics.includes("error")) {
       getLogger().error(budgetedStringify(args, LOGGER_MAX_CHARACTER_LENGTH));
     }
   },
 
   perf(label = "default"): void {
-    if (!LOGGER_TOPICS.includes("perf")) {
+    if (!_loggerTopics.includes("perf")) {
       return;
     }
 

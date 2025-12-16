@@ -33,6 +33,7 @@
     "deploy_gcp": "deno run --allow-read --allow-write --allow-env --allow-run=gcloud ./scripts/deploy_gcp.ts",
     "logs": "deno run --allow-read --allow-env --allow-run=gcloud ./scripts/logs.ts"
   },
+  "nodeModulesDir": "auto",
   "workspace": [
     "./model",
     "./libraries/logger",

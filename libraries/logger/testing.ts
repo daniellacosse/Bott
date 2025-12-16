@@ -10,6 +10,7 @@
  */
 
 import { BaseHandler, ConsoleHandler, getLogger } from "@std/log";
+import { _setLoggerTopics } from "./logger.ts";
 
 // Simple log record for testing
 export interface TestLogRecord {
@@ -29,20 +30,23 @@ export class TestHandler extends BaseHandler {
   }
 
   clear(): void {
-    this.logs = [];
+    this.logs.length = 0;
   }
 }
 
 export const testHandler: TestHandler = new TestHandler("NOTSET");
+export const testLogs = testHandler.logs;
+
+export function clearTestLogs(): void {
+  testHandler.clear();
+}
 
 export function setupTestLogger(): void {
-  Deno.env.set("LOGGER_TOPICS", "debug,info,warn,error,perf");
+  _setLoggerTopics(["debug", "info", "warn", "error", "perf"]);
 
-  // Manually attach test handler to default logger to avoid setup() conflicts
   const logger = getLogger();
-  logger.levelName = "NOTSET";
 
-  // Reset handlers to ensure clean state
+  logger.levelName = "NOTSET";
   logger.handlers = [
     new ConsoleHandler("NOTSET"),
     testHandler,
