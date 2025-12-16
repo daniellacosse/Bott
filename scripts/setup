@@ -10,117 +10,73 @@
 
 set -euo pipefail
 
-# Get script directory and source utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../libraries/logger/logger.sh"
-source "$SCRIPT_DIR/utils/checks.sh"
+source "$SCRIPT_DIR/common/logger.sh"
 
-# Main setup function
+ENV="${ENV:-devcontainer}"
+
 main() {
-  info_log <<EOF
-Bott Setup Script
-=================
+  log <<EOF
+Bott Setup
+==========
 EOF
-  
-  # Default environment to devcontainer for setup
-  local env="${ENV:-devcontainer}"
-  
-  # Check if running on macOS
   if [[ "$OSTYPE" == "darwin"* ]]; then
     info_log "Detected macOS"
     
-    # Check if brew is installed
-    if ! check_homebrew; then
-      read -r -p "Homebrew is not installed. Would you like to install it? (y/N): " install_brew
-      if [[ "$install_brew" =~ ^[Yy]$ ]]; then
-        info_log "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-      else
-        error_log "Homebrew is required. Please install it from https://brew.sh"
-        exit 1
-      fi
+    if ! command -v brew &> /dev/null; then
+      info_log "Installing Homebrew..."
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
     
     info_log "Installing dependencies via Homebrew..."
     brew bundle
-  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    info_log "Detected Linux"
+  elif [[ "$OSTYPE" == "linux-gnu"* && command -v apt-get &> /dev/null ]]; then
+    info_log "Detected Linux. Installing dependencies via apt-get..."
+      
+    if ! command -v gcloud &> /dev/null; then
+      info_log "Installing Google Cloud SDK..."
+      sudo apt-get update
+      sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
+      curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+      echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+      sudo apt-get update
+      sudo apt-get install -y google-cloud-cli
+    fi
     
-    # Check if apt-get is available (Debian/Ubuntu)
-    if command -v apt-get &> /dev/null; then
-      info_log "Installing dependencies via apt-get..."
-      
-      # Install gcloud if not present
-      if ! command -v gcloud &> /dev/null; then
-        info_log "Installing Google Cloud SDK..."
-        sudo apt-get update
-        sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
-        curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
-        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-        sudo apt-get update
-        sudo apt-get install -y google-cloud-cli
-      fi
-      
-      # Install Deno if not present
-      if ! command -v deno &> /dev/null; then
-        info_log "Installing Deno..."
-        curl -fsSL https://deno.land/install.sh | sh
-        info_log "Please add Deno to your PATH: export PATH=\"\$HOME/.deno/bin:\$PATH\""
-      fi
-    else
-      info_log <<EOF
-Please manually install the following:
-  - Google Cloud SDK (gcloud)
-  - Deno runtime
-
-For more info: https://cloud.google.com/sdk/docs/install
-EOF
+    if ! command -v deno &> /dev/null; then
+      info_log "Installing Deno..."
+      curl -fsSL https://deno.land/install.sh | sh
+      info_log "Please add Deno to your PATH: export PATH=\"\$HOME/.deno/bin:\$PATH\""
     fi
   else
-    info_log "Detected other system: $OSTYPE"
     warn_log <<EOF
+Detected unsupported system: $OSTYPE
 Please manually install dependencies:
   - Google Cloud SDK (gcloud)
   - Deno runtime
 EOF
   fi
-  
-  # Check if gcloud is installed
-  check_gcloud
-  info_log "gcloud CLI found"
-  
-  # Authenticate with gcloud
-  info_log "Authenticating with Google Cloud..."
+    
   if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null | grep -q .; then
-    info_log "Running: gcloud auth application-default login"
+    info_log "Authenticating with Google Cloud..."
     gcloud auth application-default login
-  else
-    info_log "Already authenticated with gcloud"
   fi
   
-  # Create environment file
-  local env_file=".env.$env.yml"
+  local env_file=".env.$ENV.yml"
   if [ ! -f "$env_file" ]; then
     info_log "Creating $env_file from .env.example.yml..."
     cp .env.example.yml "$env_file"
-    info_log "Created $env_file"
     
-    # Ask if user wants to edit the file
-    read -r -p "Would you like to open $env_file in your editor? (y/N): " open_editor
-    if [[ "$open_editor" =~ ^[Yy]$ ]]; then
-      local editor="${EDITOR:-${VISUAL:-vi}}"
-      info_log "Opening $env_file in $editor..."
+    local editor="${EDITOR:-${VISUAL:-vi}}"
+    if [[ "$editor" && "$open_editor" =~ ^[Yy]$ ]]; then
       "$editor" "$env_file"
     else
-      info_log "Please edit $env_file with your configuration"
+      info_log "Please complete the $env_file with your configuration."
+      exit 0 # Exit, but setup is not complete
     fi
-  else
-    info_log "$env_file already exists"
   fi
   
-  info_log ""
   info_log "Setup complete!"
 }
 
-# Run main function
 main "$@"

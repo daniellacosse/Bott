@@ -13,9 +13,9 @@ import { decodeBase64 } from "@std/encoding";
 
 import { BottAttachmentType } from "@bott/model";
 import {
-  GOOGLE_ACCESS_TOKEN,
-  GOOGLE_PROJECT_ID,
-  GOOGLE_PROJECT_LOCATION,
+  GEMINI_ACCESS_TOKEN,
+  GCP_PROJECT_ID,
+  GCP_PROJECT_LOCATION,
   SONG_MODEL,
 } from "@bott/constants";
 
@@ -24,7 +24,7 @@ import type { BottAttachmentDataGenerator } from "./types.ts";
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
 const VERTEX_API_URL =
-  `https://${GOOGLE_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GOOGLE_PROJECT_ID}/locations/${GOOGLE_PROJECT_LOCATION}/publishers/google/models/${SONG_MODEL}:predict`;
+  `https://${GCP_PROJECT_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_PROJECT_LOCATION}/publishers/google/models/${SONG_MODEL}:predict`;
 
 export const generateSongData: BottAttachmentDataGenerator = async (
   prompt,
@@ -82,12 +82,12 @@ async function getAccessToken(): Promise<string> {
       );
     }
   } else {
-    if (!GOOGLE_ACCESS_TOKEN || GOOGLE_ACCESS_TOKEN === "TOKEN_MISSING") {
+    if (!GEMINI_ACCESS_TOKEN || GEMINI_ACCESS_TOKEN === "TOKEN_MISSING") {
       throw new Error(
-        "GOOGLE_ACCESS_TOKEN is not set. Please set it for local development or ensure the app is running in Cloud Run.",
+        "GEMINI_ACCESS_TOKEN is not set. Please set it for local development or ensure the app is running in Cloud Run.",
       );
     }
 
-    return GOOGLE_ACCESS_TOKEN;
+    return GEMINI_ACCESS_TOKEN;
   }
 }

@@ -14,9 +14,9 @@ content generation capabilities.
 
 - Copy configuration template: `cp .env.example.yml .env.dev.yml`
 - Configure settings in `.env.dev.yml`:
-  - `GOOGLE_PROJECT_ID` - GCP project ID
-  - `GOOGLE_PROJECT_LOCATION` - GCP region (e.g., us-central1)
-  - `GOOGLE_ACCESS_TOKEN` - GCP access token
+  - `GCP_PROJECT_ID` - GCP project ID
+  - `GCP_REGION` - GCP region (e.g., us-central1)
+  - `GEMINI_ACCESS_TOKEN` - GCP access token
   - `DISCORD_TOKEN` - Discord bot token
 
 ### Development Workflow

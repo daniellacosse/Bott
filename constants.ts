@@ -79,15 +79,15 @@ export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
  */
 export const MODEL_PROVIDER = Deno.env.get("MODEL_PROVIDER") ?? "auto";
 
-export const GOOGLE_PROJECT_ID = Deno.env.get("GOOGLE_PROJECT_ID") ??
+export const GCP_PROJECT_ID = Deno.env.get("GCP_PROJECT_ID") ??
   Deno.env.get("GCP_PROJECT");
-export const GOOGLE_PROJECT_LOCATION =
-  Deno.env.get("GOOGLE_PROJECT_LOCATION") ??
-    Deno.env.get("GCP_LOCATION");
-export const GOOGLE_ACCESS_TOKEN = Deno.env.get("GOOGLE_ACCESS_TOKEN");
+export const GCP_PROJECT_LOCATION =
+  Deno.env.get("GCP_PROJECT_LOCATION") ??
+  Deno.env.get("GCP_LOCATION");
 
+export const GEMINI_ACCESS_TOKEN = Deno.env.get("GEMINI_ACCESS_TOKEN");
 const isGeminiAvailable = ["gemini", "auto"].includes(MODEL_PROVIDER) &&
-  GOOGLE_PROJECT_ID && GOOGLE_PROJECT_LOCATION && GOOGLE_ACCESS_TOKEN;
+  GCP_PROJECT_ID && GCP_PROJECT_LOCATION;
 
 export const ERROR_MODEL = Deno.env.get("ERROR_MODEL") ??
   (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
