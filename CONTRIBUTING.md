@@ -68,6 +68,14 @@ cp .env.example.yml .env.production.yml
 ENV=production ./exec task deploy_gcp
 ```
 
+> [!TIP]
+> You can select your container runtime by setting the `RUNTIME` environment
+> variable to `docker` or `podman`:
+>
+> ```sh
+> RUNTIME=podman ./exec task deploy_gcp
+> ```
+
 4. Verify your new deployment by tailing the logs:
 
 ```sh
