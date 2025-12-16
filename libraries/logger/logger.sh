@@ -17,53 +17,40 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
-NC='\033[0m' # No Color
+CLEAR='\033[0m'
 
-# Logger configuration
-# Use process-specific log file to avoid race conditions between concurrent processes
-# Default to STORAGE_ROOT/.output directory, scoped by ENV
-ENV="${ENV:-production}"
+ENV="${ENV:-devcontainer}"
 STORAGE_ROOT="${FILE_SYSTEM_ROOT:-./fs_root}"
+
 LOGGER_FILE="${LOGGER_FILE:-$STORAGE_ROOT/.output/logs/$ENV/script-$$.log}"
 LOGGER_BUFFER=()
 LOGGER_DEBOUNCE_SECONDS="${LOGGER_DEBOUNCE_SECONDS:-2}"
 LOGGER_TOPICS="${LOGGER_TOPICS:-info,warn,error}"
+
 LAST_FLUSH_TIME=0
 
-# Create log directory if it doesn't exist
 mkdir -p "$(dirname "$LOGGER_FILE")"
 
-# Flush log buffer to file
-flush_logs() {
-  if [ ${#LOGGER_BUFFER[@]} -gt 0 ]; then
-    printf "%s\n" "${LOGGER_BUFFER[@]}" >> "$LOGGER_FILE"
-    LOGGER_BUFFER=()
-  fi
+debug_log() {
+  log "DEBUG" "$BLUE" "$@"
 }
 
-# Schedule flush after debounce period
-schedule_flush() {
-  local current_time=$(date +%s)
-  local time_since_flush=$((current_time - LAST_FLUSH_TIME))
-  
-  if [ $time_since_flush -ge $LOGGER_DEBOUNCE_SECONDS ]; then
-    flush_logs
-    LAST_FLUSH_TIME=$current_time
-  fi
+info_log() {
+  log "INFO" "$GREEN" "$@"
 }
 
-# Trap to flush logs on exit
-trap flush_logs EXIT
-
-# Check if a log level is enabled
-is_log_level_enabled() {
-  local level="$1"
-  echo ",$LOGGER_TOPICS," | grep -qi ",$level,"
+warn_log() {
+  log "WARN" "$YELLOW" "$@"
 }
 
-# Base logging function that all other log functions call
-# Usage: log "LEVEL" "color" "message parts..."
-# Exported for performance logging
+error_log() {
+  log "ERROR" "$RED" "$@"
+}
+
+perf_log() {
+  log "PERF" "$PURPLE" "$@"
+}
+
 log() {
   local level="$1"
   local color="$2"
@@ -79,56 +66,56 @@ log() {
   
   local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   
-  # Check if this log level is enabled
   if ! is_log_level_enabled "$level"; then
     return 0
   fi
   
-  # Output to console with color
-  # Use printf to handle multi-line messages correctly
   if [ -n "$message" ]; then
-    if [ "$level" = "ERROR" ]; then
-      printf "${color}${level}${NC} %s\n" "$message" >&2
-    else
-      printf "${color}${level}${NC} %s\n" "$message"
-    fi
+    # 1. Append to file immediately
+    printf "%s %s %s\n" "$timestamp" "$level" "$message" >> "$LOGGER_FILE"
     
-    # Append to buffer without color codes
-    # For multi-line messages, we might want to split them or store as is
-    # Here we store as is, assuming the consumer handles newlines
-    LOGGER_BUFFER+=("${timestamp} ${level} ${message}")
+    # 2. Add to memory (for buffered console flush)
+    # Store as "COLOR LEVEL MESSAGE" for easy parsing in flush_logs
+    LOGGER_BUFFER+=("$color $level $message")
     
-    # Schedule flush
+    # 3. Schedule flush
     schedule_flush
   fi
 }
 
-# Logging functions matching application logger API
-# Usage: debug_log "message" or debug_log "message" "with" "multiple" "parts"
-
-# DEBUG: Detailed diagnostic information for troubleshooting
-debug_log() {
-  log "DEBUG" "$BLUE" "$@"
+is_log_level_enabled() {
+  local level="$1"
+  echo ",$LOGGER_TOPICS," | grep -qi ",$level,"
 }
 
-# INFO: General informational messages about script progress
-info_log() {
-  log "INFO" "$GREEN" "$@"
+schedule_flush() {
+  local current_time=$(date +%s)
+  local time_since_flush=$((current_time - LAST_FLUSH_TIME))
+  
+  if [ $time_since_flush -ge $LOGGER_DEBOUNCE_SECONDS ]; then
+    flush_logs
+    LAST_FLUSH_TIME=$current_time
+  fi
 }
 
-# WARN: Warning messages about potential issues that don't prevent execution
-warn_log() {
-  log "WARN" "$YELLOW" "$@"
+flush_logs() {
+  if [ ${#LOGGER_BUFFER[@]} -gt 0 ]; then
+    for entry in "${LOGGER_BUFFER[@]}"; do
+      local color="${entry%% *}"
+      local temp="${entry#* }"
+      local level="${temp%% *}"
+      local message="${temp#* }"
+      
+      # Send errors to stderr, others to stdout
+      if [ "$level" = "ERROR" ]; then
+        printf "${color}${level}${CLEAR} %s\n" "$message" >&2
+      else
+        printf "${color}${level}${CLEAR} %s\n" "$message"
+      fi
+    done
+    LOGGER_BUFFER=()
+  fi
 }
 
-# ERROR: Error messages indicating failures that may stop execution
-error_log() {
-  log "ERROR" "$RED" "$@"
-}
-
-# PERF: Performance logging for metrics and profiling
-perf_log() {
-  log "PERF" "$PURPLE" "$@"
-}
-
-
+# Flush logs on exit
+trap flush_logs EXIT

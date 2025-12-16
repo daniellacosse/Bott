@@ -10,13 +10,11 @@
  */
 
 import { assert } from "@std/assert";
-import { addLogTopic, log, setupTestLogger, testHandler } from "./module.ts";
+import { clearTestLogs, setupTestLogger, testLogs } from "./module.ts";
+import { log } from "./logger.ts";
 
 // Setup test logger
 setupTestLogger();
-
-// Enable perf logging for tests
-addLogTopic("perf");
 
 Deno.test("Logger exports expected methods", () => {
   // Verify the logger exports the expected methods
@@ -37,19 +35,23 @@ Deno.test("Logger methods can be called without errors", () => {
   log.perf("test perf start"); // This call ends the timer and logs elapsed time
 });
 
-Deno.test("Logger testHandler captures log messages", () => {
+Deno.test("Logger testHandler captures log messages", async () => {
   // Clear previous logs
-  testHandler.clear();
+  clearTestLogs();
 
   // Log some messages
   log.info("test message 1");
   log.warn("test message 2");
-  log.error("test message 3");
+  log.warn("warn message");
+  log.error("error message");
+
+  // Wait for async logging
+  await new Promise((resolve) => setTimeout(resolve, 10));
 
   // Verify logs were captured
-  assert(testHandler.logs.length >= 3, "Should have captured at least 3 logs");
+  assert(testLogs.length >= 3, "Should have captured at least 3 logs");
 
-  const messages = testHandler.logs.map((l) => l.msg);
+  const messages = testLogs.map((l) => l.msg);
   assert(
     messages.some((msg) => msg.includes("test message 1")),
     "Should capture info message",
@@ -59,14 +61,14 @@ Deno.test("Logger testHandler captures log messages", () => {
     "Should capture warn message",
   );
   assert(
-    messages.some((msg) => msg.includes("test message 3")),
+    messages.some((msg) => msg.includes("error message")),
     "Should capture error message",
   );
 });
 
 Deno.test("Logger perf works like console.time/timeEnd", async () => {
   // Clear previous logs
-  testHandler.clear();
+  clearTestLogs();
 
   // Start timer
   log.perf("timer1");
@@ -77,8 +79,11 @@ Deno.test("Logger perf works like console.time/timeEnd", async () => {
   // End timer
   log.perf("timer1");
 
+  // Wait for async logging
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
   // Check that a timing message was logged
-  const perfLog = testHandler.logs.find((l) => l.level === "PERF" && l.msg.includes("timer1:"));
+  const perfLog = testLogs.find((l) => l.level === "PERF" && l.msg.includes("timer1:"));
 
   assert(perfLog, "Should log timing message");
   assert(perfLog!.msg.includes("ms"), "Should include 'ms' in message");
@@ -97,7 +102,7 @@ Deno.test("Logger perf works like console.time/timeEnd", async () => {
 
 Deno.test("Logger perf supports multiple concurrent timers", async () => {
   // Clear previous logs
-  testHandler.clear();
+  clearTestLogs();
 
   // Start multiple timers
   log.perf("timer-a");
@@ -109,24 +114,30 @@ Deno.test("Logger perf supports multiple concurrent timers", async () => {
   log.perf("timer-b");
   log.perf("timer-a");
 
+  // Wait for async logging
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
   // Check that both timing messages were logged
-  const perfMessageA = testHandler.logs.find((l) => l.level === "PERF" && l.msg.includes("timer-a:"));
-  const perfMessageB = testHandler.logs.find((l) => l.level === "PERF" && l.msg.includes("timer-b:"));
+  const perfMessageA = testLogs.find((l) => l.level === "PERF" && l.msg.includes("timer-a:"));
+  const perfMessageB = testLogs.find((l) => l.level === "PERF" && l.msg.includes("timer-b:"));
 
   assert(perfMessageA, "Should log timer-a with PERF level");
   assert(perfMessageB, "Should log timer-b with PERF level");
 });
 
-Deno.test("Logger perf uses default label when none provided", () => {
+Deno.test("Logger perf uses default label when none provided", async () => {
   // Clear previous logs
-  testHandler.clear();
+  clearTestLogs();
 
   // Start and end timer without label
   log.perf();
   log.perf();
 
+  // Wait for async logging
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
   // Check that default label was used
-  const perfMessage = testHandler.logs.find((l) => l.level === "PERF" && l.msg.includes("default:"));
+  const perfMessage = testLogs.find((l) => l.level === "PERF" && l.msg.includes("default:"));
 
   assert(perfMessage, "Should log with 'default' label and PERF level");
 });

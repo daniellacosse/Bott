@@ -9,67 +9,35 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { formatArgs, allowedTopics, setLogInterceptor } from "./logger.ts";
+import { _setLogWriter } from "./logger.ts";
 
-// Simple log record for testing
-export interface TestLogRecord {
-  msg: string;
-  datetime: Date;
+export interface LogTestRecord {
   level: string;
+  msg: string;
 }
 
-// Test handler for capturing logs during testing
-export class TestHandler {
-  public logs: TestLogRecord[] = [];
+export let testLogs: LogTestRecord[] = [];
 
-  log(level: string, args: unknown[]): void {
-    const msg = formatArgs(...args);
-    this.logs.push({
-      msg,
-      datetime: new Date(),
-      level,
-    });
-  }
-
-  clear(): void {
-    this.logs = [];
-  }
-}
-
-export const testHandler: TestHandler = new TestHandler();
-
-export function addLogTopic(topic: string): void {
-  allowedTopics.add(topic.toLowerCase().trim());
+export function clearTestLogs(): void {
+  testLogs = [];
 }
 
 export function setupTestLogger(): void {
-  allowedTopics.clear();
-
-  // Enable standard log levels for tests
-  addLogTopic("debug");
-  addLogTopic("info");
-  addLogTopic("warn");
-  addLogTopic("error");
-
-  // Set the interceptor to direct logs to testHandler
-  setLogInterceptor((level, args) => {
-    // Only log if topic is allowed (mimicking real logger behavior)
-    // Note: perf is handled inside logging.ts logic before calling interceptor for timing, 
-    // but we can check here too or assume logging.ts handles it.
-    // In logging.ts, interception check is inside the method, BEFORE allowedTopics check for debug/info/etc.
-    // So we should enforce topic check here if we want to simulate filtering.
-    // However, logging.ts implementation:
-    /*
-      debug(...args) {
-        if (interceptor) { interceptor... return; }
-        if (allowedTopics...) { ... }
+  // Capture logs via a custom WritableStream
+  const logStream = new WritableStream<Uint8Array>({
+    write(chunk) {
+      const text = new TextDecoder().decode(chunk);
+      // Format is "fnName 'arg1' 'arg2' ..."
+      const parts = text.trim().match(/^(\w+) '(.*)'$/);
+      if (parts) {
+        const level = parts[1].replace("_log", "").toUpperCase();
+        // Simple unescape: replace ' with nothing since we want raw content, 
+        // or actually unescape bash single quotes: '\'' -> '
+        const msg = parts[2].replace(/'\\''/g, "'");
+        testLogs.push({ level, msg });
       }
-    */
-    // So if interceptor is set, topic filtering is skipped in logging.ts.
-    // We should implement filtering here if we want accurate test simulation.
-
-    if (allowedTopics.has(level === "perf" ? "perf" : level)) {
-      testHandler.log(level.toUpperCase(), args);
-    }
+    },
   });
+
+  _setLogWriter(logStream.getWriter());
 }
