@@ -81,8 +81,6 @@ ENV=production ./exec deno task deploy_gcp
 ENV=production ./exec deno task logs
 ```
 
----
-
 ## Architecture
 
 Want to learn more about how Bott ticks? See

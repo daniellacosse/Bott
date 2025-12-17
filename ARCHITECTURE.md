@@ -48,6 +48,8 @@ descriptions, and default values, please refer to the
 ## Event Generation
 
 Bott processes incoming messages and events through a complicated multi-step
-process to avoid undue chatter. For a more detailed breakdown of this process
-_(currently implemented via Gemini - see:
-**[Gemini Event Pipeline documentation](./libraries/gemini/events)**)_.
+process to avoid undue chatter.
+
+For a more detailed breakdown of this process _(currently implemented via
+Gemini - see:
+**[Gemini Event Pipeline documentation](./libraries/aiModels/gemini/events)**)_.
