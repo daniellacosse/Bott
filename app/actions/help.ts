@@ -19,11 +19,11 @@ import { createInfoEmbed } from "@bott/discord";
 import { log } from "@bott/log";
 
 // Lazy-loaded version with caching
-let version: string | undefined;
+let appVersion: string | undefined;
 
-async function getVersion(): Promise<string> {
-  if (version !== undefined) {
-    return version;
+async function getVersion(): Promise<string | undefined> {
+  if (appVersion !== undefined) {
+    return appVersion;
   }
 
   try {
@@ -31,13 +31,13 @@ async function getVersion(): Promise<string> {
       new URL("../deno.jsonc", import.meta.url),
     );
     const appDenoConfig = JSON.parse(configText);
-    version = appDenoConfig.version || "unknown";
+    appVersion = appDenoConfig.version;
   } catch (error) {
     log.error("Failed to read version from deno.jsonc:", error);
-    version = "unknown";
+    appVersion = undefined;
   }
 
-  return version;
+  return appVersion;
 }
 
 export const help: BottAction = Object.assign(
@@ -60,8 +60,9 @@ export const help: BottAction = Object.assign(
               },
               { name: "/help", value: "Display this help menu." },
             ],
-            footer:
-              `v${currentVersion} ᛫ Under development ᛫ written by DanielLaCos.se`,
+            footer: currentVersion
+              ? `v${currentVersion}`
+              : "written by DanielLaCos.se",
           }),
         ],
       },
