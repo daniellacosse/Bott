@@ -23,5 +23,3 @@ threshold = 3
 
 [[plugin]]
 name = "semgrep"
-enabled = true
-rulesets = ["security-audit", "javascript", "typescript"]
