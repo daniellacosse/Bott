@@ -1,0 +1,6 @@
+# CODEOWNERS file for Bott repository
+# This file defines who owns the code in this repository
+# For more info, see: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+* @daniellacosse
