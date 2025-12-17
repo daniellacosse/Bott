@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { Message } from "discord.js";
+import { ChannelType, type Message } from "discord.js";
 
 import { BottEventType } from "@bott/model";
 import { BottEvent } from "@bott/service";
@@ -48,10 +48,13 @@ export const resolveBottEventFromMessage = async (
     },
     channel: {
       id: message.channel.id,
-      name: message.channel.name as string,
+      // deno-lint-ignore no-explicit-any
+      name: ((message.channel as any).type === ChannelType.DM
+        ? "Direct Message"
+        : (message.channel as any).name) as string,
       space: {
-        id: message.guild?.id as string,
-        name: message.guild?.name as string,
+        id: message.guild?.id ?? "dm",
+        name: message.guild?.name ?? "Direct Messages",
       },
     },
     user: message.author
