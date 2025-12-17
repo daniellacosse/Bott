@@ -16,6 +16,7 @@ import {
 } from "@bott/model";
 import { BottEvent } from "@bott/service";
 import { createInfoEmbed } from "@bott/discord";
+import { log } from "@bott/log";
 
 // Lazy-loaded version with caching
 let version: string | undefined;
@@ -29,15 +30,10 @@ async function getVersion(): Promise<string> {
     const configText = await Deno.readTextFile(
       new URL("../deno.jsonc", import.meta.url),
     );
-    // Simple JSONC parsing: strip comments before parsing
-    const jsonText = configText.split("\n")
-      .map((line) => line.replace(/\/\/.*$/, "")) // Remove line comments
-      .join("\n")
-      .replace(/\/\*[\s\S]*?\*\//g, ""); // Remove block comments
-    const appDenoConfig = JSON.parse(jsonText);
+    const appDenoConfig = JSON.parse(configText);
     version = appDenoConfig.version || "unknown";
   } catch (error) {
-    console.error("Failed to read version from deno.jsonc:", error);
+    log.error("Failed to read version from deno.jsonc:", error);
     version = "unknown";
   }
 
