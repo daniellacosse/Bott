@@ -14,7 +14,7 @@ import { type Schema, Type } from "@google/genai";
 import { log } from "@bott/log";
 
 import { RATING_MODEL } from "@bott/constants";
-import { queryGemini } from "../../utilities/queryGemini.ts";
+import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
 const systemPrompt = await Deno.readTextFile(

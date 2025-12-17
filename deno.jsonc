@@ -41,7 +41,7 @@
     "./libraries/infrastructure/storage",
     "./libraries/infrastructure/task",
     "./libraries/aiModels/gemini",
-    "./libraries/chatClients/discord",
+    "./libraries/chatSpaces/discord",
     "./app"
   ]
 }

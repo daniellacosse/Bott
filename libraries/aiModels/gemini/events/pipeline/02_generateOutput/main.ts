@@ -13,8 +13,8 @@ import type { BottEvent } from "@bott/model";
 
 import ejs from "ejs";
 import { log } from "@bott/log";
-import { getEventSchema } from "../../utilities/getSchema.ts";
-import { queryGemini } from "../../utilities/queryGemini.ts";
+import { getEventSchema } from "../../common/getSchema.ts";
+import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
 const systemPromptTemplate = await Deno.readTextFile(

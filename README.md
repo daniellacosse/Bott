@@ -30,13 +30,13 @@ Bott: the autonomous groupchat agent!
 
 ### Supported Integrations
 
-#### Chat Clients
-
-- [Discord](./libraries/chatClients/discord)
-
 #### AI Models
 
 - [Gemini](./libraries/aiModels/gemini)
+
+#### Chat Spaces
+
+- [Discord](./libraries/chatSpaces/discord)
 
 ## Contributing
 
