@@ -57,12 +57,13 @@ export const segmentOutput: EventPipelineProcessor = async (context) => {
   context.data.output = segments.flat();
 
   log.debug(
-    `Segmented events: ${context.data.output.length}. Content: ${JSON.stringify(
-      context.data.output.map((e) => ({
-        type: e.type,
-        content: e.detail?.content ?? "n/a",
-      })),
-    )
+    `Segmented events: ${context.data.output.length}. Content: ${
+      JSON.stringify(
+        context.data.output.map((e) => ({
+          type: e.type,
+          content: e.detail?.content ?? "n/a",
+        })),
+      )
     }`,
   );
 
