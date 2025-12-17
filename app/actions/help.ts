@@ -17,6 +17,12 @@ import {
 import { BottEvent } from "@bott/service";
 import { createInfoEmbed } from "@bott/discord";
 
+// Read version from app/deno.jsonc
+const appDenoConfig = JSON.parse(
+  await Deno.readTextFile(new URL("../deno.jsonc", import.meta.url)),
+);
+const version = appDenoConfig.version || "unknown";
+
 export const help: BottAction = Object.assign(
   function help() {
     return Promise.resolve(
@@ -37,7 +43,8 @@ export const help: BottAction = Object.assign(
                 },
                 { name: "/help", value: "Display this help menu." },
               ],
-              footer: "(Under development ᛫ written by DanielLaCos.se)",
+              footer:
+                `v${version} ᛫ Under development ᛫ written by DanielLaCos.se`,
             }),
           ],
         },

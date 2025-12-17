@@ -21,3 +21,30 @@ It also orchestrates [Storage](../libraries/storage/README.md).
 - **[`defaultGlobalSettings/`](./defaultGlobalSettings/)**: Defines the "Soul"
   of the bot – its identity, core directives, and the rules (Reasons) it uses to
   evaluate inputs and outputs.
+
+## Version Management
+
+The application version is defined in [`deno.jsonc`](./deno.jsonc) and follows
+[Semantic Versioning](https://semver.org/).
+
+### Bumping the Version
+
+To update the version number:
+
+1. Open [`deno.jsonc`](./deno.jsonc) in the `app` directory
+2. Update the `version` field:
+   ```jsonc
+   {
+     "name": "Bott",
+     "version": "0.1.0", // Update this field
+     "main": "./main.ts"
+   }
+   ```
+3. Follow semantic versioning guidelines:
+   - **Major** (X.0.0): Breaking changes or major feature releases
+   - **Minor** (0.X.0): New features, backward compatible
+   - **Patch** (0.0.X): Bug fixes and minor changes
+   - **Pre-release** (0.0.0-alpha, 0.0.0-beta): Development versions
+
+The version is automatically displayed in the help command footer and other
+areas of the application.
