@@ -16,33 +16,57 @@ import {
 } from "@bott/model";
 import { BottEvent } from "@bott/service";
 import { createInfoEmbed } from "@bott/discord";
+import { log } from "@bott/log";
+
+// Lazy-loaded version with caching
+let appVersion: string | undefined;
+
+async function getVersion(): Promise<string | undefined> {
+  if (appVersion !== undefined) {
+    return appVersion;
+  }
+
+  try {
+    const configText = await Deno.readTextFile(
+      new URL("../deno.jsonc", import.meta.url),
+    );
+    const appDenoConfig = JSON.parse(configText);
+    appVersion = appDenoConfig.version;
+  } catch (error) {
+    log.error("Failed to read version from deno.jsonc:", error);
+    appVersion = undefined;
+  }
+
+  return appVersion;
+}
 
 export const help: BottAction = Object.assign(
-  function help() {
-    return Promise.resolve(
-      new BottEvent(BottEventType.ACTION_RESULT, {
-        detail: {
-          embeds: [
-            createInfoEmbed("Help Menu", {
-              fields: [
-                {
-                  name: "About",
-                  value:
-                    "@Bott (they/them) is a helpful agent that responds to your messages and generates media for you: essay, songs, photos and videos.",
-                },
-                {
-                  name: "Limitations",
-                  value:
-                    "Currently, @Bott can read urls and photos when responding. They may sometimes say things that are not correct.",
-                },
-                { name: "/help", value: "Display this help menu." },
-              ],
-              footer: "(Under development ᛫ written by DanielLaCos.se)",
-            }),
-          ],
-        },
-      }) as BottActionResultEvent,
-    );
+  async function help() {
+    const currentVersion = await getVersion();
+    return new BottEvent(BottEventType.ACTION_RESULT, {
+      detail: {
+        embeds: [
+          createInfoEmbed("Help Menu", {
+            fields: [
+              {
+                name: "About",
+                value:
+                  "@Bott (they/them) is a helpful agent that responds to your messages and generates media for you: essay, songs, photos and videos.",
+              },
+              {
+                name: "Limitations",
+                value:
+                  "Currently, @Bott can read urls and photos when responding. They may sometimes say things that are not correct.",
+              },
+              { name: "/help", value: "Display this help menu." },
+            ],
+            footer: currentVersion
+              ? `v${currentVersion}`
+              : "written by DanielLaCos.se",
+          }),
+        ],
+      },
+    }) as BottActionResultEvent;
   },
   {
     description: "Get help with @Bott.",
