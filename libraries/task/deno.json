@@ -1,4 +1,0 @@
-{
-  "name": "@bott/task",
-  "exports": "./module.ts"
-}

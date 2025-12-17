@@ -36,12 +36,12 @@
   "nodeModulesDir": "auto",
   "workspace": [
     "./model",
-    "./libraries/logger",
-    "./libraries/storage",
-    "./libraries/task",
-    "./libraries/gemini",
-    "./libraries/discord",
-    "./libraries/service",
+    "./libraries/infrastructure/log",
+    "./libraries/infrastructure/service",
+    "./libraries/infrastructure/storage",
+    "./libraries/infrastructure/task",
+    "./libraries/aiModels/gemini",
+    "./libraries/chatClients/discord",
     "./app"
   ]
 }

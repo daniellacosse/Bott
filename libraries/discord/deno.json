@@ -1,4 +1,0 @@
-{
-  "name": "@bott/discord",
-  "exports": "./module.ts"
-}

@@ -1,0 +1,5 @@
+{
+  "name": "@bott/storage",
+  "exports": "./module.ts",
+  "private": true
+}

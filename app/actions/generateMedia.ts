@@ -25,7 +25,7 @@ import {
   generatePhotoData,
   generateSongData,
 } from "@bott/gemini";
-import { log } from "@bott/logger";
+import { log } from "@bott/log";
 
 import { taskManager } from "../tasks.ts";
 import {

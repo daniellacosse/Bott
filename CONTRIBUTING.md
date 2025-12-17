@@ -80,3 +80,10 @@ ENV=production ./exec deno task deploy_gcp
 ```sh
 ENV=production ./exec deno task logs
 ```
+
+---
+
+## Architecture
+
+Want to learn more about how Bott ticks? See
+[ARCHITECTURE.md](./ARCHITECTURE.md).

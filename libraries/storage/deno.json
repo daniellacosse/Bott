@@ -1,4 +1,0 @@
-{
-  "name": "@bott/storage",
-  "exports": "./module.ts"
-}

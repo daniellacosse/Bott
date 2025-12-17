@@ -12,7 +12,7 @@
 import { loadEnv, updateEnv } from "./common/env.ts";
 import { gcloud } from "./common/gcloud.ts";
 
-import { log } from "@bott/logger";
+import { log } from "@bott/log";
 import {
   ENV,
   GCP_ALLOW_UNAUTHENTICATED,
