@@ -1,3 +1,6 @@
+.output/
+.vscode/
+
 .env*
 !.env.example
 !.env.example.yml
@@ -5,13 +8,5 @@
 # for specific npm dependencies
 node_modules/
 
-.signatures/
-.output/
-
-
 # for agents
 deno.zip
-
-# Coverage
-coverage/
-cov_profile

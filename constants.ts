@@ -12,7 +12,7 @@
 import { join } from "@std/path";
 
 // -- Infrastructure & Environment --
-export const ENV = Deno.env.get("ENV") ?? "devcontainer";
+export const ENV = Deno.env.get("ENV") ?? "local";
 export const PORT = Number(Deno.env.get("PORT") ?? 8080);
 export const OUTPUT_ROOT = Deno.env.get("OUTPUT_ROOT") ?? "./.output";
 

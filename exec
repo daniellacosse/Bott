@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # @license
 # This file is part of Bott.
@@ -16,16 +16,10 @@ IMAGE="bott:latest"
 
 $RUNNER build -t $IMAGE .
 
-# If arguments are provided, prepend 'deno'
-CMD=""
-if [ "$#" -gt 0 ]; then
-  CMD="deno $@"
-fi
-
 $RUNNER run -it --rm \
   -v "$PWD":/workspace \
   -w /workspace \
-  -e ENV="${ENV:-devcontainer}" \
-  --env-file ".env.${ENV:-devcontainer}.yml" \
+  -e ENV="${ENV:-local}" \
+  --env-file ".env.${ENV:-local}.yml" \
   $IMAGE \
-  $CMD
+  "$@"

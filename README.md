@@ -44,6 +44,10 @@ An autonomous groupchat agent.
 > Click on the links in the diagram below to navigate to a specific component's
 > documentation.
 
+> [!WARNING]
+> The following diagram is somewhat outdated and will be updated soon. Bott has
+> migrated to more of a pseudo-services architecture.
+
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'lineColor': '#5e5e5e', 'fontSize': '14px' }}}%%
 flowchart TD

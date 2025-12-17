@@ -29,15 +29,14 @@ please open an issue to discuss it!
 
 #### Instructions
 
-1. Copy `.env.example.yml` to `.env.devcontainer.yml`:
+1. Copy `.env.example.yml` to `.env.local.yml`:
 
 ```sh
-cp .env.example.yml .env.devcontainer.yml
+cp .env.example.yml .env.local.yml
 ```
 
-2. Open the `.env.devcontainer.yml` file and add the relevant credentials.
-3. Open the project in VSCode with the devcontainer. Bott should start
-   automatically.
+2. Open the `.env.local.yml` file and add the relevant credentials.
+3. Run `./exec` to start the application.
 
 ### Pull Requests
 
@@ -65,7 +64,7 @@ cp .env.example.yml .env.production.yml
 3. Execute the deployment task:
 
 ```sh
-ENV=production ./exec task deploy_gcp
+ENV=production ./exec deno task deploy_gcp
 ```
 
 > [!TIP]
@@ -73,11 +72,11 @@ ENV=production ./exec task deploy_gcp
 > variable to `docker` or `podman`:
 >
 > ```sh
-> RUNTIME=podman ./exec task deploy_gcp
+> RUNTIME=podman ./exec deno task deploy_gcp
 > ```
 
 4. Verify your new deployment by tailing the logs:
 
 ```sh
-ENV=production ./exec task logs
+ENV=production ./exec deno task logs
 ```
