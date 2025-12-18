@@ -1,0 +1,113 @@
+name: Release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., 1.0.0-alpha, 1.2.3)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate version format
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$'; then
+            echo "Error: Version must follow semantic versioning (e.g., 1.0.0 or 1.0.0-alpha.1)"
+            exit 1
+          fi
+
+      - name: Clone Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update version in app/deno.jsonc
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          sed -i 's/^  "version": ".*"/  "version": "'"$VERSION"'"/' app/deno.jsonc
+          git add app/deno.jsonc
+
+      - name: Update version badge in README.md
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          # Escape hyphens for the badge URL
+          BADGE_VERSION=$(echo "$VERSION" | sed 's/-/--/g')
+          sed -i 's|!\[Version\](https://img.shields.io/badge/version-.*-blue)|![Version](https://img.shields.io/badge/version-'"$BADGE_VERSION"'-blue)|' README.md
+          git add README.md
+
+      - name: Commit version changes
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if git diff --cached --quiet; then
+            echo "No changes to commit - version may already be set to $VERSION"
+            exit 1
+          fi
+          git commit -m "chore: bump version to $VERSION"
+          git push
+
+      - name: Create and push tag
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Containerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}
+            ghcr.io/${{ github.repository }}:latest
+          labels: |
+            org.opencontainers.image.title=Bott
+            org.opencontainers.image.description=Bott: the autonomous groupchat agent
+            org.opencontainers.image.version=${{ github.event.inputs.version }}
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          body: |
+            ## Release v${{ github.event.inputs.version }}
+
+            ### Container Image
+
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}
+            ```
+
+            ### Changes
+
+            See the [commit history](https://github.com/${{ github.repository }}/commits/v${{ github.event.inputs.version }}) for details.
+          draft: false
+          prerelease: ${{ contains(github.event.inputs.version, '-') }}

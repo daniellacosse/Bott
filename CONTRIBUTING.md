@@ -81,6 +81,34 @@ ENV=production ./exec deno task deploy_gcp
 ENV=production ./exec deno task logs
 ```
 
+### Releasing
+
+To create a new release of Bott:
+
+1. Navigate to the
+   [Actions tab](https://github.com/daniellacosse/Bott/actions/workflows/release.yml)
+   in the GitHub repository.
+
+2. Click "Run workflow" and enter the version number following semantic
+   versioning (e.g., `1.0.0`, `1.0.0-alpha`, `1.2.3-beta.1`).
+
+3. The workflow will:
+   - Update the version in `app/deno.jsonc`
+   - Update the version badge in `README.md`
+   - Create and push a git tag
+   - Build and push a container image to GitHub Container Registry
+   - Create a GitHub release
+
+4. The container image will be available at:
+
+```sh
+docker pull ghcr.io/daniellacosse/bott:VERSION
+```
+
+> [!NOTE]
+> Versions containing a hyphen (e.g., `-alpha`, `-beta`, `-rc.1`) will be marked
+> as pre-releases.
+
 ## Architecture
 
 Want to learn more about how Bott ticks? See
