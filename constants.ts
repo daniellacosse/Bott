@@ -64,8 +64,8 @@ const FOUR_WEEKS_MS = 4 * 7 * DAY_MS;
 
 export const RATE_LIMIT_WINDOW_MS = FOUR_WEEKS_MS;
 
-export const RATE_LIMIT_IMAGES = Number(
-  Deno.env.get("RATE_LIMIT_IMAGES") ?? 100,
+export const RATE_LIMIT_PHOTOS = Number(
+  Deno.env.get("RATE_LIMIT_PHOTOS") ?? 100,
 );
 export const RATE_LIMIT_MUSIC = Number(
   Deno.env.get("RATE_LIMIT_MUSIC") ?? 25,

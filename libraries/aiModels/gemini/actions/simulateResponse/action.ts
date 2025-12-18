@@ -21,7 +21,7 @@ import {
   TYPING_MAX_TIME_MS,
 } from "@bott/constants";
 import { log } from "@bott/log";
-import { BottAttachmentType, type BottAction } from "@bott/model";
+import { BottAttachmentType, type BottAction, type BottActionSettings } from "@bott/model";
 import { BottEvent } from "@bott/service";
 import { addEvents, getEvents, getEventIdsForChannel } from "@bott/storage";
 
@@ -30,6 +30,19 @@ import { delay } from "@std/async";
 import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
 
 const MS_IN_MINUTE = 60 * 1000;
+
+const settings: BottActionSettings = {
+  name: "simulateResponseForChannel",
+  instructions: "Simulate a response for a channel.",
+  parameters: [
+    {
+      name: "channelId",
+      type: "string",
+      description: "The ID of the channel to simulate a response for.",
+      required: true,
+    },
+  ],
+};
 
 export const responseAction: BottAction = createAction(async (parameters, _context) => {
 
@@ -178,15 +191,6 @@ export const responseAction: BottAction = createAction(async (parameters, _conte
       user,
     }));
   }
-}, {
-  name: "simulateResponseForChannel",
-  instructions: "Generate a response message from the conversation history.",
-  parameters: [
-    {
-      name: "channelId",
-      type: "string",
-      description: "The ID of the channel to simulate a response for.",
-      required: true,
-    },
-  ],
-});
+},
+  settings
+);

@@ -10,8 +10,8 @@
  */
 
 import { createAction } from "@bott/actions";
-import { GEMINI_PHOTO_MODEL } from "@bott/constants";
-import type { BottAction } from "@bott/model";
+import { GEMINI_PHOTO_MODEL, RATE_LIMIT_PHOTOS } from "@bott/constants";
+import type { BottAction, BottActionSettings } from "@bott/model";
 import {
   type GenerateContentParameters,
   HarmBlockThreshold,
@@ -22,6 +22,23 @@ import {
 import { encodeBase64 } from "@std/encoding/base64";
 
 import _gemini from "../client.ts";
+
+const settings: BottActionSettings = {
+  name: "photo",
+  instructions: "Generate a photo based on the prompt.",
+  limitPerMonth: RATE_LIMIT_PHOTOS,
+  parameters: [{
+    name: "prompt",
+    type: "string",
+    description: "Description of the image to generate",
+    required: true,
+  }, {
+    name: "media",
+    type: "file",
+    description: "Optional reference media for the image generation",
+    required: false,
+  }],
+},
 
 export const photoAction: BottAction = createAction(
   async (parameters, { signal }) => {
@@ -102,19 +119,5 @@ export const photoAction: BottAction = createAction(
 
     // TODO: Dispatch event with attachment
   },
-  {
-    name: "photo",
-    instructions: "Generate a photo based on the prompt.",
-    parameters: [{
-      name: "prompt",
-      type: "string",
-      description: "Description of the image to generate",
-      required: true,
-    }, {
-      name: "media",
-      type: "file",
-      description: "Optional reference media for the image generation",
-      required: false,
-    }],
-  },
+  settings
 );

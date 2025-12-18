@@ -39,7 +39,19 @@ export const startEventStorageService: BottServiceFactory = (): Promise<BottServ
     saveEvent,
   );
   addEventListener(
-    BottEventType.ACTION_RESULT,
+    BottEventType.ACTION_START,
+    saveEvent,
+  );
+  addEventListener(
+    BottEventType.ACTION_COMPLETE,
+    saveEvent,
+  );
+  addEventListener(
+    BottEventType.ACTION_ERROR,
+    saveEvent,
+  );
+  addEventListener(
+    BottEventType.ACTION_ABORT,
     saveEvent,
   );
 

@@ -14,16 +14,28 @@ import {
   GCP_REGION,
   GEMINI_ACCESS_TOKEN,
   GEMINI_SONG_MODEL,
+  RATE_LIMIT_MUSIC,
 } from "@bott/constants";
-import { BottAttachmentType, type BottAction } from "@bott/model";
+import { type BottAction, type BottActionSettings } from "@bott/model";
 
-import { decodeBase64 } from "@std/encoding";
 import { createAction } from "@bott/actions";
 
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
 const VERTEX_API_URL =
   `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_REGION}/publishers/google/models/${GEMINI_SONG_MODEL}:predict`;
+
+const settings: BottActionSettings = {
+  name: "song",
+  instructions: "Generate a song based on the prompt.",
+  limitPerMonth: RATE_LIMIT_MUSIC,
+  parameters: [{
+    name: "prompt",
+    type: "string",
+    description: "Description of the music/song to generate",
+    required: true,
+  }],
+};
 
 export const songAction: BottAction = createAction(
   async (parameters, { signal }) => {
@@ -57,16 +69,7 @@ export const songAction: BottAction = createAction(
 
     // TODO: Dispatch event with attachment
   },
-  {
-    name: "song",
-    instructions: "Generate a song based on the prompt.",
-    parameters: [{
-      name: "prompt",
-      type: "string",
-      description: "Description of the music/song to generate",
-      required: true,
-    }],
-  },
+  settings
 );
 
 async function getAccessToken(): Promise<string> {

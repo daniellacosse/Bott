@@ -10,13 +10,30 @@
  */
 
 import { createAction } from "@bott/actions";
-import { GEMINI_MOVIE_MODEL } from "@bott/constants";
-import type { BottAction } from "@bott/model";
+import { GEMINI_MOVIE_MODEL, RATE_LIMIT_VIDEOS } from "@bott/constants";
+import type { BottAction, BottActionSettings } from "@bott/model";
 
 import { type GenerateVideosOperation, type GenerateVideosParameters, PersonGeneration, type Image } from "@google/genai";
 import { encodeBase64 } from "@std/encoding/base64";
 
 import _gemini from "../client.ts";
+
+const settings: BottActionSettings = {
+  name: "movie",
+  instructions: "Generate a movie based on the prompt.",
+  limitPerMonth: RATE_LIMIT_VIDEOS,
+  parameters: [{
+    name: "prompt",
+    type: "string",
+    description: "Description of the movie scene",
+    required: true,
+  }, {
+    name: "media",
+    type: "file",
+    description: "Optional reference media for the video generation",
+    required: false,
+  }],
+};
 
 export const movieAction: BottAction = createAction(
   async (parameters, { signal }) => {
@@ -93,21 +110,7 @@ export const movieAction: BottAction = createAction(
 
     // TODO: Dispatch event with attachment
   },
-  {
-    name: "movie",
-    instructions: "Generate a movie based on the prompt.",
-    parameters: [{
-      name: "prompt",
-      type: "string",
-      description: "Description of the movie scene",
-      required: true,
-    }, {
-      name: "media",
-      type: "file",
-      description: "Optional reference media for the video generation",
-      required: false,
-    }],
-  },
+  settings
 );
 
 function _doVideoJob(

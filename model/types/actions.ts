@@ -10,8 +10,8 @@
  */
 
 import type { BottEvent, BottEventType } from "./events.ts";
-import type { NonEmptyArray } from "./utility.ts";
 import type { BottGlobalSettings } from "./settings.ts";
+import type { NonEmptyArray } from "./utility.ts";
 
 export type BottAction = BottActionFunction & BottActionSettings;
 
@@ -29,6 +29,7 @@ export type BottActionContext = {
 export type BottActionSettings = {
   name: string;
   instructions: string;
+  limitPerMonth?: number;
   parameters?: NonEmptyArray<BottActionParameter>
 };
 

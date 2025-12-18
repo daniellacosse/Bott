@@ -19,6 +19,7 @@ import {
 } from "@bott/model";
 import { BottEvent } from "@bott/service";
 import { addEventListener } from "@bott/service";
+import { commit, sql } from "@bott/storage";
 import { _validateParameters } from "./validation.ts";
 
 export const startActionService: BottServiceFactory = (options) => {
@@ -58,6 +59,32 @@ export const startActionService: BottServiceFactory = (options) => {
     try {
       if (action.parameters) {
         _validateParameters(action.parameters, event.detail.parameters);
+      }
+
+      if (action.limitPerMonth) {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+        const result = commit(sql`
+          select count(*) as count
+          from events
+          where type = ${BottEventType.ACTION_START}
+            and json_extract(detail, '$.name') = ${action.name}
+            and created_at > ${oneMonthAgo.toISOString()}
+        `);
+
+        if ("error" in result) {
+          throw result.error;
+        }
+
+        // deno-lint-ignore no-explicit-any
+        const count = (result.reads[0] as any).count;
+
+        if (count >= action.limitPerMonth) {
+          throw new Error(
+            `Rate limit exceeded for action '${action.name}'. Limit: ${action.limitPerMonth}/month. Usage: ${count}`,
+          );
+        }
       }
 
       globalThis.dispatchEvent(
