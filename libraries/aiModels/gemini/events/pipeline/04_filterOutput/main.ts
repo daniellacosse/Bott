@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { RATING_MODEL } from "@bott/constants";
+import { GEMINI_RATING_MODEL } from "@bott/constants";
 
 import { log } from "@bott/log";
 
@@ -91,7 +91,7 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
           systemPrompt,
           responseSchema,
           context,
-          model: RATING_MODEL,
+          model: GEMINI_RATING_MODEL,
           useIdentity: false,
         },
       );
@@ -123,11 +123,10 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
 
       log.debug(
         logMessage +
-          (triggeredOutputReasons.length > 0
-            ? `    [TRIGGERED OUTPUT REASONS]: ${
-              triggeredOutputReasons.map(({ name }) => name).join(", ")
-            }`
-            : ""),
+        (triggeredOutputReasons.length > 0
+          ? `    [TRIGGERED OUTPUT REASONS]: ${triggeredOutputReasons.map(({ name }) => name).join(", ")
+          }`
+          : ""),
       );
     })());
 
