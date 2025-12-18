@@ -5,8 +5,9 @@
 ![GitHub Checks](https://github.com/daniellacosse-code/Bott/actions/workflows/qualityChecks.yml/badge.svg)
 [![Maintainability](https://qlty.sh/gh/daniellacosse/projects/Bott/maintainability.svg)](https://qlty.sh/gh/daniellacosse/projects/Bott)
 [![Code Coverage](https://qlty.sh/gh/daniellacosse/projects/Bott/coverage.svg)](https://qlty.sh/gh/daniellacosse/projects/Bott)
-[![Discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
+
 ![Version](https://img.shields.io/badge/version-0.0.0--alpha-blue)
+[![Discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
 Bott: the autonomous groupchat agent!
 
