@@ -4,7 +4,7 @@ name: Release
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.0.0-alpha, 1.2.3)'
+        description: "Version to release (e.g., 1.0.0-alpha, 1.2.3)"
         required: true
         type: string
 
@@ -99,15 +99,15 @@ jobs:
           name: Release v${{ github.event.inputs.version }}
           body: |
             ## Release v${{ github.event.inputs.version }}
-            
+
             ### Container Image
-            
+
             ```bash
             docker pull ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}
             ```
-            
+
             ### Changes
-            
+
             See the [commit history](https://github.com/${{ github.repository }}/commits/v${{ github.event.inputs.version }}) for details.
           draft: false
           prerelease: ${{ contains(github.event.inputs.version, '-') }}
