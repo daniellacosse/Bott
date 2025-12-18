@@ -38,7 +38,7 @@ const settings: BottActionSettings = {
     description: "Optional reference media for the image generation",
     required: false,
   }],
-},
+};
 
 export const photoAction: BottAction = createAction(
   async (parameters, { signal }) => {

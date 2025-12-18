@@ -9,6 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { createAction } from "@bott/actions";
 import {
   GCP_PROJECT,
   GCP_REGION,
@@ -16,9 +17,8 @@ import {
   GEMINI_SONG_MODEL,
   RATE_LIMIT_MUSIC,
 } from "@bott/constants";
-import { type BottAction, type BottActionSettings } from "@bott/model";
 
-import { createAction } from "@bott/actions";
+import type { BottAction, BottActionSettings } from "@bott/model";
 
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 

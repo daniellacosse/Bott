@@ -12,8 +12,6 @@
 import { log } from "@bott/log";
 import {
   type AnyShape,
-  type BottAction,
-  BottActionOptionType,
   type BottChannel,
   BottEventType,
   type BottRatingScale,
@@ -190,13 +188,13 @@ export function createMockContext(): EventPipelineContext {
     {
       name: "prompt",
       description: "The prompt to send to the model.",
-      type: BottActionOptionType.STRING,
+      type: "string",
       required: true,
     },
     {
       name: "type",
       description: "The type of media to generate.",
-      type: BottActionOptionType.STRING,
+      type: "string",
       allowedValues: ["image", "audio", "video"],
       required: true,
     },
@@ -220,9 +218,7 @@ export function createMockContext(): EventPipelineContext {
     abortSignal: new AbortController().signal,
     user: bott,
     channel,
-    actions: {
-      generateMedia: generateMedia as BottAction<AnyShape, AnyShape>,
-    },
+    actions: {},
     settings: {
       identity: "I am a test bot.",
       reasons: {
