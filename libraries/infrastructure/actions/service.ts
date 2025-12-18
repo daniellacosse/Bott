@@ -26,7 +26,6 @@ export const startActionService: BottServiceFactory = (options) => {
   const controllerMap = new Map<string, AbortController>();
 
   addEventListener(BottEventType.ACTION_CALL, async (event: BottActionCallEvent) => {
-    const id = crypto.randomUUID();
     const controller = new AbortController();
 
     const action = actions[event.detail.name];
@@ -34,7 +33,7 @@ export const startActionService: BottServiceFactory = (options) => {
       globalThis.dispatchEvent(
         new BottEvent(BottEventType.ACTION_ERROR, {
           detail: {
-            id,
+            id: event.detail.id,
             error: new Error(`Action ${event.detail.name} not found`),
           },
         }),
@@ -42,21 +41,33 @@ export const startActionService: BottServiceFactory = (options) => {
       return;
     }
 
-    controllerMap.set(id, controller);
+    if (controllerMap.has(event.detail.id)) {
+      globalThis.dispatchEvent(
+        new BottEvent(BottEventType.ACTION_ERROR, {
+          detail: {
+            id: event.detail.id,
+            error: new Error(`Action ${event.detail.name} already in progress`),
+          },
+        }),
+      );
+      return;
+    }
+
+    controllerMap.set(event.detail.id, controller);
 
     try {
+      if (action.parameters) {
+        _validateParameters(action.parameters, event.detail.parameters);
+      }
+
       globalThis.dispatchEvent(
         new BottEvent(BottEventType.ACTION_START, {
           detail: {
-            id,
+            id: event.detail.id,
             name: action.name,
           },
         }),
       );
-
-      if (action.parameters) {
-        _validateParameters(action.parameters, event.detail.parameters);
-      }
 
       await action(event.detail.parameters, {
         signal: controller.signal,
@@ -67,7 +78,7 @@ export const startActionService: BottServiceFactory = (options) => {
       globalThis.dispatchEvent(
         new BottEvent(BottEventType.ACTION_COMPLETE, {
           detail: {
-            id,
+            id: event.detail.id,
             name: action.name,
           },
         }),
@@ -76,14 +87,14 @@ export const startActionService: BottServiceFactory = (options) => {
       globalThis.dispatchEvent(
         new BottEvent(BottEventType.ACTION_ERROR, {
           detail: {
-            id,
+            id: event.detail.id,
             error: error as Error,
           },
         }),
       );
     }
 
-    controllerMap.delete(id);
+    controllerMap.delete(event.detail.id);
   });
 
   addEventListener(BottEventType.ACTION_ABORT, (event: BottActionAbortEvent) =>

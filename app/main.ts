@@ -22,7 +22,7 @@ import { serviceRegistry } from "@bott/service";
 import { startEventStorageService } from "@bott/storage";
 
 import actions from "./actions.ts";
-import { startMainService } from "./service.ts";
+import { startAppService } from "./service.ts";
 
 if (import.meta.main) {
   // Prevent multiple deployments from conflicting with each other.
@@ -55,9 +55,9 @@ if (import.meta.main) {
     );
   }
 
-  if (ENABLED_SERVICES.includes("main")) {
+  if (ENABLED_SERVICES.includes("app")) {
     serviceRegistry.register(
-      await startMainService({}),
+      await startAppService({}),
     );
   }
 }

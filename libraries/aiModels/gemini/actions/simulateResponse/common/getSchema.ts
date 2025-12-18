@@ -10,9 +10,7 @@
  */
 
 import {
-  type AnyShape,
   type BottAction,
-  BottActionOptionType,
   type BottChannel,
   BottEventType,
   type BottGlobalSettings,
@@ -24,11 +22,11 @@ import {
   Type as GeminiStructuredResponseType,
 } from "@google/genai";
 
-export const getEventSchema = <O extends AnyShape>(
+export const getEventSchema = (
   context: {
     user: BottUser;
     channel: BottChannel;
-    actions: Record<string, BottAction<O, AnyShape>>;
+    actions: Record<string, BottAction>;
     settings: BottGlobalSettings;
   },
 ): GeminiStructuredResponseSchema => ({
@@ -78,17 +76,17 @@ export const getEventSchema = <O extends AnyShape>(
   },
 });
 
-export const getActionSchema = <O extends AnyShape>(
-  handlers: Record<string, BottAction<O, AnyShape>>,
+export const getActionSchema = (
+  actions: Record<string, BottAction,
 ): GeminiStructuredResponseSchema[] => {
-  if (Object.keys(handlers).length === 0) {
+  if (Object.keys(actions).length === 0) {
     return [];
   }
 
   const schemas = [];
 
-  for (const name in handlers) {
-    const handler = handlers[name];
+  for (const name in actions) {
+    const action = actions[name];
     // Some handlers might not have options.
 
     schemas.push({
@@ -106,41 +104,43 @@ export const getActionSchema = <O extends AnyShape>(
               type: GeminiStructuredResponseType.STRING,
               enum: [name],
             },
-            options: {
+            parameters: {
               type: GeminiStructuredResponseType.OBJECT,
-              properties: (handler.options ?? []).reduce(
-                (properties, option) => {
+              properties: (action.parameters ?? []).reduce(
+                (properties, parameter) => {
                   let type: GeminiStructuredResponseType;
 
-                  switch (option.type) {
-                    case BottActionOptionType.INTEGER:
+                  switch (parameter.type) {
+                    case "number":
                       type = GeminiStructuredResponseType.NUMBER;
                       break;
-                    case BottActionOptionType.BOOLEAN:
+                    case "boolean":
                       type = GeminiStructuredResponseType.BOOLEAN;
                       break;
-                    case BottActionOptionType.STRING:
+                    case "string":
+                      type = GeminiStructuredResponseType.STRING;
+                      break;
                     default:
                       type = GeminiStructuredResponseType.STRING;
                       break;
                   }
 
-                  properties[option.name] = {
+                  properties[parameter.name] = {
                     type,
-                    enum: option.allowedValues,
-                    description: option.description,
+                    enum: parameter.allowedValues?.map(String),
+                    description: parameter.description,
                   };
 
                   return properties;
                 },
                 {} as Record<string, GeminiStructuredResponseSchema>,
               ),
-              required: (handler.options ?? []).filter((option) =>
-                option.required
-              ).map((option) => option.name),
+              required: (action.parameters ?? []).filter((parameter) =>
+                parameter.required
+              ).map((parameter) => parameter.name),
             },
           },
-          required: ["name"],
+          required: ["name", "parameters"],
         },
       },
       required: ["type", "detail"],

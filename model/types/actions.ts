@@ -50,6 +50,7 @@ export type BottActionParameterEntry = {
 export type BottActionCallEvent = BottEvent<
   BottEventType.ACTION_CALL,
   {
+    id: string;
     name: string;
     parameters: BottActionParameterEntry[];
   }

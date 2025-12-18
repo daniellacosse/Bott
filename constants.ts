@@ -76,7 +76,7 @@ export const RATE_LIMIT_VIDEOS = Number(
 
 // -- Services --
 export const ENABLED_SERVICES =
-  (Deno.env.get("ENABLED_SERVICES") ?? "main,eventStorage,discord")
+  (Deno.env.get("ENABLED_SERVICES") ?? "app,eventStorage,discord")
     .split(/,\s*/)
     .filter((s) => s.length > 0);
 

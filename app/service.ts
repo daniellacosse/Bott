@@ -14,7 +14,7 @@ import { BOTT_SERVICE } from "@bott/constants";
 import { BottEventType, type BottServiceFactory } from "@bott/model";
 import { addEventListener, BottEvent } from "@bott/service";
 
-export const startMainService: BottServiceFactory = () => {
+export const startAppService: BottServiceFactory = () => {
   const triggerEventGenerationPipeline = (
     event: BottEvent,
   ) => {
@@ -28,6 +28,7 @@ export const startMainService: BottServiceFactory = () => {
     globalThis.dispatchEvent(
       new BottEvent(BottEventType.ACTION_CALL, {
         detail: {
+          id: crypto.randomUUID(),
           name: "simulateResponseForChannel",
           parameters: [{
             name: "channelId",

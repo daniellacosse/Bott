@@ -229,25 +229,28 @@ Deno.test("BottEvent - supports all event types", () => {
   const replyEvent = new BottEvent(BottEventType.REPLY);
   const reactionEvent = new BottEvent(BottEventType.REACTION);
   const actionCallEvent = new BottEvent(BottEventType.ACTION_CALL);
-  const actionResultEvent = new BottEvent(BottEventType.ACTION_RESULT);
+  const actionCompleteEvent = new BottEvent(BottEventType.ACTION_COMPLETE);
+  const actionErrorEvent = new BottEvent(BottEventType.ACTION_ERROR);
 
   assertEquals(messageEvent.type, BottEventType.MESSAGE);
   assertEquals(replyEvent.type, BottEventType.REPLY);
   assertEquals(reactionEvent.type, BottEventType.REACTION);
   assertEquals(actionCallEvent.type, BottEventType.ACTION_CALL);
-  assertEquals(actionResultEvent.type, BottEventType.ACTION_RESULT);
+  assertEquals(actionCompleteEvent.type, BottEventType.ACTION_COMPLETE);
+  assertEquals(actionErrorEvent.type, BottEventType.ACTION_ERROR);
 });
 
 Deno.test("BottEvent - type-specific details work correctly", () => {
   const actionCallEvent = new BottEvent(BottEventType.ACTION_CALL, {
     detail: {
+      id: "actionCallEventId",
       name: "testAction",
-      options: { param1: "value1" },
+      parameters: { param1: "value1" },
     },
   });
 
   assertEquals(actionCallEvent.detail.name, "testAction");
-  assertEquals(actionCallEvent.detail.options.param1, "value1");
+  assertEquals(actionCallEvent.detail.parameters.param1, "value1");
 });
 
 Deno.test("BottEvent - createdAt is close to current time", () => {

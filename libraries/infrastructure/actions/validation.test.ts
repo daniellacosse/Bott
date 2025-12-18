@@ -1,11 +1,11 @@
 
-import {
-  assertThrows,
-} from "@std/assert";
 import type {
   BottActionParameter,
   BottActionParameterEntry,
 } from "@bott/model";
+import {
+  assertThrows,
+} from "@std/assert";
 // Function to be tested
 import { _validateParameters } from "./validation.ts";
 
