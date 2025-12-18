@@ -13,12 +13,12 @@ import {
   DISCORD_TOKEN,
   ENABLED_SERVICES,
   PORT,
-  STORAGE_DEPLOY_NONCE_PATH,
+  STORAGE_DEPLOY_NONCE_LOCATION,
   STORAGE_ROOT,
 } from "@bott/constants";
 import { startDiscordService } from "@bott/discord";
 import { serviceRegistry } from "@bott/service";
-import { startStorageService } from "@bott/storage";
+import { startEventStorageService } from "@bott/storage";
 import * as actions from "./actions/main.ts";
 import { startMainService } from "./service.ts";
 
@@ -26,13 +26,13 @@ if (import.meta.main) {
   // Prevent multiple deployments from conflicting with each other.
   const deploymentNonce = crypto.randomUUID();
   Deno.mkdirSync(STORAGE_ROOT, { recursive: true });
-  Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_PATH, deploymentNonce);
+  Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_LOCATION, deploymentNonce);
 
   serviceRegistry.nonce = deploymentNonce;
 
-  if (ENABLED_SERVICES.includes("storage")) {
+  if (ENABLED_SERVICES.includes("eventStorage")) {
     serviceRegistry.register(
-      await startStorageService({
+      await startEventStorageService({
         root: STORAGE_ROOT,
       }),
     );

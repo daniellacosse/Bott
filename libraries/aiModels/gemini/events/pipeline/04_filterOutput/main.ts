@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { GEMINI_RATING_MODEL } from "@bott/constants";
+import { RATING_MODEL } from "@bott/constants";
 
 import { log } from "@bott/log";
 
@@ -91,7 +91,7 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
           systemPrompt,
           responseSchema,
           context,
-          model: GEMINI_RATING_MODEL,
+          model: RATING_MODEL,
           useIdentity: false,
         },
       );

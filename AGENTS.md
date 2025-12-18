@@ -106,7 +106,7 @@ content generation capabilities.
 - Verify configuration is set correctly in `.env.*.yml`
 - Test network connectivity to Discord API and Google Cloud APIs
 - Validate file permissions for `FILE_SYSTEM_ROOT` directory (default:
-  `./.output/fs_root`)
+  `./.output/fsRoot`)
 
 ### Configuration Options
 

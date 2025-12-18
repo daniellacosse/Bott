@@ -9,11 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { STORAGE_MAX_FILE_SIZE } from "@bott/constants";
 import { BottAttachmentType } from "@bott/model";
 import { extractFromHtml } from "@extractus/article-extractor";
 import TurndownService from "turndown";
 
-import { STORAGE_FILE_SIZE_CAUTION } from "../service.ts";
 
 const turndownService = new TurndownService({
   headingStyle: "atx", // Use # for headings.
@@ -48,8 +48,8 @@ export const prepareHtmlAsMarkdown = async (
   // Consolidate multiple blank lines:
   result = result.replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
 
-  if (result.length > STORAGE_FILE_SIZE_CAUTION) {
-    result = result.substring(0, STORAGE_FILE_SIZE_CAUTION) +
+  if (result.length > STORAGE_MAX_FILE_SIZE) {
+    result = result.substring(0, STORAGE_MAX_FILE_SIZE) +
       "\n\n...(truncated)";
   }
 

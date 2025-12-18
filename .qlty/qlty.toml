@@ -2,7 +2,6 @@ config_version = "0"
 
 exclude_patterns = [
   "**/*.test.ts",
-  "fs_root/",
   "**/e2e.ts",
 ]
 

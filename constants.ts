@@ -33,17 +33,18 @@ const SECOND_TO_MS = 1000;
 const MINUTE_TO_MS = 60 * SECOND_TO_MS;
 
 export const STORAGE_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ??
-  join(OUTPUT_ROOT, "fs_root");
-export const STORAGE_DEPLOY_NONCE_PATH = join(
+  join(OUTPUT_ROOT, "fsRoot");
+export const STORAGE_FILE_ROOT = join(STORAGE_ROOT, "files");
+export const STORAGE_DATA_LOCATION = join(STORAGE_ROOT, "data.db");
+export const STORAGE_DEPLOY_NONCE_LOCATION = join(
   STORAGE_ROOT,
-  ".deploy-nonce",
+  ".deployNonce",
 );
-
 export const STORAGE_MAX_FILE_SIZE = 50 * MEGABYTE;
-export const STORAGE_FETCH_TIMEOUT_MS = 30 * SECOND_TO_MS;
 export const STORAGE_MAX_TEXT_FILE_WORDS = 600;
-export const STORAGE_FFMPEG_TIMEOUT_MS = 5 * MINUTE_TO_MS;
 export const STORAGE_MAX_ATTACHMENT_DIMENSION = 480;
+export const STORAGE_FETCH_TIMEOUT_MS = 30 * SECOND_TO_MS;
+export const STORAGE_FFMPEG_TIMEOUT_MS = 5 * MINUTE_TO_MS;
 
 // Logger
 export const LOGGER_TOPICS =
@@ -75,7 +76,7 @@ export const RATE_LIMIT_VIDEOS = Number(
 
 // -- Services --
 export const ENABLED_SERVICES =
-  (Deno.env.get("ENABLED_SERVICES") ?? "main,storage,discord")
+  (Deno.env.get("ENABLED_SERVICES") ?? "main,eventStorage,discord")
     .split(/,\s*/)
     .filter((s) => s.length > 0);
 

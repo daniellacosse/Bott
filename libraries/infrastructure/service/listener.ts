@@ -9,14 +9,14 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { STORAGE_DEPLOY_NONCE_PATH } from "@bott/constants";
+import { STORAGE_DEPLOY_NONCE_LOCATION } from "@bott/constants";
 import { log } from "@bott/log";
 import type { BottEvent, BottEventType, BottService } from "@bott/model";
 import { serviceRegistry } from "./registry.ts";
 
 const _getCurrentDeployNonce = () => {
   try {
-    return Deno.readTextFileSync(STORAGE_DEPLOY_NONCE_PATH);
+    return Deno.readTextFileSync(STORAGE_DEPLOY_NONCE_LOCATION);
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) {
       return null;

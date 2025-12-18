@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { STORAGE_DEPLOY_NONCE_PATH } from "@bott/constants";
+import { STORAGE_DEPLOY_NONCE_LOCATION } from "@bott/constants";
 import { log } from "@bott/log";
 
 import { BottEventType } from "@bott/model";
@@ -21,12 +21,12 @@ import { stub } from "@std/testing/mock";
 import { addEvents } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
-import { startStorageService } from "./service.ts";
+import { startEventStorageService } from "./data/events/service.ts";
 
 Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();
 
-  await startStorageService({ root: tempDir });
+  await startEventStorageService({ root: tempDir });
 
   // spaces
   const spaceChatWorld = {
@@ -128,7 +128,7 @@ body { color: blue; }
 
 Deno.test("Storage - prepareHtml", async () => {
   const tempDir = Deno.makeTempDirSync();
-  await startStorageService({ root: tempDir });
+  await startEventStorageService({ root: tempDir });
 
   const inputData = new TextEncoder().encode(htmlInput);
   const result = await prepareHtmlAsMarkdown(
@@ -146,7 +146,7 @@ Deno.test("Storage - prepareHtml", async () => {
 
 Deno.test("Storage - Global Listener Persistence", async () => {
   const tempDir = Deno.makeTempDirSync();
-  await startStorageService({ root: tempDir });
+  await startEventStorageService({ root: tempDir });
 
   // Setup nonce to ensure listener fires
   const nonce = "test-nonce";
@@ -156,7 +156,7 @@ Deno.test("Storage - Global Listener Persistence", async () => {
     Deno,
     "readTextFileSync",
     (path: string | URL) => {
-      if (path === STORAGE_DEPLOY_NONCE_PATH) return nonce;
+      if (path === STORAGE_DEPLOY_NONCE_LOCATION) return nonce;
       throw new Deno.errors.NotFound();
     },
   );

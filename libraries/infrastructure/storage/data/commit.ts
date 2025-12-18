@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { STORAGE_DATA_CLIENT as client } from "../service.ts";
+import { client } from "./client.ts";
 import type { SqlInstructions } from "./sql.ts";
 
 const QUERY_DEBUG_MAX_LENGTH = 250;
@@ -77,8 +77,7 @@ export const commit = (
         .slice(0, QUERY_DEBUG_MAX_LENGTH);
       const paramsString = JSON.stringify(currentInstruction.params);
       messageParts.push(
-        `Failed on instruction: "${querySnippet}${
-          querySnippet.length === QUERY_DEBUG_MAX_LENGTH ? "…" : ""
+        `Failed on instruction: "${querySnippet}${querySnippet.length === QUERY_DEBUG_MAX_LENGTH ? "…" : ""
         }" with parameters: ${paramsString}.`,
       );
     }

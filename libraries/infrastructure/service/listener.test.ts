@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { STORAGE_DEPLOY_NONCE_PATH } from "@bott/constants";
+import { STORAGE_DEPLOY_NONCE_LOCATION } from "@bott/constants";
 import { BottEventType } from "@bott/model";
 import type { BottService } from "@bott/model";
 import { assert } from "@std/assert";
@@ -31,7 +31,7 @@ Deno.test("addEventListener - calls handler when nonce matches", () => {
     Deno,
     "readTextFileSync",
     (path: string | URL) => {
-      if (path === STORAGE_DEPLOY_NONCE_PATH) return nonce;
+      if (path === STORAGE_DEPLOY_NONCE_LOCATION) return nonce;
       throw new Deno.errors.NotFound();
     },
   );
@@ -60,7 +60,7 @@ Deno.test("addEventListener - does not call handler when nonce mismatches", () =
     Deno,
     "readTextFileSync",
     (path: string | URL) => {
-      if (path === STORAGE_DEPLOY_NONCE_PATH) return "disk-nonce";
+      if (path === STORAGE_DEPLOY_NONCE_LOCATION) return "disk-nonce";
       throw new Deno.errors.NotFound();
     },
   );

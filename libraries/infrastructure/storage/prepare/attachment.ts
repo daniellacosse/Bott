@@ -12,6 +12,7 @@
 import {
   STORAGE_FETCH_TIMEOUT_MS,
   STORAGE_MAX_TEXT_FILE_WORDS,
+  STORAGE_FILE_ROOT,
 } from "@bott/constants";
 import { log } from "@bott/log";
 import {
@@ -21,7 +22,6 @@ import {
   type BottEventAttachment,
 } from "@bott/model";
 import { join } from "@std/path";
-import { STORAGE_FILE_ROOT } from "../service.ts";
 
 import { throwIfUnsafeFileSize, throwIfUnsafeUrl } from "../validation.ts";
 import {
