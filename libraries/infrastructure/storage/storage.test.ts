@@ -20,8 +20,8 @@ import { assertEquals, assertExists } from "@std/assert";
 import { stub } from "@std/testing/mock";
 import { addEvents } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
-import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
 import { startEventStorageService } from "./data/events/service.ts";
+import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
 
 Deno.test("Storage - addEventsData, getEvents", async () => {
   const tempDir = Deno.makeTempDirSync();

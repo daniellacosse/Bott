@@ -9,11 +9,11 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { log } from "@bott/log";
+import { GEMINI_RATING_MODEL } from "@bott/constants";
 
+import { log } from "@bott/log";
 import { BottEventType } from "@bott/model";
 import { type Schema, Type } from "@google/genai";
-import { GEMINI_RATING_MODEL } from "@bott/constants";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 

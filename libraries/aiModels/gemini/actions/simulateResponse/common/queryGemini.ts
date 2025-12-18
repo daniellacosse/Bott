@@ -9,6 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { GEMINI_EVENT_MODEL } from "@bott/constants";
 import type { BottEvent } from "@bott/model";
 import type {
   Content,
@@ -16,12 +17,11 @@ import type {
   Part,
   Schema,
 } from "@google/genai";
-import { encodeBase64 } from "@std/encoding/base64";
 
+import { encodeBase64 } from "@std/encoding/base64";
 import ejs from "ejs";
-import gemini from "../../client.ts";
+import gemini from "../../../client.ts";
 import type { EventPipelineContext } from "../pipeline/types.ts";
-import { GEMINI_EVENT_MODEL } from "@bott/constants";
 
 const eventStructure = await Deno.readTextFile(
   new URL("./eventStructure.md.ejs", import.meta.url),

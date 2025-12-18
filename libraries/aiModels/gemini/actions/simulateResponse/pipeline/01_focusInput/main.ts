@@ -10,10 +10,10 @@
  */
 
 
-import { log } from "@bott/log";
-
-import { type Schema, Type } from "@google/genai";
 import { GEMINI_RATING_MODEL } from "@bott/constants";
+
+import { log } from "@bott/log";
+import { type Schema, Type } from "@google/genai";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 

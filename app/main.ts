@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { serviceRegistry } from "@bott/service";
+import { startActionService } from "@bott/actions";
 import {
   DISCORD_TOKEN,
   ENABLED_SERVICES,
@@ -17,10 +17,10 @@ import {
   STORAGE_DEPLOY_NONCE_LOCATION,
   STORAGE_ROOT,
 } from "@bott/constants";
-import { startStorageService } from "@bott/storage";
 import { startDiscordService } from "@bott/discord";
-import { startActionService } from "@bott/actions";
 import { songAction, movieAction, photoAction, responseAction } from "@bott/gemini";
+import { serviceRegistry } from "@bott/service";
+import { startEventStorageService } from "@bott/storage";
 import { startMainService } from "./service.ts";
 
 const actions = { songAction, movieAction, photoAction, responseAction };

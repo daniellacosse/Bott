@@ -9,23 +9,23 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { createAction } from "../../../infrastructure/actions/module.ts";
-import { decodeBase64 } from "@std/encoding";
-
-import { BottAttachmentType } from "@bott/model";
 import {
   GCP_PROJECT,
   GCP_REGION,
   GEMINI_ACCESS_TOKEN,
   GEMINI_SONG_MODEL,
 } from "@bott/constants";
+import { BottAttachmentType, type BottAction } from "@bott/model";
+
+import { decodeBase64 } from "@std/encoding";
+import { createAction } from "../../../infrastructure/actions/module.ts";
 
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
 const VERTEX_API_URL =
   `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_REGION}/publishers/google/models/${GEMINI_SONG_MODEL}:predict`;
 
-export const songAction = createAction(
+export const songAction: BottAction = createAction(
   async (input, { signal }) => {
     const prompt = input.find((i) => i.name === "prompt")?.value as string;
 

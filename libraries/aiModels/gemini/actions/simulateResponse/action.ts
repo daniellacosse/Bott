@@ -9,22 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { delay } from "@std/async";
-
-import { BottAttachmentType } from "@bott/model";
-import type {
-  BottGlobalSettings,
-  BottActionValue,
-} from "@bott/model";
-import { isBottDataEvent } from "@bott/model";
-import { BottEvent } from "@bott/service";
-import { addEvents } from "@bott/storage";
-import { log } from "@bott/log";
-
-import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
-
-import { getEvents } from "@bott/storage";
-
+import { createAction } from "@bott/actions";
 import {
   INPUT_EVENT_COUNT_LIMIT,
   INPUT_EVENT_TIME_LIMIT_MS,
@@ -35,7 +20,17 @@ import {
   TYPING_WORDS_PER_MINUTE,
   TYPING_MAX_TIME_MS,
 } from "@bott/constants";
-import { createAction } from "@bott/actions";
+import { log } from "@bott/log";
+import { BottAttachmentType, type BottAction, type BottGlobalSettings, isBottDataEvent } from "@bott/model";
+import type {
+  BottActionValue,
+} from "@bott/model";
+import { BottEvent } from "@bott/service";
+import { addEvents, getEvents } from "@bott/storage";
+
+import { delay } from "@std/async";
+
+import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
 
 // TODO: Replace with actual settings or move settings to a shared library
 const BOTT_GLOBAL_SETTINGS: BottGlobalSettings = {
@@ -48,7 +43,7 @@ const BOTT_GLOBAL_SETTINGS: BottGlobalSettings = {
 
 const MS_IN_MINUTE = 60 * 1000;
 
-export const responseAction = createAction(async (input, _context) => {
+export const responseAction: BottAction = createAction(async (input, _context) => {
   const inputEntries = input.filter((i) => i.name.startsWith("history"));
   const inputEvents = inputEntries
     .map((i) => i.value)

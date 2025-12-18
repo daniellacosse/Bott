@@ -9,16 +9,16 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { createAction } from "../../../infrastructure/actions/module.ts";
-import { PersonGeneration, SafetyFilterLevel } from "@google/genai";
-import { decodeBase64 } from "@std/encoding";
-
-import { BottAttachmentType } from "@bott/model";
 import { GEMINI_PHOTO_MODEL } from "@bott/constants";
+import { BottAttachmentType, type BottAction } from "@bott/model";
+import { PersonGeneration, SafetyFilterLevel } from "@google/genai";
+
+import { decodeBase64 } from "@std/encoding";
+import { createAction } from "../../../infrastructure/actions/module.ts";
 
 import _gemini from "../client.ts";
 
-export const photoAction = createAction(
+export const photoAction: BottAction = createAction(
   async (input, { signal }) => {
     const prompt = input.find((i) => i.name === "prompt")?.value as string;
 

@@ -10,15 +10,15 @@
  */
 
 import { createAction } from "@bott/actions";
+import { GEMINI_MOVIE_MODEL } from "@bott/constants";
+import { BottAttachmentType, type BottAction } from "@bott/model";
+
 import { type GenerateVideosOperation, PersonGeneration } from "@google/genai";
 import { decodeBase64 } from "@std/encoding";
 
-import { BottAttachmentType } from "@bott/model";
-import { GEMINI_MOVIE_MODEL } from "@bott/constants";
-
 import _gemini from "../client.ts";
 
-export const movieAction = createAction(
+export const movieAction: BottAction = createAction(
   async (input, { signal }) => {
     const prompt = input.find((i) => i.name === "prompt")?.value as string;
 
