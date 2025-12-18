@@ -10,6 +10,10 @@
  */
 
 import { createAction } from "@bott/actions";
+import type {
+  BottAction,
+  BottActionSettings,
+} from "@bott/actions";
 import {
   BOTT_SERVICE,
   INPUT_EVENT_COUNT_LIMIT,
@@ -21,11 +25,7 @@ import {
   TYPING_WORDS_PER_MINUTE,
 } from "@bott/constants";
 import { log } from "@bott/log";
-import {
-  type BottAction,
-  type BottActionSettings,
-  BottAttachmentType,
-} from "@bott/model";
+import { BottAttachmentType } from "@bott/model";
 import { BottEvent } from "@bott/service";
 import { addEvents, getEventIdsForChannel, getEvents } from "@bott/storage";
 

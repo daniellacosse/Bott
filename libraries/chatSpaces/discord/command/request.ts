@@ -9,14 +9,15 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import type {
+  BottActionCallEvent,
+  BottActionParameterEntry,
+} from "@bott/actions";
 import {
-  type BottActionCallEvent,
-  type BottActionParameterEntry,
   type BottChannel,
   BottEventType,
-  type BottService,
 } from "@bott/model";
-import { BottEvent } from "@bott/service";
+import { BottEvent, type BottService } from "@bott/service";
 import {
   ApplicationCommandOptionType,
   ChannelType,

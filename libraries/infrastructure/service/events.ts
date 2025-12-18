@@ -9,13 +9,13 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import {
-  type AnyShape,
-  type BottChannel,
-  type BottEvent as BottEventInterface,
-  type BottEventAttachment,
+import type {
+  AnyShape,
+  BottChannel,
+  BottEvent as BottEventInterface,
+  BottEventAttachment,
   BottEventType,
-  type BottUser,
+  BottUser,
 } from "@bott/model";
 
 /**

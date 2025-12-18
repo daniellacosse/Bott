@@ -9,8 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import type { BottAction } from "@bott/actions";
 import {
-  type BottAction,
   type BottChannel,
   BottEventType,
   type BottGlobalSettings,
