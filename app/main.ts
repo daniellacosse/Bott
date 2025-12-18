@@ -18,12 +18,11 @@ import {
   STORAGE_ROOT,
 } from "@bott/constants";
 import { startDiscordService } from "@bott/discord";
-import { songAction, movieAction, photoAction, responseAction } from "@bott/gemini";
 import { serviceRegistry } from "@bott/service";
 import { startEventStorageService } from "@bott/storage";
-import { startMainService } from "./service.ts";
 
-const actions = { songAction, movieAction, photoAction, responseAction };
+import actions from "./actions.ts";
+import { startMainService } from "./service.ts";
 
 if (import.meta.main) {
   // Prevent multiple deployments from conflicting with each other.
@@ -58,7 +57,7 @@ if (import.meta.main) {
 
   if (ENABLED_SERVICES.includes("main")) {
     serviceRegistry.register(
-      await startMainService({ actions }),
+      await startMainService({}),
     );
   }
 }

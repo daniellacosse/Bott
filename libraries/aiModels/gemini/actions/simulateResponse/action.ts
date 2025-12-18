@@ -21,33 +21,24 @@ import {
   TYPING_MAX_TIME_MS,
 } from "@bott/constants";
 import { log } from "@bott/log";
-import { BottAttachmentType, type BottAction, type BottGlobalSettings, isBottDataEvent } from "@bott/model";
-import type {
-  BottActionValue,
-} from "@bott/model";
+import { BottAttachmentType, type BottAction } from "@bott/model";
 import { BottEvent } from "@bott/service";
-import { addEvents, getEvents } from "@bott/storage";
+import { addEvents, getEvents, getEventIdsForChannel } from "@bott/storage";
 
 import { delay } from "@std/async";
 
 import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
 
-// TODO: Replace with actual settings or move settings to a shared library
-const BOTT_GLOBAL_SETTINGS: BottGlobalSettings = {
-  identity: "",
-  reasons: {
-    input: [],
-    output: [],
-  },
-};
-
 const MS_IN_MINUTE = 60 * 1000;
 
-export const responseAction: BottAction = createAction(async (input, _context) => {
-  const inputEntries = input.filter((i) => i.name.startsWith("history"));
-  const inputEvents = inputEntries
-    .map((i) => i.value)
-    .filter(isBottDataEvent);
+export const responseAction: BottAction = createAction(async (parameters, _context) => {
+
+  const channelId = parameters.find((p) => p.name === "channelId")?.value as string;
+  const eventHistoryIds = getEventIdsForChannel(
+    channelId,
+  );
+  const channelHistory = await getEvents(...eventHistoryIds);
+
 
   const prunedInput: BottEvent[] = [];
   const now = Date.now();
@@ -60,12 +51,12 @@ export const responseAction: BottAction = createAction(async (input, _context) =
   };
 
   // Iterate backwards to prioritize the most recent events
-  for (let i = inputEvents.length - 1; i >= 0; i--) {
+  for (let i = channelHistory.length - 1; i >= 0; i--) {
     if (prunedInput.length >= INPUT_EVENT_COUNT_LIMIT) {
       break;
     }
 
-    const event = structuredClone(inputEvents[i]);
+    const event = structuredClone(channelHistory[i]);
 
     if (event.createdAt.getTime() < timeCutoff) {
       break;
@@ -115,7 +106,7 @@ export const responseAction: BottAction = createAction(async (input, _context) =
   }
 
   // Derive context from history
-  const latestEvent = inputEvents[inputEvents.length - 1]; // Assuming ascending order input
+  const latestEvent = channelHistory[channelHistory.length - 1]; // Assuming ascending order input
   const channel = latestEvent?.channel;
 
   // Use bot user as the actor
@@ -134,8 +125,8 @@ export const responseAction: BottAction = createAction(async (input, _context) =
     // We pass our derived context to the pipeline
     user,
     channel,
-    actions: {}, // Actions context if needed by pipeline?
-    settings: BOTT_GLOBAL_SETTINGS, // Passing global settings if needed?
+    actions: {},
+    settings: _context.globalSettings,
     abortSignal: _context.signal,
   };
 
@@ -164,8 +155,6 @@ export const responseAction: BottAction = createAction(async (input, _context) =
     log.warn(error);
   }
 
-  const outputEvents: BottEvent[] = [];
-
   for (const event of pipelineContext.data.output) {
     if (!pipelineContext.evaluationState.get(event)?.outputReasons?.length) {
       continue;
@@ -189,25 +178,15 @@ export const responseAction: BottAction = createAction(async (input, _context) =
       user,
     }));
   }
-
-  return outputEvents.map((event, index) => ({
-    name: `response_${index}`,
-    value: event as unknown as BottActionValue, // Cast to avoid strict union issues
-  }));
 }, {
-  name: "simulateResponse",
+  name: "simulateResponseForChannel",
   instructions: "Generate a response message from the conversation history.",
-  schema: {
-    input: [{
-      name: "history",
-      type: "event",
-      description: "The conversation history events",
+  parameters: [
+    {
+      name: "channelId",
+      type: "string",
+      description: "The ID of the channel to simulate a response for.",
       required: true,
-    }],
-    output: [{
-      name: "response",
-      type: "event",
-      description: "The generated response events",
-    }],
-  },
+    },
+  ],
 });

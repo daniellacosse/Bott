@@ -9,36 +9,27 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import {
-  type AnyShape,
-  type BottAction,
-  BottActionOptionType,
-} from "@bott/model";
-
+import type { BottAction } from "@bott/model";
 import { SlashCommandBuilder } from "discord.js";
 
 const COMMAND_DESCRIPTION_LIMIT = 100;
 
-export function getCommandJson<
-  O extends Record<string, unknown> = Record<string, unknown>,
->({
+export function getCommandJson({
   name,
-  description,
-  options,
-}: BottAction<O, AnyShape>) {
+  instructions,
+  parameters,
+}: BottAction) {
   const builder = new SlashCommandBuilder().setName(name);
 
-  if (description) {
-    builder.setDescription(description.slice(0, COMMAND_DESCRIPTION_LIMIT));
-  }
+  builder.setDescription(instructions.slice(0, COMMAND_DESCRIPTION_LIMIT));
 
-  if (options && options.length) {
-    for (const { name, description, type, required } of options) {
+  if (parameters && parameters.length) {
+    for (
+      const { name, description, type, required, allowedValues } of parameters
+    ) {
       // deno-lint-ignore no-explicit-any
       const buildOption = (option: any) => {
-        if (name) {
-          option.setName(name);
-        }
+        option.setName(name);
 
         if (description) {
           option.setDescription(description);
@@ -48,18 +39,31 @@ export function getCommandJson<
           option.setRequired(required);
         }
 
+        if (
+          (type === "string" || type === "number") &&
+          allowedValues &&
+          allowedValues.length
+        ) {
+          option.addChoices(
+            ...allowedValues.map((v) => ({ name: String(v), value: v })),
+          );
+        }
+
         return option;
       };
 
       switch (type) {
-        case BottActionOptionType.STRING:
+        case "string":
           builder.addStringOption(buildOption);
           break;
-        case BottActionOptionType.INTEGER:
-          builder.addIntegerOption(buildOption);
+        case "number":
+          builder.addNumberOption(buildOption);
           break;
-        case BottActionOptionType.BOOLEAN:
+        case "boolean":
           builder.addBooleanOption(buildOption);
+          break;
+        case "file":
+          builder.addAttachmentOption(buildOption);
           break;
       }
     }

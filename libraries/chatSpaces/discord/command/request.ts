@@ -11,6 +11,7 @@
 
 import {
   type BottActionCallEvent,
+  type BottActionParameterEntry,
   type BottChannel,
   BottEventType,
   type BottService,
@@ -24,12 +25,10 @@ import {
   type GuildTextBasedChannel,
 } from "discord.js";
 
-export function resolveCommandRequestEvent<
-  O extends Record<string, unknown> = Record<string, unknown>,
->(
+export async function resolveCommandRequestEvent(
   interaction: ChatInputCommandInteraction,
   service: BottService,
-): BottActionCallEvent<O> {
+): Promise<BottActionCallEvent> {
   let channel: BottChannel | undefined = undefined;
 
   if (
@@ -51,61 +50,77 @@ export function resolveCommandRequestEvent<
   return new BottEvent(BottEventType.ACTION_CALL, {
     detail: {
       name: interaction.commandName,
-      options: extractResolvedOptions(
+      parameters: await extractResolvedOptions(
         interaction,
         interaction.options.data,
-      ) as O,
+      ),
     },
     user: service.user,
     channel,
-  }) as BottActionCallEvent<O>;
+  }) as BottActionCallEvent;
 }
 
-function extractResolvedOptions(
+async function extractResolvedOptions(
   interaction: ChatInputCommandInteraction,
   optionList: readonly CommandInteractionOption[],
-): Record<string, unknown> {
-  const options: Record<string, unknown> = {};
+): Promise<BottActionParameterEntry[]> {
+  const options: BottActionParameterEntry[] = [];
 
   for (const opt of optionList) {
     switch (opt.type) {
       case ApplicationCommandOptionType.SubcommandGroup:
       case ApplicationCommandOptionType.Subcommand:
         if (opt.options) {
-          // Recursively merge options from subcommands.
-          // This flattens all options into a single map.
-          Object.assign(
-            options,
-            extractResolvedOptions(interaction, opt.options),
+          options.push(
+            ...(await extractResolvedOptions(interaction, opt.options)),
           );
         }
         break;
       case ApplicationCommandOptionType.String:
-        options[opt.name] = interaction.options.getString(opt.name);
+        {
+          const value = interaction.options.getString(opt.name);
+          if (value !== null) {
+            options.push({ name: opt.name, value });
+          }
+        }
         break;
       case ApplicationCommandOptionType.Integer:
-        options[opt.name] = interaction.options.getInteger(opt.name);
+        {
+          const value = interaction.options.getInteger(opt.name);
+          if (value !== null) {
+            options.push({ name: opt.name, value });
+          }
+        }
         break;
       case ApplicationCommandOptionType.Boolean:
-        options[opt.name] = interaction.options.getBoolean(opt.name);
-        break;
-      case ApplicationCommandOptionType.User:
-        options[opt.name] = interaction.options.getUser(opt.name);
-        break;
-      case ApplicationCommandOptionType.Channel:
-        options[opt.name] = interaction.options.getChannel(opt.name);
-        break;
-      case ApplicationCommandOptionType.Role:
-        options[opt.name] = interaction.options.getRole(opt.name);
-        break;
-      case ApplicationCommandOptionType.Mentionable:
-        options[opt.name] = interaction.options.getMentionable(opt.name);
+        {
+          const value = interaction.options.getBoolean(opt.name);
+          if (value !== null) {
+            options.push({ name: opt.name, value });
+          }
+        }
         break;
       case ApplicationCommandOptionType.Number:
-        options[opt.name] = interaction.options.getNumber(opt.name);
+        {
+          const value = interaction.options.getNumber(opt.name);
+          if (value !== null) {
+            options.push({ name: opt.name, value });
+          }
+        }
         break;
       case ApplicationCommandOptionType.Attachment:
-        options[opt.name] = interaction.options.getAttachment(opt.name);
+        {
+          const attachment = interaction.options.getAttachment(opt.name);
+          if (attachment !== null) {
+            const response = await fetch(attachment.url);
+            const blob = await response.blob();
+            const file = new File([blob], attachment.name, {
+              type: attachment.contentType ?? undefined,
+            });
+
+            options.push({ name: opt.name, value: file });
+          }
+        }
         break;
     }
   }

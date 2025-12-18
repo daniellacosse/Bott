@@ -11,22 +11,25 @@
 
 import { createAction } from "@bott/actions";
 import { GEMINI_MOVIE_MODEL } from "@bott/constants";
-import { BottAttachmentType, type BottAction } from "@bott/model";
+import type { BottAction } from "@bott/model";
 
-import { type GenerateVideosOperation, PersonGeneration } from "@google/genai";
-import { decodeBase64 } from "@std/encoding";
+import { type GenerateVideosOperation, type GenerateVideosParameters, PersonGeneration, type Image } from "@google/genai";
+import { encodeBase64 } from "@std/encoding/base64";
 
 import _gemini from "../client.ts";
 
 export const movieAction: BottAction = createAction(
-  async (input, { signal }) => {
-    const prompt = input.find((i) => i.name === "prompt")?.value as string;
+  async (parameters, { signal }) => {
+    const prompt = parameters.find((p) => p.name === "prompt")?.value as string;
+    const media = parameters.find((p) => p.name === "media")?.value as
+      | File
+      | undefined;
 
     if (!prompt) {
       throw new Error("Prompt is required");
     }
 
-    let operation = await _gemini.models.generateVideos({
+    const request: GenerateVideosParameters = {
       model: GEMINI_MOVIE_MODEL,
       prompt,
       config: {
@@ -38,7 +41,20 @@ export const movieAction: BottAction = createAction(
         personGeneration: PersonGeneration.ALLOW_ADULT,
         resolution: "720p",
       },
-    });
+    };
+
+    if (media?.type.startsWith("image/")) {
+      request.image = {
+        inlineData: {
+          data: encodeBase64(await media.arrayBuffer()),
+          mimeType: media.type,
+        },
+      } as Image;
+    } else if (media) {
+      throw new Error(`Unsupported media type: ${media.type}. Only images are supported.`);
+    }
+
+    let operation = await _gemini.models.generateVideos(request);
 
     operation = await _doVideoJob(operation, _gemini);
 
@@ -69,30 +85,28 @@ export const movieAction: BottAction = createAction(
       throw new Error("No video bytes");
     }
 
-    const file = new File(
-      [decodeBase64(videoData.video.videoBytes)],
-      "movie.mp4",
-      { type: BottAttachmentType.MP4 },
-    );
+    // const file = new File(
+    //   [decodeBase64(videoData.video.videoBytes)],
+    //   "movie.mp4",
+    //   { type: BottAttachmentType.MP4 },
+    // );
 
-    return [{ name: "file", value: file }];
+    // TODO: Dispatch event with attachment
   },
   {
     name: "movie",
     instructions: "Generate a movie based on the prompt.",
-    schema: {
-      input: [{
-        name: "prompt",
-        type: "string",
-        description: "Description of the movie scene",
-        required: true,
-      }],
-      output: [{
-        name: "file",
-        type: "file",
-        description: "The generated movie file",
-      }],
-    },
+    parameters: [{
+      name: "prompt",
+      type: "string",
+      description: "Description of the movie scene",
+      required: true,
+    }, {
+      name: "media",
+      type: "file",
+      description: "Optional reference media for the video generation",
+      required: false,
+    }],
   },
 );
 

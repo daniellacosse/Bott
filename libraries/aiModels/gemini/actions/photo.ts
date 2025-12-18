@@ -9,78 +9,112 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { createAction } from "@bott/actions";
 import { GEMINI_PHOTO_MODEL } from "@bott/constants";
-import { BottAttachmentType, type BottAction } from "@bott/model";
-import { PersonGeneration, SafetyFilterLevel } from "@google/genai";
+import type { BottAction } from "@bott/model";
+import {
+  type GenerateContentParameters,
+  HarmBlockThreshold,
+  HarmCategory,
+  type Part,
+} from "@google/genai";
 
-import { decodeBase64 } from "@std/encoding";
-import { createAction } from "../../../infrastructure/actions/module.ts";
+import { encodeBase64 } from "@std/encoding/base64";
 
 import _gemini from "../client.ts";
 
 export const photoAction: BottAction = createAction(
-  async (input, { signal }) => {
-    const prompt = input.find((i) => i.name === "prompt")?.value as string;
+  async (parameters, { signal }) => {
+    const prompt = parameters.find((p) => p.name === "prompt")?.value as string;
+    const media = parameters.find((p) => p.name === "media")?.value as
+      | File
+      | undefined;
 
     if (!prompt) {
       throw new Error("Prompt is required");
     }
 
-    const response = await _gemini.models.generateImages({
+    const parts: Part[] = [{ text: prompt }];
+
+    if (media && !media.type.startsWith("image/")) {
+      throw new Error(
+        `Unsupported media type: ${media.type}. Only images are supported.`,
+      );
+    }
+
+    if (media) {
+      parts.push({
+        inlineData: {
+          data: encodeBase64(await media.arrayBuffer()),
+          mimeType: media.type,
+        },
+      });
+    }
+
+    const request: GenerateContentParameters = {
       model: GEMINI_PHOTO_MODEL,
-      prompt,
+      contents: [{ role: "user", parts }],
       config: {
         abortSignal: signal,
-        addWatermark: true,
-        enhancePrompt: true,
-        includeRaiReason: true,
-        numberOfImages: 1,
-        personGeneration: PersonGeneration.ALLOW_ADULT,
-        safetyFilterLevel: SafetyFilterLevel.BLOCK_ONLY_HIGH,
+        candidateCount: 1,
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+          },
+        ],
       },
-    });
+    };
 
-    if (!response.generatedImages?.length) {
-      throw new Error("No images generated");
+    const response = await _gemini.models.generateContent(request);
+
+    if (!response.candidates?.length) {
+      throw new Error("No candidates returned");
     }
 
-    const [imageData] = response.generatedImages;
-
-    if (imageData.raiFilteredReason) {
-      throw new Error(`Photo blocked: ${imageData.raiFilteredReason}`);
+    const candidate = response.candidates[0];
+    if (
+      candidate.finishReason !== "STOP" && candidate.finishReason !== undefined
+    ) {
+      throw new Error(`Generation stopped: ${candidate.finishReason}`);
     }
 
-    if (!imageData.image) {
-      throw new Error("No image data");
+    let imageBytes: string | undefined;
+    let _mimeType: string | undefined;
+
+    for (const part of candidate.content?.parts ?? []) {
+      if (part.inlineData) {
+        imageBytes = part.inlineData.data;
+        _mimeType = part.inlineData.mimeType;
+        break;
+      }
     }
 
-    if (!imageData.image.imageBytes) {
-      throw new Error("No image bytes");
+    if (!imageBytes) {
+      throw new Error("No image data found in response");
     }
 
-    const file = new File(
-      [decodeBase64(imageData.image.imageBytes)],
-      "photo.png",
-      { type: BottAttachmentType.PNG },
-    );
+    // const file = new File(
+    //   [decodeBase64(imageData.image.imageBytes)],
+    //   "photo.png",
+    //   { type: BottAttachmentType.PNG },
+    // );
 
-    return [{ name: "file", value: file }];
+    // TODO: Dispatch event with attachment
   },
   {
     name: "photo",
     instructions: "Generate a photo based on the prompt.",
-    schema: {
-      input: [{
-        name: "prompt",
-        type: "string",
-        description: "Description of the image to generate",
-        required: true,
-      }],
-      output: [{
-        name: "file",
-        type: "file",
-        description: "The generated photo file",
-      }],
-    },
+    parameters: [{
+      name: "prompt",
+      type: "string",
+      description: "Description of the image to generate",
+      required: true,
+    }, {
+      name: "media",
+      type: "file",
+      description: "Optional reference media for the image generation",
+      required: false,
+    }],
   },
 );

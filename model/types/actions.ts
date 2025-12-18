@@ -9,79 +9,80 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEvent, BottEventType, BottDataEvent } from "./events.ts";
+import type { BottEvent, BottEventType } from "./events.ts";
+import type { NonEmptyArray } from "./utility.ts";
+import type { BottGlobalSettings } from "./settings.ts";
 
 export type BottAction = BottActionFunction & BottActionSettings;
 
 export type BottActionFunction = (
-  input: BottActionValueEntry[],
+  parameters: BottActionParameterEntry[],
   context: BottActionContext,
-) => Promise<BottActionValueEntry[]>;
+) => Promise<void>;
 
 export type BottActionContext = {
   signal: AbortSignal;
   settings: BottActionSettings;
+  globalSettings: BottGlobalSettings;
 };
 
 export type BottActionSettings = {
   name: string;
   instructions: string;
-  schema: {
-    input: BottActionSchema[];
-    output: BottActionSchema[];
-  }
+  parameters?: NonEmptyArray<BottActionParameter>
 };
 
-export type BottActionValue = string | number | boolean | File | BottDataEvent;
+export type BottActionParameterValue = string | number | boolean | File;
 
-export type BottActionSchema = {
+export type BottActionParameter = {
   name: string;
-  type: "string" | "number" | "boolean" | "file" | "event";
-  allowedValues?: BottActionValue[];
+  type: "string" | "number" | "boolean" | "file";
+  allowedValues?: BottActionParameterValue[];
   description?: string;
   required?: boolean;
 };
 
-export type BottActionValueEntry = {
+export type BottActionParameterEntry = {
   name: string;
-  value: BottActionValue;
+  value: BottActionParameterValue;
 }
 
 export type BottActionCallEvent = BottEvent<
   BottEventType.ACTION_CALL,
   {
     name: string;
-    input: BottActionValueEntry[];
+    parameters: BottActionParameterEntry[];
   }
 >;
 
 export type BottActionStartEvent = BottEvent<
   BottEventType.ACTION_START,
   {
-    id: string;
     name: string;
+    id: string;
   }
 >;
 
 export type BottActionCancelEvent = BottEvent<
-  BottEventType.ACTION_CANCEL,
+  BottEventType.ACTION_ABORT,
   {
-    id: string;
-  }
->;
-
-export type BottActionResultEvent = BottEvent<
-  BottEventType.ACTION_RESULT, {
-    id: string;
     name: string;
-    output: BottActionValueEntry[];
+    id: string;
   }
 >;
 
+export type BottActionCompleteEvent = BottEvent<
+  BottEventType.ACTION_COMPLETE,
+  {
+    name: string;
+    id: string;
+  }
+>;
 
 export type BottActionErrorEvent = BottEvent<
   BottEventType.ACTION_ERROR,
   {
+    name: string;
     id: string;
     error: Error;
   }

@@ -18,7 +18,7 @@ import {
 import { BottAttachmentType, type BottAction } from "@bott/model";
 
 import { decodeBase64 } from "@std/encoding";
-import { createAction } from "../../../infrastructure/actions/module.ts";
+import { createAction } from "@bott/actions";
 
 const IS_CLOUD_RUN = Boolean(Deno.env.get("K_SERVICE"));
 
@@ -26,8 +26,8 @@ const VERTEX_API_URL =
   `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_REGION}/publishers/google/models/${GEMINI_SONG_MODEL}:predict`;
 
 export const songAction: BottAction = createAction(
-  async (input, { signal }) => {
-    const prompt = input.find((i) => i.name === "prompt")?.value as string;
+  async (parameters, { signal }) => {
+    const prompt = parameters.find((p) => p.name === "prompt")?.value as string;
 
     if (!prompt) {
       throw new Error("Prompt is required");
@@ -53,33 +53,19 @@ export const songAction: BottAction = createAction(
       );
     }
 
-    const { predictions } = await response.json();
+    // const { predictions } = await response.json();
 
-    return [{
-      name: "file",
-      value: new File(
-        [decodeBase64(predictions[0].bytesBase64Encoded)],
-        "song.wav",
-        { type: BottAttachmentType.WAV },
-      ),
-    }];
+    // TODO: Dispatch event with attachment
   },
   {
     name: "song",
     instructions: "Generate a song based on the prompt.",
-    schema: {
-      input: [{
-        name: "prompt",
-        type: "string",
-        description: "Description of the music/song to generate",
-        required: true,
-      }],
-      output: [{
-        name: "file",
-        type: "file",
-        description: "The generated song file",
-      }],
-    },
+    parameters: [{
+      name: "prompt",
+      type: "string",
+      description: "Description of the music/song to generate",
+      required: true,
+    }],
   },
 );
 

@@ -27,9 +27,9 @@ export enum BottEventType {
   /** An event representing the start of an action. */
   ACTION_START = "actionStart",
   /** An event representing the cancellation of an action. */
-  ACTION_CANCEL = "actionCancel",
-  /** An event representing the result of an action. */
-  ACTION_RESULT = "actionResult",
+  ACTION_ABORT = "actionCancel",
+  /** An event representing the completion of an action. */
+  ACTION_COMPLETE = "actionComplete",
   /** An event representing an error that occurred during an action. */
   ACTION_ERROR = "actionError",
 }
@@ -73,16 +73,6 @@ export type BottReplyEvent = BottEvent<BottEventType.REPLY, {
 export type BottReactionEvent = BottEvent<BottEventType.REACTION, {
   content: string;
 }>;
-
-export type BottDataEvent = BottMessageEvent | BottReplyEvent | BottReactionEvent;
-
-export const isBottDataEvent = (value: unknown): value is BottDataEvent => {
-  return [
-    BottEventType.MESSAGE,
-    BottEventType.REPLY,
-    BottEventType.REACTION,
-  ].includes((value as BottEvent).type);
-};
 
 /**
  * Enumerates the different types of attachments that can be associated with a BottEvent.

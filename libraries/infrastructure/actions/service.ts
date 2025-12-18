@@ -9,69 +9,92 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { type BottServiceFactory, type BottAction, type BottActionCallEvent, type BottActionCancelEvent, BottEventType } from "@bott/model";
+import {
+  type BottAction,
+  type BottActionCallEvent,
+  type BottActionCancelEvent as BottActionAbortEvent,
+  type BottGlobalSettings,
+  BottEventType,
+  type BottServiceFactory,
+} from "@bott/model";
 import { BottEvent } from "@bott/service";
+import { addEventListener } from "@bott/service";
+import { _validateParameters } from "./validation.ts";
 
 export const startActionService: BottServiceFactory = (options) => {
   const { actions } = options as { actions: Record<string, BottAction> };
   const controllerMap = new Map<string, AbortController>();
 
-  addEventListener(BottEventType.ACTION_CALL, async (event: Event) => {
-    if (!(event instanceof BottEvent)) return;
-    const callEvent = event as BottActionCallEvent;
+  addEventListener(BottEventType.ACTION_CALL, async (event: BottActionCallEvent) => {
+    const id = crypto.randomUUID();
+    const controller = new AbortController();
 
-    const action = actions[callEvent.detail.name];
+    const action = actions[event.detail.name];
     if (!action) {
-      globalThis.dispatchEvent(new BottEvent(BottEventType.ACTION_ERROR, {
-        detail: {
-          id: callEvent.id,
-          error: new Error(`Action ${callEvent.detail.name} not found`),
-        },
-      }));
+      globalThis.dispatchEvent(
+        new BottEvent(BottEventType.ACTION_ERROR, {
+          detail: {
+            id,
+            error: new Error(`Action ${event.detail.name} not found`),
+          },
+        }),
+      );
       return;
     }
-
-    const controller = new AbortController();
-    const id = crypto.randomUUID();
 
     controllerMap.set(id, controller);
 
     try {
-      const output = await action(callEvent.detail.input, {
+      globalThis.dispatchEvent(
+        new BottEvent(BottEventType.ACTION_START, {
+          detail: {
+            id,
+            name: action.name,
+          },
+        }),
+      );
+
+      if (action.parameters) {
+        _validateParameters(action.parameters, event.detail.parameters);
+      }
+
+      await action(event.detail.parameters, {
         signal: controller.signal,
         settings: action,
+        globalSettings: options as unknown as BottGlobalSettings, // TODO: Fix
       });
 
-      globalThis.dispatchEvent(new BottEvent(BottEventType.ACTION_RESULT, {
-        detail: {
-          id,
-          name: action.name,
-          output,
-        },
-      }));
+      globalThis.dispatchEvent(
+        new BottEvent(BottEventType.ACTION_COMPLETE, {
+          detail: {
+            id,
+            name: action.name,
+          },
+        }),
+      );
+    } catch (error) {
+      globalThis.dispatchEvent(
+        new BottEvent(BottEventType.ACTION_ERROR, {
+          detail: {
+            id,
+            error: error as Error,
+          },
+        }),
+      );
     }
-    catch (error) {
-      globalThis.dispatchEvent(new BottEvent(BottEventType.ACTION_ERROR, {
-        detail: {
-          id,
-          error: error as Error,
-        },
-      }));
-    }
+
+    controllerMap.delete(id);
   });
 
-  addEventListener(BottEventType.ACTION_CANCEL, (event: Event) => {
-    if (!(event instanceof BottEvent)) return;
-    const cancelEvent = event as BottActionCancelEvent;
-
-    controllerMap.get(cancelEvent.detail.id)?.abort();
-    controllerMap.delete(cancelEvent.detail.id);
-  });
+  addEventListener(BottEventType.ACTION_ABORT, (event: BottActionAbortEvent) =>
+    controllerMap.get(event.detail.id)?.abort()
+  );
 
   return Promise.resolve({
     user: {
       id: "system:actions",
       name: "Actions",
-    }
-  })
-}
+    },
+  });
+};
+
