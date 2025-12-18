@@ -53,6 +53,10 @@ jobs:
       - name: Commit version changes
         run: |
           VERSION="${{ github.event.inputs.version }}"
+          if git diff --cached --quiet; then
+            echo "No changes to commit - version may already be set to $VERSION"
+            exit 1
+          fi
           git commit -m "chore: bump version to $VERSION"
           git push
 
@@ -79,8 +83,8 @@ jobs:
           file: ./Containerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bott:${{ github.event.inputs.version }}
-            ghcr.io/${{ github.repository_owner }}/bott:latest
+            ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}
+            ghcr.io/${{ github.repository }}:latest
           labels: |
             org.opencontainers.image.title=Bott
             org.opencontainers.image.description=Bott: the autonomous groupchat agent
@@ -99,7 +103,7 @@ jobs:
             ### Container Image
             
             ```bash
-            docker pull ghcr.io/${{ github.repository_owner }}/bott:${{ github.event.inputs.version }}
+            docker pull ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}
             ```
             
             ### Changes
