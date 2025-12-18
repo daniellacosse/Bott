@@ -122,10 +122,11 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
 
       log.debug(
         logMessage +
-        (triggeredOutputReasons.length > 0
-          ? `    [TRIGGERED OUTPUT REASONS]: ${triggeredOutputReasons.map(({ name }) => name).join(", ")
-          }`
-          : ""),
+          (triggeredOutputReasons.length > 0
+            ? `    [TRIGGERED OUTPUT REASONS]: ${
+              triggeredOutputReasons.map(({ name }) => name).join(", ")
+            }`
+            : ""),
       );
     })());
 

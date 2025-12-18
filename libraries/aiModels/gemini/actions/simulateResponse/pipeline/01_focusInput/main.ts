@@ -114,10 +114,11 @@ export const focusInput: EventPipelineProcessor = async (context) => {
 
       log.debug(
         logMessage +
-        (triggeredFocusReasons.length > 0
-          ? `    [TRIGGERED FOCUS REASONS]: ${triggeredFocusReasons.map(({ name }) => name).join(", ")
-          }`
-          : ""),
+          (triggeredFocusReasons.length > 0
+            ? `    [TRIGGERED FOCUS REASONS]: ${
+              triggeredFocusReasons.map(({ name }) => name).join(", ")
+            }`
+            : ""),
       );
     })());
 

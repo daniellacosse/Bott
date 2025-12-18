@@ -14,7 +14,6 @@ import { BottAttachmentType } from "@bott/model";
 import { extractFromHtml } from "@extractus/article-extractor";
 import TurndownService from "turndown";
 
-
 const turndownService = new TurndownService({
   headingStyle: "atx", // Use # for headings.
   hr: "---",

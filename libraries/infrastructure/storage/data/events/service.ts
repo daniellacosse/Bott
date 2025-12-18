@@ -20,7 +20,9 @@ import { addEventListener } from "@bott/service";
 
 import { addEvents } from "./add.ts";
 
-export const startEventStorageService: BottServiceFactory = (): Promise<BottService> => {
+export const startEventStorageService: BottServiceFactory = (): Promise<
+  BottService
+> => {
   const saveEvent = (event: BottEvent) => {
     const result = addEvents(event);
 

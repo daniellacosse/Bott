@@ -11,8 +11,8 @@
 
 import {
   STORAGE_FETCH_TIMEOUT_MS,
-  STORAGE_MAX_TEXT_FILE_WORDS,
   STORAGE_FILE_ROOT,
+  STORAGE_MAX_TEXT_FILE_WORDS,
 } from "@bott/constants";
 import { log } from "@bott/log";
 import {
