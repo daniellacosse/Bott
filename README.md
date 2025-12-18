@@ -6,14 +6,12 @@
 [![Maintainability](https://qlty.sh/gh/daniellacosse/projects/Bott/maintainability.svg)](https://qlty.sh/gh/daniellacosse/projects/Bott)
 [![Code Coverage](https://qlty.sh/gh/daniellacosse/projects/Bott/coverage.svg)](https://qlty.sh/gh/daniellacosse/projects/Bott)
 
-![Version](https://img.shields.io/badge/version-0.0.0--alpha-blue)
+![Version](https://img.shields.io/badge/version-0.0.0--alpha-red)
 [![Discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
 Bott: the autonomous groupchat agent!
 
 > [!CAUTION]
->
-> 🛑 ![in development](https://img.shields.io/badge/in%20development-red) 🛑
 >
 > **Currently in development:** see the
 > [alpha release milestone](https://github.com/daniellacosse-code/Bott/milestone/2).
