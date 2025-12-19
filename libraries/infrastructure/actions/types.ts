@@ -29,14 +29,12 @@ export type BottActionFunction = (
   parameters: BottActionParameterEntry[],
 ) => Promise<void>;
 
-export type BottActionParams = Record<
-  string,
-  BottActionParameterValue | undefined
->;
-
 export type BottActionHandler = (
   this: BottActionContext,
-  params: BottActionParams,
+  params: Record<
+    string,
+    BottActionParameterValue | undefined
+  >,
 ) => Promise<void>;
 
 export type BottActionContext = {
