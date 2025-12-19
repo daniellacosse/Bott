@@ -9,15 +9,17 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { log } from "@bott/log";
 import { type BottServiceEvent, serviceRegistry } from "@bott/service";
 
 export function dispatchEvent(event: BottServiceEvent): void {
   const type = event.type;
 
   if (!serviceRegistry.isEventProvided(type)) {
-    throw new Error(
-      `Event type "${type}" is not provided by any registered service.`,
+    log.warn(
+      `Event type "${type}" is not provided by any registered service. Refusing to dispatch.`,
     );
+    return;
   }
 
   globalThis.dispatchEvent(event);
