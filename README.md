@@ -6,7 +6,7 @@
 [![Maintainability](https://qlty.sh/gh/daniellacosse/projects/Bott/maintainability.svg)](https://qlty.sh/gh/daniellacosse/projects/Bott)
 [![Code Coverage](https://qlty.sh/gh/daniellacosse/projects/Bott/coverage.svg)](https://qlty.sh/gh/daniellacosse/projects/Bott)
 
-![Version](https://img.shields.io/badge/version-0.0.0--alpha-red)
+![Version](https://img.shields.io/badge/unreleased-red)
 [![Discord](https://img.shields.io/discord/1294993662534483978)](https://DanielLaCos.se)
 
 Bott: the autonomous groupchat agent!
