@@ -47,6 +47,9 @@ export function getCommandJson({
           option.setDescription(finalDescription);
         }
 
+        // Discord does not support pre-filled values:
+        // the workaround is to make the Discord option required only if
+        // there's no default.
         if (required && defaultValue === undefined) {
           option.setRequired(required);
         }

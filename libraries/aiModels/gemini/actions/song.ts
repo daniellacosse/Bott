@@ -19,7 +19,7 @@ import {
   SONG_GENERATION_DURATION_SECONDS,
 } from "@bott/constants";
 import { BottEventType } from "@bott/model";
-import { BottEvent } from "@bott/service";
+import { dispatchEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 
 import _gemini from "../client.ts";
@@ -119,24 +119,24 @@ export const songAction: BottAction = createAction(
     const finalWav = Buffer.concat([wavHeader, allPcmData]);
 
     const file = new File([finalWav], "song.wav", { type: "audio/wav" });
+
+    // TODO: create result event, attach file, then dispatch
     const attachment = await prepareAttachmentFromFile(
       file,
-      _context.triggerEvent,
+      _context.id,
     );
 
-    globalThis.dispatchEvent(
-      new BottEvent(BottEventType.ACTION_RESULT, {
-        detail: {
-          id: _context.triggerEvent.id, // Group by original action ID or make new one? usually link by parent
-          name: "song",
-          result: {
-            attachment,
-            prompt,
-            duration,
-          },
+    dispatchEvent(
+      BottEventType.ACTION_RESULT,
+      {
+        id: _context.id,
+        name: "song",
+        result: {
+          attachment,
+          prompt,
+          duration,
         },
-        parent: _context.triggerEvent,
-      }),
+      },
     );
   },
   settings,

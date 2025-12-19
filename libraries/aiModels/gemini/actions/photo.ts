@@ -13,7 +13,7 @@ import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import { GEMINI_PHOTO_MODEL, RATE_LIMIT_PHOTOS } from "@bott/constants";
 import { BottEventType } from "@bott/model";
-import { BottEvent } from "@bott/service";
+import { BottEvent, dispatchEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
   type GenerateContentParameters,
@@ -121,23 +121,22 @@ export const photoAction: BottAction = createAction(
       { type: _mimeType ?? "image/png" },
     );
 
+    // TODO: create result event, attach file, then dispatch
     const attachment = await prepareAttachmentFromFile(
       file,
-      _context.triggerEvent,
+      _context.id,
     );
 
-    globalThis.dispatchEvent(
-      new BottEvent(BottEventType.ACTION_RESULT, {
-        detail: {
-          id: _context.triggerEvent.id,
-          name: "photo",
-          result: {
-            attachment,
-            prompt,
-          },
+    dispatchEvent(
+      BottEventType.ACTION_RESULT,
+      {
+        id: _context.id,
+        name: "photo",
+        result: {
+          attachment,
+          prompt,
         },
-        parent: _context.triggerEvent,
-      }),
+      },
     );
   },
   settings,

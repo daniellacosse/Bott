@@ -14,7 +14,7 @@ import type {
   BottActionParameter,
   BottActionParameterEntry,
 } from "@bott/actions";
-import { _validateParameters, applyParameterDefaults } from "./validation.ts";
+import { validateParameters, applyParameterDefaults } from "./validation.ts";
 
 Deno.test("applyParameterDefaults", () => {
   const schema: BottActionParameter[] = [
@@ -47,7 +47,7 @@ Deno.test("validateParameters - Valid parameters", () => {
     { name: "name", value: "Alice" },
     { name: "age", value: 30 },
   ];
-  _validateParameters(schema, params);
+  validateParameters(schema, params);
 });
 
 Deno.test("validateParameters - Missing required parameter", () => {
@@ -56,7 +56,7 @@ Deno.test("validateParameters - Missing required parameter", () => {
   ];
   const params: BottActionParameterEntry[] = [];
   assertThrows(
-    () => _validateParameters(schema, params),
+    () => validateParameters(schema, params),
     Error,
     "Missing required parameter: name",
   );
@@ -70,7 +70,7 @@ Deno.test("validateParameters - Invalid type (string expected)", () => {
     { name: "name", value: 123 },
   ];
   assertThrows(
-    () => _validateParameters(schema, params),
+    () => validateParameters(schema, params),
     Error,
     "Parameter 'name' must be of type string",
   );
@@ -84,7 +84,7 @@ Deno.test("validateParameters - Invalid type (number expected)", () => {
     { name: "age", value: "30" },
   ];
   assertThrows(
-    () => _validateParameters(schema, params),
+    () => validateParameters(schema, params),
     Error,
     "Parameter 'age' must be of type number",
   );
@@ -98,7 +98,7 @@ Deno.test("validateParameters - Invalid value (not allowed)", () => {
     { name: "color", value: "green" },
   ];
   assertThrows(
-    () => _validateParameters(schema, params),
+    () => validateParameters(schema, params),
     Error,
     "Parameter 'color' has invalid value 'green'. Allowed values: red, blue",
   );
@@ -114,7 +114,7 @@ Deno.test("validateParameters - Unknown parameter", () => {
   // Usually, extra parameters are just ignored in many systems,
   // but strict validation helps catch typos. Let's decide to ERROR on unknown parameters.
   assertThrows(
-    () => _validateParameters(schema, params),
+    () => validateParameters(schema, params),
     Error,
     "Unknown parameter: extra",
   );

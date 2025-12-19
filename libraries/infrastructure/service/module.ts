@@ -9,7 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export * from "./events.ts";
+export * from "./event/main.ts";
+export * from "./event/dispatcher.ts";
+export * from "./event/listener.ts";
 export * from "./registry.ts";
-export * from "./listener.ts";
 export * from "./types.ts";

@@ -57,7 +57,7 @@ if (import.meta.main) {
 
   if (ENABLED_SERVICES.includes("app")) {
     serviceRegistry.register(
-      await startAppService({}),
+      await startAppService(),
     );
   }
 }

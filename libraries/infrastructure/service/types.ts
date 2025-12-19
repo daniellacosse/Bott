@@ -16,5 +16,5 @@ export type BottService = {
 };
 
 export type BottServiceFactory = (
-  options: AnyShape,
+  options?: AnyShape,
 ) => Promise<BottService>;

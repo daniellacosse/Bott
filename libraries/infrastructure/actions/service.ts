@@ -17,11 +17,12 @@ import type {
 import { BottEventType, type BottGlobalSettings } from "@bott/model";
 import {
   addEventListener,
+  dispatchEvent,
   BottEvent,
   type BottServiceFactory,
 } from "@bott/service";
 import { commit, sql } from "@bott/storage";
-import { _validateParameters, applyParameterDefaults } from "./validation.ts";
+import { validateParameters, applyParameterDefaults } from "./validation.ts";
 
 export const startActionService: BottServiceFactory = (options) => {
   const { actions } = options as { actions: Record<string, BottAction> };
@@ -34,29 +35,35 @@ export const startActionService: BottServiceFactory = (options) => {
 
       const action = actions[event.detail.name];
       if (!action) {
-        globalThis.dispatchEvent(
-          new BottEvent(BottEventType.ACTION_ERROR, {
-            detail: {
-              id: event.detail.id,
-              error: new Error(`Action ${event.detail.name} not found`),
-            },
-          }),
+        return dispatchEvent(
+          BottEventType.ACTION_ERROR,
+          {
+            id: event.detail.id,
+            name: event.detail.name,
+            error: new Error(`Action ${event.detail.name} not found`),
+          },
+          {
+            user: event.user,
+            channel: event.channel,
+          },
         );
-        return;
       }
 
       if (controllerMap.has(event.detail.id)) {
-        globalThis.dispatchEvent(
-          new BottEvent(BottEventType.ACTION_ERROR, {
-            detail: {
-              id: event.detail.id,
-              error: new Error(
-                `Action ${event.detail.name} already in progress`,
-              ),
-            },
-          }),
+        return dispatchEvent(
+          BottEventType.ACTION_ERROR,
+          {
+            id: event.detail.id,
+            name: event.detail.name,
+            error: new Error(
+              `Action ${event.detail.name} already in progress`,
+            ),
+          },
+          {
+            user: event.user,
+            channel: event.channel,
+          },
         );
-        return;
       }
 
       controllerMap.set(event.detail.id, controller);
@@ -69,7 +76,7 @@ export const startActionService: BottServiceFactory = (options) => {
             action.parameters,
             event.detail.parameters,
           );
-          _validateParameters(action.parameters, parameters);
+          validateParameters(action.parameters, parameters);
         }
 
         if (action.limitPerMonth) {
@@ -98,38 +105,48 @@ export const startActionService: BottServiceFactory = (options) => {
           }
         }
 
-        globalThis.dispatchEvent(
-          new BottEvent(BottEventType.ACTION_START, {
-            detail: {
-              id: event.detail.id,
-              name: action.name,
-            },
-          }),
+        dispatchEvent(
+          BottEventType.ACTION_START,
+          {
+            id: event.detail.id,
+            name: action.name,
+          },
+          {
+            user: event.user,
+            channel: event.channel,
+          },
         );
 
         await action(parameters, {
+          id: event.detail.id,
           signal: controller.signal,
           settings: action,
           globalSettings: options as unknown as BottGlobalSettings, // TODO: Fix
-          triggerEvent: event,
         });
 
-        globalThis.dispatchEvent(
-          new BottEvent(BottEventType.ACTION_COMPLETE, {
-            detail: {
-              id: event.detail.id,
-              name: action.name,
-            },
-          }),
+        dispatchEvent(
+          BottEventType.ACTION_COMPLETE,
+          {
+            id: event.detail.id,
+            name: action.name,
+          },
+          {
+            user: event.user,
+            channel: event.channel,
+          },
         );
       } catch (error) {
-        globalThis.dispatchEvent(
-          new BottEvent(BottEventType.ACTION_ERROR, {
-            detail: {
-              id: event.detail.id,
-              error: error as Error,
-            },
-          }),
+        dispatchEvent(
+          BottEventType.ACTION_ERROR,
+          {
+            id: event.detail.id,
+            name: event.detail.name,
+            error: error as Error,
+          },
+          {
+            user: event.user,
+            channel: event.channel,
+          },
         );
       }
 

@@ -34,7 +34,7 @@ export function applyParameterDefaults(
   return mergedParameters;
 }
 
-export function _validateParameters(
+export function validateParameters(
   schema: BottActionParameter[],
   parameters: BottActionParameterEntry[],
 ) {
@@ -72,10 +72,12 @@ export function _validateParameters(
         }
       }
 
-      if (field.allowedValues && !field.allowedValues.includes(param.value)) {
+      if (
+        field.allowedValues && !field.allowedValues.includes(param.value) &&
+        field.type !== "file"
+      ) {
         throw new Error(
-          `Parameter '${field.name}' has invalid value '${param.value}'. Allowed values: ${
-            field.allowedValues.join(", ")
+          `Parameter '${field.name}' has invalid value '${param.value}'. Allowed values: ${field.allowedValues.join(", ")
           }`,
         );
       }

@@ -100,19 +100,19 @@ const isGeminiAvailable = ["gemini", "auto"].includes(MODEL_PROVIDER) &&
   GCP_PROJECT;
 
 export const GEMINI_EVENT_MODEL = Deno.env.get("GEMINI_EVENT_MODEL") ??
-  (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
+  (isGeminiAvailable ? "gemini-2.5-flash" : undefined);
 
 export const GEMINI_RATING_MODEL = Deno.env.get("GEMINI_RATING_MODEL") ??
-  (isGeminiAvailable ? "gemini-2.5-flash-lite" : "not_available");
+  (isGeminiAvailable ? "gemini-2.5-flash-lite" : undefined);
 
 export const GEMINI_PHOTO_MODEL = Deno.env.get("GEMINI_PHOTO_MODEL") ??
-  (isGeminiAvailable ? "gemini-3-pro-image-preview" : "not_available");
+  (isGeminiAvailable ? "gemini-3-pro-image-preview" : undefined);
 
 export const GEMINI_SONG_MODEL = Deno.env.get("GEMINI_SONG_MODEL") ??
-  (isGeminiAvailable ? "lyria-realtime" : "not_available");
+  (isGeminiAvailable ? "lyria-realtime" : undefined);
 
 export const GEMINI_MOVIE_MODEL = Deno.env.get("GEMINI_MOVIE_MODEL") ??
-  (isGeminiAvailable ? "veo-3.1-fast-generate-001" : "not_available");
+  (isGeminiAvailable ? "veo-3.1-fast-generate-001" : undefined);
 
 // Input processing limits
 export const INPUT_FILE_TOKEN_LIMIT = Number(

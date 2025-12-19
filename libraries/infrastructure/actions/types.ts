@@ -21,10 +21,10 @@ export type BottActionFunction = (
 ) => Promise<void>;
 
 export type BottActionContext = {
+  id: string;
   signal: AbortSignal;
   settings: BottActionSettings;
   globalSettings: BottGlobalSettings;
-  triggerEvent: BottEvent;
 };
 
 export type BottActionSettings = {

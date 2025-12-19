@@ -13,7 +13,7 @@ import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import { GEMINI_MOVIE_MODEL, RATE_LIMIT_VIDEOS } from "@bott/constants";
 import { BottEventType } from "@bott/model";
-import { BottEvent } from "@bott/service";
+import { dispatchEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 
 import {
@@ -119,23 +119,22 @@ export const movieAction: BottAction = createAction(
       { type: "video/mp4" },
     );
 
+    // TODO: create result event, attach file, then dispatch
     const attachment = await prepareAttachmentFromFile(
       file,
-      _context.triggerEvent,
+      _context.id,
     );
 
-    globalThis.dispatchEvent(
-      new BottEvent(BottEventType.ACTION_RESULT, {
-        detail: {
-          id: _context.triggerEvent.id,
-          name: "movie",
-          result: {
-            attachment,
-            prompt,
-          },
+    dispatchEvent(
+      BottEventType.ACTION_RESULT,
+      {
+        id: _context.id,
+        name: "movie",
+        result: {
+          attachment,
+          prompt,
         },
-        parent: _context.triggerEvent,
-      }),
+      },
     );
   },
   settings,

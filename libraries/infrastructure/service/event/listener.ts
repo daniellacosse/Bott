@@ -13,7 +13,7 @@ import { STORAGE_DEPLOY_NONCE_LOCATION } from "@bott/constants";
 import { log } from "@bott/log";
 import type { BottEvent, BottEventType } from "@bott/model";
 import type { BottService } from "@bott/service";
-import { serviceRegistry } from "./registry.ts";
+import { serviceRegistry } from "../registry.ts";
 
 const _getCurrentDeployNonce = () => {
   try {
