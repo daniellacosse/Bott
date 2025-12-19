@@ -174,7 +174,9 @@ export const responseAction: BottAction = createAction(
         continue;
       }
 
-      const words = (event.detail.content as string).split(/\s+/).length;
+      const content =
+        typeof event.detail?.content === "string" ? event.detail.content : "";
+      const words = content.split(/\s+/).length;
       const delayMs = (words / TYPING_WORDS_PER_MINUTE) * MS_IN_MINUTE;
       const cappedDelayMs = Math.min(
         delayMs,
