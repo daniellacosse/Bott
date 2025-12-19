@@ -74,7 +74,9 @@ export function validateParameters(
 
       if (
         field.type !== "file" && field.allowedValues &&
-        !field.allowedValues.includes(param.value)
+        !field.allowedValues.includes(
+          param.value as string | number | boolean,
+        )
       ) {
         throw new Error(
           `Parameter '${field.name}' has invalid value '${param.value}'. Allowed values: ${
