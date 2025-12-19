@@ -24,16 +24,15 @@ export function getCommandJson({
   builder.setDescription(instructions.slice(0, COMMAND_DESCRIPTION_LIMIT));
 
   if (parameters && parameters.length) {
-    for (
+    for (const parameter of parameters) {
       const {
         name,
         description,
         type,
         required,
-        allowedValues,
         defaultValue,
-      } of parameters
-    ) {
+      } = parameter;
+
       // deno-lint-ignore no-explicit-any
       const buildOption = (option: any) => {
         option.setName(name);
@@ -55,12 +54,15 @@ export function getCommandJson({
         }
 
         if (
-          (type === "string" || type === "number") &&
-          allowedValues &&
-          allowedValues.length
+          type !== "file" &&
+          parameter.allowedValues &&
+          parameter.allowedValues.length
         ) {
           option.addChoices(
-            ...allowedValues.map((v) => ({ name: String(v), value: v })),
+            ...parameter.allowedValues.map((v) => ({
+              name: String(v),
+              value: v,
+            })),
           );
         }
 

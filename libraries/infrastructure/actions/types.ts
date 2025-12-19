@@ -53,14 +53,26 @@ export type BottActionSettings = {
 
 export type BottActionParameterValue = string | number | boolean | File;
 
-export type BottActionParameter = {
+type BottActionParameterBase = {
   name: string;
-  type: "string" | "number" | "boolean" | "file";
-  allowedValues?: BottActionParameterValue[];
   description?: string;
-  defaultValue?: BottActionParameterValue;
   required?: boolean;
 };
+
+type BottActionParameterWithAllowedValues = BottActionParameterBase & {
+  type: "string" | "number" | "boolean";
+  allowedValues?: (string | number | boolean)[];
+  defaultValue?: string | number | boolean;
+};
+
+type BottActionParameterFile = BottActionParameterBase & {
+  type: "file";
+  defaultValue?: File;
+};
+
+export type BottActionParameter =
+  | BottActionParameterWithAllowedValues
+  | BottActionParameterFile;
 
 export type BottActionParameterEntry = {
   name: string;

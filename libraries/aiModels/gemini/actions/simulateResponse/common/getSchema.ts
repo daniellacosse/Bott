@@ -131,7 +131,9 @@ export const getActionSchema = (
 
                   properties[parameter.name] = {
                     type,
-                    enum: parameter.allowedValues?.map(String),
+                    enum: parameter.type !== "file"
+                      ? parameter.allowedValues?.map(String)
+                      : undefined,
                     description: parameter.description,
                   };
 
