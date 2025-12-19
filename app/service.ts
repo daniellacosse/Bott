@@ -14,7 +14,7 @@ import { BOTT_USER } from "@bott/constants";
 import { BottEventType } from "@bott/model";
 import {
   addEventListener,
-  type BottServiceEvent,
+  BottServiceEvent,
   type BottServiceFactory,
   dispatchEvent,
 } from "@bott/service";
@@ -31,19 +31,21 @@ export const startAppService: BottServiceFactory = () => {
     ) return;
 
     dispatchEvent(
-      BottActionEventType.ACTION_CALL,
-      {
-        id: crypto.randomUUID(),
-        name: "simulateResponseForChannel",
-        parameters: [{
-          name: "channelId",
-          value: event.channel.id,
-        }],
-      },
-      {
-        user: event.user,
-        channel: event.channel,
-      },
+      new BottServiceEvent(
+        BottActionEventType.ACTION_CALL,
+        {
+          detail: {
+            id: crypto.randomUUID(),
+            name: "simulateResponseForChannel",
+            parameters: [{
+              name: "channelId",
+              value: event.channel.id,
+            }],
+          },
+          user: event.user,
+          channel: event.channel,
+        },
+      ),
     );
   };
 
