@@ -79,8 +79,9 @@ jobs:
             module_paths="$module_paths app/"
           fi
           
-          # Trim leading/trailing whitespace
-          module_paths=$(echo "$module_paths" | xargs)
+          # Trim leading and trailing whitespace
+          module_paths="${module_paths# }"
+          module_paths="${module_paths% }"
           
           echo "module_paths=$module_paths" >> $GITHUB_OUTPUT
           
