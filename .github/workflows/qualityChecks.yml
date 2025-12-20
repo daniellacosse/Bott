@@ -62,6 +62,9 @@ jobs:
 
       - name: Run Benchmarks
         run: |
+          # Cache dependencies first to avoid download noise in benchmark output
+          deno bench --allow-all --quiet > /dev/null 2>&1 || true
+          # Now run benchmarks and capture clean output
           deno bench --allow-all > bench-results.txt 2>&1 || true
           {
             echo "## Benchmark Results"
