@@ -131,22 +131,21 @@ jobs:
 
       - name: Run Tests
         run: |
+          root_changed="${{ needs.detect-changes.outputs.root_changed }}"
+          module_paths="${{ needs.detect-changes.outputs.changed_module_paths }}"
+          
           # When root files change (constants.ts, deno.jsonc, workflows), run all tests
           # since these files affect the entire workspace
-          if [ "${{ needs.detect-changes.outputs.root_changed }}" == "true" ]; then
+          if [ "$root_changed" == "true" ]; then
             echo "Root files changed - running all tests"
             deno test --allow-all --coverage=.output/cov_profile
+          elif [ -n "$module_paths" ]; then
+            echo "Running tests for changed modules: $module_paths"
+            # shellcheck disable=SC2086
+            deno test --allow-all --coverage=.output/cov_profile $module_paths
           else
-            module_paths="${{ needs.detect-changes.outputs.changed_module_paths }}"
-            
-            if [ -n "$module_paths" ]; then
-              echo "Running tests for changed modules: $module_paths"
-              # shellcheck disable=SC2086
-              deno test --allow-all --coverage=.output/cov_profile $module_paths
-            else
-              echo "Running all tests"
-              deno test --allow-all --coverage=.output/cov_profile
-            fi
+            echo "Running all tests"
+            deno test --allow-all --coverage=.output/cov_profile
           fi
           
           mkdir -p .output/coverage
@@ -176,32 +175,31 @@ jobs:
 
       - name: Run Benchmarks
         run: |
+          root_changed="${{ needs.detect-changes.outputs.root_changed }}"
+          module_paths="${{ needs.detect-changes.outputs.changed_module_paths }}"
+          
           # When root files change (constants.ts, deno.jsonc, workflows), run all benchmarks
           # since these files affect the entire workspace
-          if [ "${{ needs.detect-changes.outputs.root_changed }}" == "true" ]; then
+          if [ "$root_changed" == "true" ]; then
             echo "Root files changed - running all benchmarks"
             # Cache dependencies first to avoid download noise in benchmark output
             deno bench --allow-all --quiet > /dev/null 2>&1 || true
             # Now run benchmarks and capture clean output
             deno bench --allow-all > bench-results-raw.txt 2>&1 || true
+          elif [ -n "$module_paths" ]; then
+            echo "Running benchmarks for changed modules: $module_paths"
+            # Cache dependencies first to avoid download noise in benchmark output
+            # shellcheck disable=SC2086
+            deno bench --allow-all --quiet $module_paths > /dev/null 2>&1 || true
+            # Now run benchmarks and capture clean output
+            # shellcheck disable=SC2086
+            deno bench --allow-all $module_paths > bench-results-raw.txt 2>&1 || true
           else
-            module_paths="${{ needs.detect-changes.outputs.changed_module_paths }}"
-            
-            if [ -n "$module_paths" ]; then
-              echo "Running benchmarks for changed modules: $module_paths"
-              # Cache dependencies first to avoid download noise in benchmark output
-              # shellcheck disable=SC2086
-              deno bench --allow-all --quiet $module_paths > /dev/null 2>&1 || true
-              # Now run benchmarks and capture clean output
-              # shellcheck disable=SC2086
-              deno bench --allow-all $module_paths > bench-results-raw.txt 2>&1 || true
-            else
-              echo "Running all benchmarks"
-              # Cache dependencies first to avoid download noise in benchmark output
-              deno bench --allow-all --quiet > /dev/null 2>&1 || true
-              # Now run benchmarks and capture clean output
-              deno bench --allow-all > bench-results-raw.txt 2>&1 || true
-            fi
+            echo "Running all benchmarks"
+            # Cache dependencies first to avoid download noise in benchmark output
+            deno bench --allow-all --quiet > /dev/null 2>&1 || true
+            # Now run benchmarks and capture clean output
+            deno bench --allow-all > bench-results-raw.txt 2>&1 || true
           fi
           
           # Strip ANSI color codes from the output
@@ -229,7 +227,20 @@ jobs:
           REQUIRED_HEADER_SNIPPET="This project is dual-licensed:"
           changed_files="${{ needs.detect-changes.outputs.all_changed_files }}"
           
-          if [ -n "$changed_files" ]; then
+          if [ -z "$changed_files" ]; then
+            echo "Checking all files"
+            # shellcheck disable=SC2046
+            MISSING_HEADERS_COUNT=$(grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.sql") | wc -l)
+
+            if [ "$MISSING_HEADERS_COUNT" -gt 0 ]; then
+              echo "Error: The following files are missing the required license header:"
+              # shellcheck disable=SC2046
+              grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.sql")
+              exit 1
+            else
+              echo "All files have the required license header."
+            fi
+          else
             echo "Checking changed files only"
             # Filter for only .ts and .sql files
             ts_sql_files=""
@@ -256,18 +267,5 @@ jobs:
               exit 1
             else
               echo "All changed .ts and .sql files have the required license header."
-            fi
-          else
-            echo "Checking all files"
-            # shellcheck disable=SC2046
-            MISSING_HEADERS_COUNT=$(grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.sql") | wc -l)
-
-            if [ "$MISSING_HEADERS_COUNT" -gt 0 ]; then
-              echo "Error: The following files are missing the required license header:"
-              # shellcheck disable=SC2046
-              grep -L "${REQUIRED_HEADER_SNIPPET}" $(find . -name "*.ts" -o -name "*.sql")
-              exit 1
-            else
-              echo "All files have the required license header."
             fi
           fi
