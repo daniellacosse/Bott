@@ -19,8 +19,7 @@ import {
   RATE_LIMIT_MUSIC,
   SONG_GENERATION_DURATION_SECONDS,
 } from "@bott/constants";
-import type { BottEventAttachment } from "@bott/model";
-import { BottServiceEvent, dispatchEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 
 import _gemini from "../client.ts";
@@ -119,33 +118,22 @@ export const songAction: BottAction = createAction(
 
     const file = new File([finalWav], "song.wav", { type: "audio/wav" });
 
-    // Create the event first
     const resultEvent = new BottServiceEvent(
       BottActionEventType.ACTION_RESULT,
       {
         detail: {
           id: this.id,
-          name: "song",
-          result: {
-            prompt,
-            duration,
-            attachment: undefined as BottEventAttachment | undefined,
-          },
+          name: "song"
         },
       },
     );
 
-    // Prepare attachment with the event as parent
-    const attachment = await prepareAttachmentFromFile(
+    resultEvent.attachments = [await prepareAttachmentFromFile(
       file,
       resultEvent,
-    );
+    )];
 
-    // Add attachment to result
-    resultEvent.detail.result.attachment = attachment;
-
-    // Dispatch the fully constructed event
-    dispatchEvent(resultEvent);
+    this.dispatchResult(resultEvent);
   },
   settings,
 );

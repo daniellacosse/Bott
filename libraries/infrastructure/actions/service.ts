@@ -13,9 +13,10 @@ import type {
   BottAction,
   BottActionCallEvent,
   BottActionCancelEvent as BottActionAbortEvent,
+  BottActionResultEvent,
 } from "@bott/actions";
 import { BottActionEventType } from "@bott/actions";
-import type { BottGlobalSettings } from "@bott/model";
+import type { BottGlobalSettings, BottUser } from "@bott/model";
 import {
   addEventListener,
   BottServiceEvent,
@@ -24,6 +25,11 @@ import {
 } from "@bott/service";
 import { commit, sql } from "@bott/storage";
 import { applyParameterDefaults, validateParameters } from "./validation.ts";
+
+const ACTION_SERVICE_USER: BottUser = {
+  id: "system:actions",
+  name: "Actions",
+};
 
 export const startActionService: BottServiceFactory = (options) => {
   const { actions } = options as { actions: Record<string, BottAction> };
@@ -43,7 +49,7 @@ export const startActionService: BottServiceFactory = (options) => {
               name: event.detail.name,
               error: new Error(`Action ${event.detail.name} not found`),
             },
-            user: event.user,
+            user: ACTION_SERVICE_USER,
             channel: event.channel,
           }),
         );
@@ -59,7 +65,7 @@ export const startActionService: BottServiceFactory = (options) => {
                 `Action ${event.detail.name} already in progress`,
               ),
             },
-            user: event.user,
+            user: ACTION_SERVICE_USER,
             channel: event.channel,
           }),
         );
@@ -110,7 +116,7 @@ export const startActionService: BottServiceFactory = (options) => {
               id: event.detail.id,
               name: action.name,
             },
-            user: event.user,
+            user: ACTION_SERVICE_USER,
             channel: event.channel,
           }),
         );
@@ -121,6 +127,13 @@ export const startActionService: BottServiceFactory = (options) => {
             signal: controller.signal,
             settings: action,
             globalSettings: options as unknown as BottGlobalSettings, // TODO: Fix
+            user: ACTION_SERVICE_USER,
+            channel: event.channel!,
+            dispatchResult: (resultEvent: BottActionResultEvent) => {
+              resultEvent.user = ACTION_SERVICE_USER;
+              resultEvent.channel = event.channel;
+              dispatchEvent(resultEvent);
+            },
           },
           parameters,
         );
@@ -131,7 +144,7 @@ export const startActionService: BottServiceFactory = (options) => {
               id: event.detail.id,
               name: action.name,
             },
-            user: event.user,
+            user: ACTION_SERVICE_USER,
             channel: event.channel,
           }),
         );
@@ -143,7 +156,7 @@ export const startActionService: BottServiceFactory = (options) => {
               name: event.detail.name,
               error: error as Error,
             },
-            user: event.user,
+            user: ACTION_SERVICE_USER,
             channel: event.channel,
           }),
         );
@@ -160,10 +173,7 @@ export const startActionService: BottServiceFactory = (options) => {
   );
 
   return Promise.resolve({
-    user: {
-      id: "system:actions",
-      name: "Actions",
-    },
+    user: ACTION_SERVICE_USER,
     events: Object.values(BottActionEventType),
   });
 };

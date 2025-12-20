@@ -13,7 +13,7 @@ import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import { BottActionEventType } from "@bott/actions";
 import { GEMINI_PHOTO_MODEL, RATE_LIMIT_PHOTOS } from "@bott/constants";
-import { BottServiceEvent, dispatchEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
   type GenerateContentParameters,
@@ -51,8 +51,7 @@ export const photoAction: BottAction = createAction(
 
     if (media && !((media as File)?.type.startsWith("image/"))) {
       throw new Error(
-        `Unsupported media type: ${
-          (media as File)?.type
+        `Unsupported media type: ${(media as File)?.type
         }. Only images are supported.`,
       );
     }
@@ -123,25 +122,19 @@ export const photoAction: BottAction = createAction(
       {
         detail: {
           id: this.id,
-          name: "photo",
-          result: {
-            prompt,
-          } as Record<string, unknown>,
+          name: "photo"
         },
       },
     );
 
-    // Prepare attachment with the event as parent
     const attachment = await prepareAttachmentFromFile(
       file,
       resultEvent,
     );
 
-    // Add attachment to result
-    resultEvent.detail.result.attachment = attachment;
+    resultEvent.attachments = [attachment];
 
-    // Dispatch the fully constructed event
-    dispatchEvent(resultEvent);
+    this.dispatchResult(resultEvent);
   },
   settings,
 );

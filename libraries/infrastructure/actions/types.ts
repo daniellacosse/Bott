@@ -9,9 +9,13 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEvent } from "@bott/model";
-import type { BottGlobalSettings } from "@bott/model";
-import type { NonEmptyArray } from "@bott/model";
+import type {
+  BottChannel,
+  BottEvent,
+  BottGlobalSettings,
+  BottUser,
+  NonEmptyArray,
+} from "@bott/model";
 
 export enum BottActionEventType {
   ACTION_CALL = "action:call",
@@ -42,6 +46,7 @@ export type BottActionContext = {
   signal: AbortSignal;
   settings: BottActionSettings;
   globalSettings: BottGlobalSettings;
+  dispatchResult: (event: BottActionResultEvent) => void;
 };
 
 export type BottActionSettings = {
@@ -117,7 +122,7 @@ export type BottActionResultEvent = BottEvent<
   {
     name: string;
     id: string;
-    result: unknown;
+    content?: string;
   }
 >;
 

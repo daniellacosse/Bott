@@ -11,5 +11,4 @@
 
 export * from "./create.ts";
 export * from "./service.ts";
-export * from "./events.ts";
 export * from "./types.ts";

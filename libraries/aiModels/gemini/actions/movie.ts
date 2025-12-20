@@ -16,7 +16,7 @@ import {
   createAction,
 } from "@bott/actions";
 import { GEMINI_MOVIE_MODEL, RATE_LIMIT_VIDEOS } from "@bott/constants";
-import { BottServiceEvent, dispatchEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
   type GenerateVideosOperation,
@@ -75,8 +75,7 @@ export const movieAction: BottAction = createAction(
       } as Image;
     } else if (media) {
       throw new Error(
-        `Unsupported media type: ${
-          (media as File)?.type
+        `Unsupported media type: ${(media as File)?.type
         }. Only images are supported.`,
       );
     }
@@ -118,31 +117,22 @@ export const movieAction: BottAction = createAction(
       { type: "video/mp4" },
     );
 
-    // Create the event first
     const resultEvent = new BottServiceEvent(
       BottActionEventType.ACTION_RESULT,
       {
         detail: {
           id: this.id,
-          name: "movie",
-          result: {
-            prompt,
-          } as Record<string, unknown>,
+          name: "movie"
         },
       },
     );
 
-    // Prepare attachment with the event as parent
-    const attachment = await prepareAttachmentFromFile(
+    resultEvent.attachments = [await prepareAttachmentFromFile(
       file,
       resultEvent,
-    );
+    )];
 
-    // Add attachment to result
-    resultEvent.detail.result.attachment = attachment;
-
-    // Dispatch the fully constructed event
-    dispatchEvent(resultEvent);
+    this.dispatchResult(resultEvent);
   },
   settings,
 );
