@@ -10,3 +10,6 @@ node_modules/
 
 # for agents
 deno.zip
+
+# temporary tools
+actionlint
