@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { STORAGE_MAX_FILE_SIZE } from "@bott/constants";
+import { STORAGE_FILE_SIZE_LIMIT } from "@bott/constants";
 import { BottAttachmentType } from "@bott/model";
 import { extractFromHtml } from "@extractus/article-extractor";
 import TurndownService from "turndown";
@@ -47,8 +47,8 @@ export const prepareHtmlAsMarkdown = async (
   // Consolidate multiple blank lines:
   result = result.replace(/\n\s*\n\s*\n+/g, "\n\n").trim();
 
-  if (result.length > STORAGE_MAX_FILE_SIZE) {
-    result = result.substring(0, STORAGE_MAX_FILE_SIZE) +
+  if (result.length > STORAGE_FILE_SIZE_LIMIT) {
+    result = result.substring(0, STORAGE_FILE_SIZE_LIMIT) +
       "\n\n...(truncated)";
   }
 

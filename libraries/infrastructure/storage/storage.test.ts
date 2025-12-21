@@ -13,20 +13,20 @@ import { STORAGE_DEPLOY_NONCE_LOCATION } from "@bott/constants";
 import { log } from "@bott/log";
 
 import { BottEventType } from "@bott/model";
-import { BottServiceEvent } from "@bott/service";
-import { serviceRegistry } from "@bott/service";
+import { BottServiceEvent } from "@bott/services";
+import { serviceRegistry } from "@bott/services";
 
 import { assertEquals, assertExists } from "@std/assert";
 import { stub } from "@std/testing/mock";
 import { addEvents } from "./data/events/add.ts";
 import { getEvents } from "./data/events/get.ts";
-import { startEventStorageService } from "./data/events/service.ts";
+import { eventStorageService } from "./data/events/service.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
 
 Deno.test("Storage - addEventsData, getEvents", async () => {
-  const tempDir = Deno.makeTempDirSync();
+  const _tempDir = Deno.makeTempDirSync();
 
-  await startEventStorageService({ root: tempDir });
+  eventStorageService.start();
 
   // spaces
   const spaceChatWorld = {
@@ -127,8 +127,8 @@ body { color: blue; }
 \`\`\``;
 
 Deno.test("Storage - prepareHtml", async () => {
-  const tempDir = Deno.makeTempDirSync();
-  await startEventStorageService({ root: tempDir });
+  const _tempDir = Deno.makeTempDirSync();
+  eventStorageService.start();
 
   const inputData = new TextEncoder().encode(htmlInput);
   const result = await prepareHtmlAsMarkdown(
@@ -145,8 +145,8 @@ Deno.test("Storage - prepareHtml", async () => {
 });
 
 Deno.test("Storage - Global Listener Persistence", async () => {
-  const tempDir = Deno.makeTempDirSync();
-  await startEventStorageService({ root: tempDir });
+  const _tempDir = Deno.makeTempDirSync();
+  eventStorageService.start();
 
   // Setup nonce to ensure listener fires
   const nonce = "test-nonce";

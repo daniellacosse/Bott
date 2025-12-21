@@ -9,58 +9,28 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { startActionService } from "@bott/actions";
+import { actionService } from "@bott/actions";
 import {
-  DISCORD_TOKEN,
-  ENABLED_SERVICES,
-  PORT,
-  STORAGE_DEPLOY_NONCE_LOCATION,
-  STORAGE_ROOT,
+  SERVICE_LIST,
+  PORT
 } from "@bott/constants";
-import { startDiscordService } from "@bott/discord";
-import { serviceRegistry } from "@bott/service";
-import { startEventStorageService } from "@bott/storage";
+import { discordService } from "@bott/discord";
+import { BottServicesManager } from "@bott/services";
+import { eventStorageService } from "@bott/storage";
 
-import actions from "./settings/actions.ts";
-import { defaultSettings } from "./settings/main.ts";
-import { startAppService } from "./service.ts";
+import { appService } from "./service/main.ts";
+import { settings } from "./settings/main.ts";
 
 if (import.meta.main) {
-  // Prevent multiple deployments from conflicting with each other.
-  const deploymentNonce = crypto.randomUUID();
-  Deno.mkdirSync(STORAGE_ROOT, { recursive: true });
-  Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_LOCATION, deploymentNonce);
+  const servicesManager = new BottServicesManager(settings);
 
-  serviceRegistry.nonce = deploymentNonce;
+  servicesManager.register(eventStorageService);
+  servicesManager.register(discordService);
+  servicesManager.register(actionService);
+  servicesManager.register(appService);
 
-  if (ENABLED_SERVICES.includes("eventStorage")) {
-    serviceRegistry.register(
-      await startEventStorageService({
-        root: STORAGE_ROOT,
-      }),
-    );
-  }
-
-  if (ENABLED_SERVICES.includes("discord") && DISCORD_TOKEN) {
-    serviceRegistry.register(
-      await startDiscordService({
-        actions,
-        identityToken: DISCORD_TOKEN,
-      }),
-    );
-  }
-
-  if (ENABLED_SERVICES.includes("action")) {
-    const context = { settings: defaultSettings };
-    serviceRegistry.register(
-      await startActionService({ actions, context }),
-    );
-  }
-
-  if (ENABLED_SERVICES.includes("app")) {
-    serviceRegistry.register(
-      await startAppService({ actions }),
-    );
+  for (const serviceName of SERVICE_LIST) {
+    servicesManager.start(serviceName);
   }
 }
 

@@ -15,7 +15,7 @@ import type {
 } from "@bott/actions";
 import { BottActionEventType } from "@bott/actions";
 import type { BottChannel } from "@bott/model";
-import { type BottService, BottServiceEvent } from "@bott/service";
+import { type BottServiceContext, BottServiceEvent } from "@bott/services";
 import {
   ApplicationCommandOptionType,
   ChannelType,
@@ -26,7 +26,7 @@ import {
 
 export async function resolveCommandRequestEvent(
   interaction: ChatInputCommandInteraction,
-  service: BottService,
+  context: BottServiceContext,
 ): Promise<BottActionCallEvent> {
   let channel: BottChannel | undefined = undefined;
 
@@ -55,7 +55,7 @@ export async function resolveCommandRequestEvent(
         interaction.options.data,
       ),
     },
-    user: service.user,
+    user: context.user,
     channel,
   }) as BottActionCallEvent;
 }
@@ -80,7 +80,7 @@ async function extractResolvedOptions(
         {
           const value = interaction.options.getString(opt.name);
           if (value !== null) {
-            options.push({ name: opt.name, value });
+            options.push({ name: opt.name, value, type: "string" });
           }
         }
         break;
@@ -88,7 +88,7 @@ async function extractResolvedOptions(
         {
           const value = interaction.options.getInteger(opt.name);
           if (value !== null) {
-            options.push({ name: opt.name, value });
+            options.push({ name: opt.name, value, type: "number" });
           }
         }
         break;
@@ -96,7 +96,7 @@ async function extractResolvedOptions(
         {
           const value = interaction.options.getBoolean(opt.name);
           if (value !== null) {
-            options.push({ name: opt.name, value });
+            options.push({ name: opt.name, value, type: "boolean" });
           }
         }
         break;
@@ -104,7 +104,7 @@ async function extractResolvedOptions(
         {
           const value = interaction.options.getNumber(opt.name);
           if (value !== null) {
-            options.push({ name: opt.name, value });
+            options.push({ name: opt.name, value, type: "number" });
           }
         }
         break;
@@ -118,7 +118,7 @@ async function extractResolvedOptions(
               type: attachment.contentType ?? undefined,
             });
 
-            options.push({ name: opt.name, value: file });
+            options.push({ name: opt.name, value: file, type: "file" });
           }
         }
         break;

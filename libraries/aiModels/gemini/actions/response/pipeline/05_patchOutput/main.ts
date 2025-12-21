@@ -31,7 +31,7 @@ export const patchOutput: EventPipelineProcessor = async function () {
     this.data.output,
     {
       systemPrompt,
-      responseSchema: getEventSchema(this.action.service.settings),
+      responseSchema: getEventSchema(this.action.service.app),
       pipeline: this,
       useIdentity: false,
     },
@@ -53,7 +53,7 @@ export const patchOutput: EventPipelineProcessor = async function () {
   // bypassing the need for a re-evaluation loop.
   for (const event of this.data.output) {
     this.evaluationState.set(event, {
-      outputReasons: this.action.service.settings.reasons.output,
+      outputReasons: this.action.service.app.response.reasons.output,
     });
   }
 };

@@ -11,51 +11,60 @@
 
 import { BottActionEventType } from "@bott/actions";
 import { log } from "@bott/log";
-import { type BottEvent, BottEventType } from "@bott/model";
-import {
-  addEventListener,
-  type BottService,
-  type BottServiceFactory,
-} from "@bott/service";
+import { BottEvent, BottEventType } from "@bott/model";
+import { type BottService, type BottServiceSettings, createService } from "@bott/services";
 
 import { addEvents } from "./add.ts";
 
-export const startEventStorageService: BottServiceFactory = (): Promise<
-  BottService
-> => {
-  const saveEvent = (event: BottEvent) => {
-    const result = addEvents(event);
-
-    if ("error" in result) {
-      log.error("Failed to add event to database:", result);
-    } else {
-      log.info("Event added to database:", result);
-    }
-  };
-
-  addEventListener(BottEventType.MESSAGE, saveEvent);
-  addEventListener(BottEventType.REPLY, saveEvent);
-  addEventListener(BottEventType.REACTION, saveEvent);
-  addEventListener(
+const settings: BottServiceSettings = {
+  name: "eventStorage",
+  events: new Set([
+    BottEventType.MESSAGE,
+    BottEventType.REPLY,
+    BottEventType.REACTION,
     BottActionEventType.ACTION_CALL,
-    saveEvent,
-  );
-  addEventListener(
     BottActionEventType.ACTION_START,
-    saveEvent,
-  );
-  addEventListener(
     BottActionEventType.ACTION_COMPLETE,
-    saveEvent,
-  );
-  addEventListener(
     BottActionEventType.ACTION_ERROR,
-    saveEvent,
-  );
-  addEventListener(
     BottActionEventType.ACTION_ABORT,
-    saveEvent,
-  );
-
-  return Promise.resolve({ user: { id: "system:storage", name: "Storage" } });
+  ]),
 };
+
+export const eventStorageService: BottService = createService(
+  function () {
+    const saveEvent = (event: BottEvent) => {
+      const result = addEvents(event);
+
+      if ("error" in result) {
+        log.error("Failed to add event to database:", result);
+      } else {
+        log.info("Event added to database:", result);
+      }
+    };
+
+    this.addEventListener(BottEventType.MESSAGE, saveEvent);
+    this.addEventListener(BottEventType.REPLY, saveEvent);
+    this.addEventListener(BottEventType.REACTION, saveEvent);
+    this.addEventListener(
+      BottActionEventType.ACTION_CALL,
+      saveEvent,
+    );
+    this.addEventListener(
+      BottActionEventType.ACTION_START,
+      saveEvent,
+    );
+    this.addEventListener(
+      BottActionEventType.ACTION_COMPLETE,
+      saveEvent,
+    );
+    this.addEventListener(
+      BottActionEventType.ACTION_ERROR,
+      saveEvent,
+    );
+    this.addEventListener(
+      BottActionEventType.ACTION_ABORT,
+      saveEvent,
+    );
+  },
+  settings,
+);

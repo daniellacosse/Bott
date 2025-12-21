@@ -9,20 +9,19 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BOTT_NAME } from "@bott/constants";
-import type { BottGlobalSettings } from "@bott/model";
+import { APP_NAME } from "@bott/constants";
+import type { BottResponseSettings } from "@bott/model";
 
 import ejs from "ejs";
 
-import actions from "./actions.ts";
 import * as reasons from "./reasons.ts";
 
 const identityTemplate = Deno.readTextFileSync(
   new URL("./identity.md.ejs", import.meta.url),
 );
 
-export const defaultSettings: BottGlobalSettings = {
-  identity: ejs.render(identityTemplate, { name: BOTT_NAME }),
+export const settings: BottResponseSettings = {
+  identity: ejs.render(identityTemplate, { name: APP_NAME }),
   reasons: {
     input: [
       reasons.whenAddressed,
@@ -32,5 +31,4 @@ export const defaultSettings: BottGlobalSettings = {
       reasons.ensurePotentialImpact,
     ],
   },
-  actions
-};
+}

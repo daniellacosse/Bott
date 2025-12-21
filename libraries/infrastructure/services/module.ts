@@ -9,14 +9,6 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottService, BottServiceContext } from "./types.ts";
-
-export const createService = (
-  service: BottService,
-  context: BottServiceContext,
-): BottService & { context: BottServiceContext } => {
-  return {
-    ...service,
-    context,
-  };
-};
+export * from "./types.ts";
+export * from "./create.ts";
+export * from "./manager.ts";

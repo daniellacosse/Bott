@@ -37,7 +37,7 @@ export const generateOutput: EventPipelineProcessor = async function () {
     this.data.input,
     {
       systemPrompt,
-      responseSchema: getEventSchema(this.action.service.settings),
+      responseSchema: getEventSchema(this.action.service.app),
       pipeline: this,
     },
   );

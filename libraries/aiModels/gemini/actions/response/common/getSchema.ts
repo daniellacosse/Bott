@@ -14,15 +14,15 @@ import type {
   BottActionParameter,
 } from "@bott/actions";
 import { BottActionEventType } from "@bott/actions";
-import { BottEventType, type BottGlobalSettings } from "@bott/model";
-
+import { BottEventType } from "@bott/model";
+import type { BottServiceSettings } from "@bott/services";
 import {
   type Schema as GeminiStructuredResponseSchema,
   Type as GeminiStructuredResponseType,
 } from "@google/genai";
 
 export const getEventSchema = (
-  settings: BottGlobalSettings,
+  settings: BottServiceSettings,
 ): GeminiStructuredResponseSchema => ({
   type: GeminiStructuredResponseType.ARRAY,
   description:

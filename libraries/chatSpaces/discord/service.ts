@@ -10,20 +10,18 @@
  */
 
 import { Buffer } from "node:buffer";
-import type { BottAction } from "@bott/actions";
+import { SERVICE_DISCORD_TOKEN } from "@bott/constants";
 import {
   BOTT_ATTACHMENT_TYPE_LOOKUP,
-  type BottEvent,
+  BottEvent,
   BottEventType,
   type BottUser,
 } from "@bott/model";
 import {
-  addEventListener,
   type BottService,
-  BottServiceEvent,
-  type BottServiceFactory,
-  dispatchEvent,
-} from "@bott/service";
+  type BottServiceSettings,
+  createService,
+} from "@bott/services";
 import {
   AttachmentBuilder,
   ChannelType,
@@ -49,167 +47,162 @@ const REQUIRED_INTENTS = [
   GatewayIntentBits.MessageContent,
 ];
 
-export const startDiscordService: BottServiceFactory = async ({
-  identityToken: token = "",
-  actions = {},
-}: { identityToken?: string; actions?: Record<string, BottAction> } = {}) => {
-  const client = new Client({ intents: REQUIRED_INTENTS });
+const settings: BottServiceSettings = {
+  name: "discord",
+  events: new Set([
+    BottEventType.MESSAGE,
+    BottEventType.REPLY,
+    BottEventType.REACTION,
+  ]),
+};
 
-  await client.login(token);
+export const discordService: BottService = createService(
+  async function () {
+    const client = new Client({ intents: REQUIRED_INTENTS });
 
-  if (!client.user) {
-    throw new Error("Discord user is not set!");
-  }
-
-  const localService: BottService = {
-    user: {
-      id: client.user.id,
-      name: client.user.username,
-    },
-    events: [
-      BottEventType.MESSAGE,
-      BottEventType.REPLY,
-      BottEventType.REACTION,
-    ],
-  };
-
-  client.on(DiscordEvents.MessageCreate, async (message) => {
-    if (message.channel.type !== ChannelType.GuildText) return;
-
-    const event = (await resolveEventFromMessage(
-      message as Message<true>,
-    )) as BottServiceEvent;
-
-    dispatchEvent(event);
-  });
-
-  client.on(DiscordEvents.MessageReactionAdd, async (reaction) => {
-    const currentChannel = reaction.message.channel;
-    if (currentChannel.type !== ChannelType.GuildText) return;
-
-    const reactor = reaction.users.cache.first();
-    let user: BottUser | undefined;
-    if (reactor) {
-      user = { id: reactor.id, name: reactor.username };
+    if (!SERVICE_DISCORD_TOKEN) {
+      throw new Error("SERVICE_DISCORD_TOKEN is not set");
     }
 
-    let parent: BottEvent | undefined;
-    if (reaction.message.content) {
-      parent = await resolveEventFromMessage(
-        reaction.message as Message<true>,
-      );
+    await client.login(SERVICE_DISCORD_TOKEN);
+
+    if (!client.user) {
+      throw new Error("Discord user is not set!");
     }
 
-    dispatchEvent(
-      new BottServiceEvent(BottEventType.REACTION, {
-        detail: { content: reaction.emoji.toString() },
-        channel: {
-          id: currentChannel.id,
-          name: currentChannel.name,
-          space: {
-            id: currentChannel.guild.id,
-            name: currentChannel.guild.name,
-          },
-        },
-        user,
-        parent,
-      }),
-    );
-  });
+    client.on(DiscordEvents.MessageCreate, async (message) => {
+      if (message.channel.type !== ChannelType.GuildText) return;
 
-  client.on(DiscordEvents.InteractionCreate, async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
+      const event = (await resolveEventFromMessage(
+        message as Message<true>,
+      )) as BottEvent;
 
-    const action = Object.values(actions).find(
-      ({ name }) => interaction.commandName === name,
-    );
+      this.dispatchEvent(event);
+    });
 
-    if (!action) return;
+    client.on(DiscordEvents.MessageReactionAdd, async (reaction) => {
+      const currentChannel = reaction.message.channel;
+      if (currentChannel.type !== ChannelType.GuildText) return;
 
-    dispatchEvent(
-      await resolveCommandRequestEvent(
-        interaction,
-        localService,
-      ),
-    );
-  });
-
-  const forwardSystemEvent = async (
-    event: BottEvent,
-    service?: BottService,
-  ) => {
-    if (!event.channel) return;
-    if (service?.user?.id === localService.user.id) return;
-    if (!service) return;
-
-    const content = event.detail.content as string;
-
-    const channel = await client.channels.fetch(event.channel.id);
-    if (!channel || channel.type !== ChannelType.GuildText) return;
-
-    if (event.type === BottEventType.REACTION && event.parent) {
-      const message = await channel.messages.fetch(
-        event.parent.id,
-      );
-
-      return message.react(content);
-    }
-
-    // Message or Reply (or force reaction)
-    const attachments = event.attachments || [];
-
-    if (!content && attachments.length === 0) return;
-
-    const files = [];
-
-    for (const attachment of attachments) {
-      if (!attachment.raw?.file) {
-        continue;
+      const reactor = reaction.users.cache.first();
+      let user: BottUser | undefined;
+      if (reactor) {
+        user = { id: reactor.id, name: reactor.username };
       }
 
-      files.push(
-        new AttachmentBuilder(
-          Buffer.from(
-            new Uint8Array(await attachment.raw.file.arrayBuffer()),
-          ),
-          {
-            name: `${attachment.id}.${
-              BOTT_ATTACHMENT_TYPE_LOOKUP[
-                attachment.raw.file
-                  .type as keyof typeof BOTT_ATTACHMENT_TYPE_LOOKUP
-              ].toLowerCase()
-            }`,
+      let parent: BottEvent | undefined;
+      if (reaction.message.content) {
+        parent = await resolveEventFromMessage(
+          reaction.message as Message<true>,
+        );
+      }
+
+      this.dispatchEvent(
+        new BottEvent(BottEventType.REACTION, {
+          detail: { content: reaction.emoji.toString() },
+          channel: {
+            id: currentChannel.id,
+            name: currentChannel.name,
+            space: {
+              id: currentChannel.guild.id,
+              name: currentChannel.guild.name,
+            },
           },
+          user,
+          parent,
+        }),
+      );
+    });
+
+    client.on(DiscordEvents.InteractionCreate, async (interaction) => {
+      if (!interaction.isChatInputCommand()) return;
+
+      const action = Object.values(this.settings.actions).find(
+        ({ name }) => interaction.commandName === name,
+      );
+
+      if (!action) return;
+
+      dispatchEvent(
+        await resolveCommandRequestEvent(
+          interaction,
+          this,
         ),
       );
+    });
+
+    const forwardEventToChannelIfNotSelf = async (event: BottEvent) => {
+      if (!event.channel) return;
+      if (event.user?.id === client.user?.id) return;
+
+      const content = event.detail.content as string;
+
+      const channel = await client.channels.fetch(event.channel.id);
+      if (!channel || channel.type !== ChannelType.GuildText) return;
+
+      if (event.type === BottEventType.REACTION && event.parent) {
+        const message = await channel.messages.fetch(
+          event.parent.id,
+        );
+
+        return message.react(content);
+      }
+
+      // Message or Reply (or force reaction)
+      const attachments = event.attachments || [];
+
+      if (!content && attachments.length === 0) return;
+
+      const files = [];
+
+      for (const attachment of attachments) {
+        if (!attachment.raw?.file) {
+          continue;
+        }
+
+        files.push(
+          new AttachmentBuilder(
+            Buffer.from(
+              new Uint8Array(await attachment.raw.file.arrayBuffer()),
+            ),
+            {
+              name: `${attachment.id}.${BOTT_ATTACHMENT_TYPE_LOOKUP[
+                  attachment.raw.file
+                    .type as keyof typeof BOTT_ATTACHMENT_TYPE_LOOKUP
+                ].toLowerCase()
+                }`,
+            },
+          ),
+        );
+      }
+
+      const payload: MessageCreateOptions = { content, files };
+
+      if (event.detail.embed) {
+        // deno-lint-ignore no-explicit-any
+        payload.embeds = [event.detail.embed as JSONEncodable<any>];
+      }
+
+      if (event.type === BottEventType.REPLY && event.parent) {
+        payload.reply = { messageReference: event.parent.id };
+      }
+
+      return channel.send(payload);
+    };
+
+    this.addEventListener(BottEventType.MESSAGE, forwardEventToChannelIfNotSelf);
+    this.addEventListener(BottEventType.REPLY, forwardEventToChannelIfNotSelf);
+    this.addEventListener(BottEventType.REACTION, forwardEventToChannelIfNotSelf);
+
+    const actions = this.settings.actions;
+    if (actions) {
+      // Register actions as commands
+      const body = Object.values(actions).map((cmd) => getCommandJson(cmd));
+      await new REST({ version: "10" }).setToken(SERVICE_DISCORD_TOKEN).put(
+        Routes.applicationCommands(String(client.user.id)),
+        { body },
+      );
     }
-
-    const payload: MessageCreateOptions = { content, files };
-
-    if (event.detail.embed) {
-      // deno-lint-ignore no-explicit-any
-      payload.embeds = [event.detail.embed as JSONEncodable<any>];
-    }
-
-    if (event.type === BottEventType.REPLY && event.parent) {
-      payload.reply = { messageReference: event.parent.id };
-    }
-
-    return channel.send(payload);
-  };
-
-  addEventListener(BottEventType.MESSAGE, forwardSystemEvent);
-  addEventListener(BottEventType.REPLY, forwardSystemEvent);
-  addEventListener(BottEventType.REACTION, forwardSystemEvent);
-
-  if (actions) {
-    // Register actions as commands
-    const body = Object.values(actions).map((cmd) => getCommandJson(cmd));
-    await new REST({ version: "10" }).setToken(token).put(
-      Routes.applicationCommands(String(localService.user.id)),
-      { body },
-    );
-  }
-
-  return localService;
-};
+  },
+  settings,
+);

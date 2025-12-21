@@ -27,7 +27,7 @@
     "@std/testing": "jsr:@std/testing@^1.0.6",
     "@std/text": "jsr:@std/text@^1.0.8",
     "@std/yaml": "jsr:@std/yaml@^0.224.0",
-    "@bott/service": "./libraries/infrastructure/service/module.ts",
+    "@bott/services": "./libraries/infrastructure/services/module.ts",
     "discord.js": "npm:discord.js@^14.19.3",
     "ejs": "npm:ejs@^3.1.7",
     "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2.0.2",
@@ -43,8 +43,8 @@
   "workspace": [
     "./model",
     "./libraries/infrastructure/log",
-    "./libraries/infrastructure/service",
     "./libraries/infrastructure/actions",
+    "./libraries/infrastructure/services",
     "./libraries/infrastructure/storage",
     "./libraries/aiModels/gemini",
     "./libraries/chatSpaces/discord",

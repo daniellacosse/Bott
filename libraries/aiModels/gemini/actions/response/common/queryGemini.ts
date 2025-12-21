@@ -57,7 +57,7 @@ export const queryGemini = async <O>(
     systemInstruction: {
       parts: [
         ...(useIdentity
-          ? [{ text: pipeline.action.service.settings.identity }]
+          ? [{ text: pipeline.action.service.app.response.identity }]
           : []),
         {
           text: systemPrompt,
@@ -65,8 +65,8 @@ export const queryGemini = async <O>(
         {
           text: ejs.render(eventStructure, {
             ...pipeline.action,
-            settings: pipeline.action.service.settings,
-            actions: pipeline.action.service.settings.actions ?? {},
+            settings: pipeline.action.service.app,
+            actions: pipeline.action.service.app.actions ?? {},
           }),
         },
       ],

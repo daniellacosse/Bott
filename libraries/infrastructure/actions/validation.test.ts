@@ -25,8 +25,8 @@ Deno.test("applyParameterDefaults", () => {
   ];
 
   const parameters: BottActionParameterEntry[] = [
-    { name: "p1", value: "value1" },
-    { name: "p4", value: "overridden" },
+    { name: "p1", value: "value1", type: "string" },
+    { name: "p4", value: "overridden", type: "string" },
   ];
 
   const result = applyParameterDefaults(schema, parameters);
@@ -44,8 +44,8 @@ Deno.test("validateParameters - Valid parameters", () => {
     { name: "age", type: "number" },
   ];
   const params: BottActionParameterEntry[] = [
-    { name: "name", value: "Alice" },
-    { name: "age", value: 30 },
+    { name: "name", value: "Alice", type: "string" },
+    { name: "age", value: 30, type: "number" },
   ];
   validateParameters(schema, params);
 });
@@ -67,7 +67,7 @@ Deno.test("validateParameters - Invalid type (string expected)", () => {
     { name: "name", type: "string" },
   ];
   const params: BottActionParameterEntry[] = [
-    { name: "name", value: 123 },
+    { name: "name", value: 123, type: "number" },
   ];
   assertThrows(
     () => validateParameters(schema, params),
@@ -81,7 +81,7 @@ Deno.test("validateParameters - Invalid type (number expected)", () => {
     { name: "age", type: "number" },
   ];
   const params: BottActionParameterEntry[] = [
-    { name: "age", value: "30" },
+    { name: "age", value: "30", type: "string" },
   ];
   assertThrows(
     () => validateParameters(schema, params),
@@ -95,7 +95,7 @@ Deno.test("validateParameters - Invalid value (not allowed)", () => {
     { name: "color", type: "string", allowedValues: ["red", "blue"] },
   ];
   const params: BottActionParameterEntry[] = [
-    { name: "color", value: "green" },
+    { name: "color", value: "green", type: "string" },
   ];
   assertThrows(
     () => validateParameters(schema, params),
@@ -107,7 +107,7 @@ Deno.test("validateParameters - Invalid value (not allowed)", () => {
 Deno.test("validateParameters - Unknown parameter", () => {
   const schema: BottActionParameter[] = [];
   const params: BottActionParameterEntry[] = [
-    { name: "extra", value: "value" },
+    { name: "extra", value: "value", type: "string" },
   ];
   // Assuming strict validation, unknown parameters might be ignored or error.
   // Let's implement strict validation for now, or just ignore unknown ones?

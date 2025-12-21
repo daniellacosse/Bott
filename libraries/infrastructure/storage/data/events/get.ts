@@ -10,7 +10,7 @@
  */
 
 import type { BottChannel } from "@bott/model";
-import { BottServiceEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/services";
 
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";

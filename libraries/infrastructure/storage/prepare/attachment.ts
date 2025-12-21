@@ -10,9 +10,9 @@
  */
 
 import {
-  STORAGE_FETCH_TIMEOUT_MS,
+  STORAGE_FETCH_TIME_LIMIT_MS,
   STORAGE_FILE_ROOT,
-  STORAGE_MAX_TEXT_FILE_WORDS,
+  STORAGE_FILE_WORD_LIMIT,
 } from "@bott/constants";
 import { log } from "@bott/log";
 import {
@@ -50,7 +50,7 @@ export async function prepareAttachmentFromUrl(
   log.debug(`Fetching attachment from URL: ${sourceUrl}`);
 
   const response = await fetch(sourceUrl, {
-    signal: AbortSignal.timeout(STORAGE_FETCH_TIMEOUT_MS),
+    signal: AbortSignal.timeout(STORAGE_FETCH_TIME_LIMIT_MS),
     redirect: "follow",
     headers: {
       "User-Agent": "Bott",
@@ -206,8 +206,8 @@ async function compressFile(
       const words = textContent.split(/\s+/);
 
       let data;
-      if (words.length > STORAGE_MAX_TEXT_FILE_WORDS) {
-        textContent = words.slice(0, STORAGE_MAX_TEXT_FILE_WORDS).join(" ") +
+      if (words.length > STORAGE_FILE_WORD_LIMIT) {
+        textContent = words.slice(0, STORAGE_FILE_WORD_LIMIT).join(" ") +
           "\n\n...(truncated)";
         data = new TextEncoder().encode(textContent);
       } else {

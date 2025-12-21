@@ -13,7 +13,7 @@ import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import { GEMINI_MOVIE_MODEL, RATE_LIMIT_VIDEOS } from "@bott/constants";
 import { BottEventType } from "@bott/model";
-import { BottServiceEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/services";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
   type GenerateVideosOperation,

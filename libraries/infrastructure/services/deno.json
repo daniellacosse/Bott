@@ -1,5 +1,5 @@
 {
-  "name": "@bott/service",
+  "name": "@bott/services",
   "exports": "./module.ts",
   "private": true
 }

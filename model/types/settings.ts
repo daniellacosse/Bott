@@ -9,18 +9,16 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottAction } from "@bott/actions";
 import type { BottReason } from "./reasons.ts";
 
 /**
  * Defines the structure for global settings in Bott.
  * These settings apply across all spaces and channels unless overridden.
  */
-export interface BottGlobalSettings {
+export interface BottResponseSettings {
   identity: string;
   reasons: {
     input: BottReason[];
     output: BottReason[];
   };
-  actions: Record<string, BottAction>;
 }

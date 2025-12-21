@@ -10,101 +10,108 @@
  */
 
 import type {
-  BottAction,
   BottActionCallEvent,
   BottActionAbortEvent,
 } from "@bott/actions";
 import { BottActionEventType } from "@bott/actions";
-import type { BottEvent, BottUser } from "@bott/model";
+import { BottEvent, type BottUser } from "@bott/model";
 import {
-  addEventListener,
-  BottServiceEvent,
-  type BottServiceContext,
-  type BottServiceFactory,
-  dispatchEvent,
-} from "@bott/service";
+  type BottService,
+  type BottServiceSettings,
+  createService,
+} from "@bott/services";
 import { commit, sql } from "@bott/storage";
 import { applyParameterDefaults, validateParameters } from "./validation.ts";
 
-const ACTION_SERVICE_USER: BottUser = {
-  id: "system:actions",
-  name: "Actions",
+const settings: BottServiceSettings = {
+  name: "actions",
+  events: new Set([
+    BottActionEventType.ACTION_CALL,
+    BottActionEventType.ACTION_ABORT,
+    BottActionEventType.ACTION_START,
+    BottActionEventType.ACTION_OUTPUT,
+    BottActionEventType.ACTION_COMPLETE,
+    BottActionEventType.ACTION_ERROR,
+  ]),
 };
 
-export const startActionService: BottServiceFactory = (options) => {
-  const { actions, context } = options as {
-    actions: Record<string, BottAction>;
-    context: BottServiceContext;
-  };
-  const controllerMap = new Map<string, AbortController>();
+const actionUser: BottUser = {
+  id: "actions",
+  name: "actions",
+};
 
-  addEventListener(
-    BottActionEventType.ACTION_CALL,
-    async (event: BottActionCallEvent) => {
-      const controller = new AbortController();
+export const actionService: BottService = createService(
+  function () {
+    const controllerMap = new Map<string, AbortController>();
 
-      const action = actions[event.detail.name];
-      if (!action) {
-        return dispatchEvent(
-          new BottServiceEvent(BottActionEventType.ACTION_ERROR, {
-            detail: {
-              id: event.detail.id,
-              name: event.detail.name,
-              error: new Error(`Action ${event.detail.name} not found`),
-            },
-            user: ACTION_SERVICE_USER,
-            channel: event.channel,
-          }),
-        );
-      }
+    this.addEventListener(
+      BottActionEventType.ACTION_CALL,
+      async (event: BottActionCallEvent) => {
+        const controller = new AbortController();
 
-      if (controllerMap.has(event.detail.id)) {
-        return dispatchEvent(
-          new BottServiceEvent(BottActionEventType.ACTION_ERROR, {
-            detail: {
-              id: event.detail.id,
-              name: event.detail.name,
-              error: new Error(
-                `Action ${event.detail.name} already in progress`,
-              ),
-            },
-            user: ACTION_SERVICE_USER,
-            channel: event.channel,
-          }),
-        );
-      }
-
-      if (!event.channel) {
-        return dispatchEvent(
-          new BottServiceEvent(BottActionEventType.ACTION_ERROR, {
-            detail: {
-              id: event.detail.id,
-              name: event.detail.name,
-              error: new Error(`Action calls require a channel`),
-            },
-            user: ACTION_SERVICE_USER,
-          }),
-        );
-      }
-
-      controllerMap.set(event.detail.id, controller);
-
-      try {
-        let parameters = event.detail.parameters;
-
-        if (action.parameters) {
-          parameters = applyParameterDefaults(
-            action.parameters,
-            event.detail.parameters,
+        const action = this.settings.actions[event.detail.name];
+        if (!action) {
+          return dispatchEvent(
+            new BottEvent(BottActionEventType.ACTION_ERROR, {
+              detail: {
+                id: event.detail.id,
+                name: event.detail.name,
+                error: new Error(`Action ${event.detail.name} not found`),
+              },
+              user: actionUser,
+              channel: event.channel,
+            }),
           );
-          validateParameters(action.parameters, parameters);
         }
 
-        if (action.limitPerMonth) {
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        if (controllerMap.has(event.detail.id)) {
+          return this.dispatchEvent(
+            new BottEvent(BottActionEventType.ACTION_ERROR, {
+              detail: {
+                id: event.detail.id,
+                name: event.detail.name,
+                error: new Error(
+                  `Action ${event.detail.name} already in progress`,
+                ),
+              },
+              user: actionUser,
+              channel: event.channel,
+            }),
+          );
+        }
 
-          const result = commit(sql`
+        if (!event.channel) {
+          return this.dispatchEvent(
+            new BottEvent(BottActionEventType.ACTION_ERROR, {
+              detail: {
+                id: event.detail.id,
+                name: event.detail.name,
+                error: new Error(`Action calls require a channel`),
+              },
+              user: actionUser,
+              channel: event.channel,
+            }),
+          );
+        }
+
+        controllerMap.set(event.detail.id, controller);
+
+        try {
+          let parameters = event.detail.parameters;
+
+          if (action.parameters) {
+            parameters = applyParameterDefaults(
+              action.parameters,
+              event.detail.parameters,
+            );
+            validateParameters(action.parameters, parameters);
+          }
+
+          if (action.limitPerMonth) {
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+            const result = commit(sql`
           select count(*) as count
           from events
           where type = ${BottActionEventType.ACTION_START}
@@ -112,109 +119,108 @@ export const startActionService: BottServiceFactory = (options) => {
             and created_at > ${oneMonthAgo.toISOString()}
         `);
 
-          if ("error" in result) {
-            throw result.error;
+            if ("error" in result) {
+              throw result.error;
+            }
+
+            const count = result.reads[0]?.count as number;
+
+            if (count >= action.limitPerMonth) {
+              throw new Error(
+                `Rate limit exceeded for action '${action.name}'. Limit: ${action.limitPerMonth}/month. Usage: ${count}`,
+              );
+            }
           }
 
-          // deno-lint-ignore no-explicit-any
-          const count = (result.reads[0] as any).count;
-
-          if (count >= action.limitPerMonth) {
-            throw new Error(
-              `Rate limit exceeded for action '${action.name}'. Limit: ${action.limitPerMonth}/month. Usage: ${count}`,
-            );
-          }
-        }
-
-        dispatchEvent(
-          new BottServiceEvent(BottActionEventType.ACTION_START, {
-            detail: {
-              id: event.detail.id,
-              name: action.name,
-            },
-            user: ACTION_SERVICE_USER,
-            channel: event.channel,
-          }),
-        );
-
-        let callResult: BottEvent | void;
-        try {
-          const iterator = action.call(
-            {
-              id: event.detail.id,
-              signal: controller.signal,
-              settings: action,
-              service: context,
-              user: event.user,
+          this.dispatchEvent(
+            new BottEvent(BottActionEventType.ACTION_START, {
+              detail: {
+                id: event.detail.id,
+                name: action.name,
+              },
+              user: actionUser,
               channel: event.channel,
-            },
-            parameters,
+            }),
           );
 
-          let next = await iterator.next();
-          while (!next.done) {
-            const yieldedEvent = next.value;
-            yieldedEvent.user = ACTION_SERVICE_USER;
-            yieldedEvent.channel = event.channel;
-            dispatchEvent(yieldedEvent);
-            next = await iterator.next();
+          let callResult: BottEvent | void;
+          try {
+            const iterator = action.call(
+              {
+                id: event.detail.id,
+                signal: controller.signal,
+                settings: action,
+                service: this,
+                user: event.user,
+                channel: event.channel,
+              },
+              parameters,
+            );
+
+            let next = await iterator.next();
+            while (!next.done) {
+              const yieldedEvent = next.value;
+              yieldedEvent.user = actionUser;
+              yieldedEvent.channel = event.channel;
+              dispatchEvent(yieldedEvent);
+              next = await iterator.next();
+            }
+            callResult = next.value;
+          } catch (e) {
+            throw e;
           }
-          callResult = next.value;
-        } catch (e) {
-          throw e;
+
+          if (callResult) {
+            const resultEvent = new BottEvent(
+              BottActionEventType.ACTION_OUTPUT,
+              {
+                detail: {
+                  name: action.name,
+                  id: event.detail.id,
+                  event: callResult,
+                  shouldInterpretOutput: action.shouldInterpretOutput,
+                  shouldForwardOutput: action.shouldForwardOutput,
+                },
+                user: actionUser,
+                channel: event.channel,
+              },
+            );
+            this.dispatchEvent(resultEvent);
+          }
+
+          this.dispatchEvent(
+            new BottEvent(BottActionEventType.ACTION_COMPLETE, {
+              detail: {
+                id: event.detail.id,
+                name: action.name,
+              },
+              user: actionUser,
+              channel: event.channel,
+            }),
+          );
+        } catch (error) {
+          this.dispatchEvent(
+            new BottEvent(BottActionEventType.ACTION_ERROR, {
+              detail: {
+                id: event.detail.id,
+                name: event.detail.name,
+                error: error as Error,
+              },
+              user: actionUser,
+              channel: event.channel,
+            }),
+          );
         }
 
-        if (callResult) {
-          const resultEvent = new BottServiceEvent(BottActionEventType.ACTION_OUTPUT, {
-            detail: {
-              name: action.name,
-              id: event.detail.id,
-              event: callResult,
-              shouldInterpretOutput: action.shouldInterpretOutput,
-              shouldForwardOutput: action.shouldForwardOutput,
-            },
-            user: ACTION_SERVICE_USER,
-            channel: event.channel,
-          });
-          dispatchEvent(resultEvent);
-        }
+        controllerMap.delete(event.detail.id);
+      },
+    );
 
-        dispatchEvent(
-          new BottServiceEvent(BottActionEventType.ACTION_COMPLETE, {
-            detail: {
-              id: event.detail.id,
-              name: action.name,
-            },
-            user: ACTION_SERVICE_USER,
-            channel: event.channel,
-          }),
-        );
-      } catch (error) {
-        dispatchEvent(
-          new BottServiceEvent(BottActionEventType.ACTION_ERROR, {
-            detail: {
-              id: event.detail.id,
-              name: event.detail.name,
-              error: error as Error,
-            },
-            user: ACTION_SERVICE_USER,
-            channel: event.channel,
-          }),
-        );
-      }
-
-      controllerMap.delete(event.detail.id);
-    },
-  );
-
-  addEventListener(
-    BottActionEventType.ACTION_ABORT,
-    (event: BottActionAbortEvent) =>
-      controllerMap.get(event.detail.id)?.abort(),
-  );
-
-  return Promise.resolve({
-    user: ACTION_SERVICE_USER,
-    events: Object.values(BottActionEventType),
-  });
-};
+    this.addEventListener(
+      BottActionEventType.ACTION_ABORT,
+      (event: BottActionAbortEvent) =>
+        controllerMap.get(event.detail.id)?.abort(),
+    );
+  },
+  settings,
+);

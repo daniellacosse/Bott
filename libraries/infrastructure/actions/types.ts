@@ -15,7 +15,7 @@ import type {
   BottUser,
   NonEmptyArray,
 } from "@bott/model";
-import type { BottServiceContext } from "@bott/service";
+import type { BottServiceContext } from "@bott/services";
 
 export enum BottActionEventType {
   ACTION_CALL = "action:call",
@@ -41,22 +41,22 @@ export type BottActionHandler = (
   >,
 ) => AsyncGenerator<BottEvent, BottEvent | void, void>;
 
-export type BottActionContext = {
-  id: string;
-  signal: AbortSignal;
-  service: BottServiceContext;
-  settings: BottActionSettings;
-  user?: BottUser;
-  channel?: BottChannel;
-};
-
 export type BottActionSettings = {
-  name: string;
   instructions: string;
   limitPerMonth?: number;
+  name: string;
   parameters?: NonEmptyArray<BottActionParameter>;
-  shouldInterpretOutput?: boolean;
   shouldForwardOutput?: boolean;
+  shouldInterpretOutput?: boolean;
+};
+
+export type BottActionContext = {
+  channel?: BottChannel;
+  id: string;
+  service: BottServiceContext;
+  settings: BottActionSettings;
+  signal: AbortSignal;
+  user?: BottUser;
 };
 
 export type BottActionParameterValue = string | number | boolean | File;

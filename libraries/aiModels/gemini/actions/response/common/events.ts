@@ -14,7 +14,7 @@ import {
   INPUT_EVENT_COUNT_LIMIT,
   INPUT_EVENT_TIME_LIMIT_MS,
   INPUT_FILE_AUDIO_COUNT_LIMIT,
-  INPUT_FILE_TOKEN_LIMIT,
+  ACTION_RESPONSE_FILE_TOKEN_LIMIT,
   INPUT_FILE_VIDEO_COUNT_LIMIT,
 } from "@bott/constants";
 import {
@@ -22,7 +22,7 @@ import {
   type BottEvent,
   type BottEventAttachment,
 } from "@bott/model";
-import type { BottServiceEvent } from "@bott/service";
+import type { BottServiceEvent } from "@bott/services";
 import { getEvents } from "@bott/storage";
 import type { EventPipelineContext } from "../pipeline/types.ts";
 
@@ -60,7 +60,7 @@ export const prepareInputEvents = (events: BottEvent[]): BottEvent[] => {
       const newTotalTokens = resourceAccumulator.tokens +
         attachment.compressed.file.size;
 
-      if (newTotalTokens > INPUT_FILE_TOKEN_LIMIT) continue;
+      if (newTotalTokens > ACTION_RESPONSE_FILE_TOKEN_LIMIT) continue;
 
       const isAudio =
         attachment.compressed.file.type === BottAttachmentType.MP3 ||

@@ -19,12 +19,13 @@ import {
   type BottReason,
   type BottUser,
 } from "@bott/model";
-import { BottServiceEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/services";
+import type { BottServiceContext } from "@bott/services";
+
 import { faker } from "@faker-js/faker";
 
-import { focusInput } from "./01_focusInput/main.ts";
-
 // Import the processor to test
+import { focusInput } from "./01_focusInput/main.ts";
 import { generateOutput } from "./02_generateOutput/main.ts";
 import { segmentOutput } from "./03_segmentOutput/main.ts";
 import { filterOutput } from "./04_filterOutput/main.ts";
@@ -46,7 +47,9 @@ if (import.meta.main) {
 
   for (const processor of pipelineToTest) {
     log.perf(processor.name);
-    result = await processor.call(createMockContext());
+    const context = createMockContext();
+    await processor.call(context);
+    result = context;
     log.perf(processor.name);
   }
 
@@ -224,15 +227,19 @@ export function createMockContext(): EventPipelineContext {
         instructions: "test instructions",
       },
       service: {
-        settings: {
-          identity: "I am a test bot.",
-          reasons: {
-            input: [inputRule],
-            output: [outputRule],
+        user: bott,
+        app: {
+          response: {
+            identity: "I am a test bot.",
+            reasons: {
+              input: [inputRule],
+              output: [outputRule],
+            },
           },
           actions: {},
+          events: new Set(),
         },
-      },
+      } as unknown as BottServiceContext,
       user: bott,
       channel,
     },

@@ -10,7 +10,7 @@
  */
 
 import { BottEventType } from "@bott/model";
-import { BottServiceEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/services"";
 import { assertEquals } from "@std/assert/equals";
 import { createMockContext, createMockUser } from "../pipeline/e2e.ts";
 import {

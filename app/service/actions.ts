@@ -12,6 +12,7 @@
 import type { BottAction } from "@bott/actions";
 import { createAction } from "@bott/actions";
 import {
+  GEMINI_AVAILABLE,
   GEMINI_EVENT_MODEL,
   GEMINI_MOVIE_MODEL,
   GEMINI_PHOTO_MODEL,
@@ -25,29 +26,31 @@ import {
   songAction,
 } from "@bott/gemini";
 
-const actions: Record<string, BottAction> = {};
+const _actions: Record<string, BottAction> = {};
 
-if (GEMINI_EVENT_MODEL && GEMINI_RATING_MODEL) {
-  actions[responseAction.name] = responseAction;
+if (GEMINI_AVAILABLE) {
+  if (GEMINI_EVENT_MODEL && GEMINI_RATING_MODEL) {
+    _actions[responseAction.name] = responseAction;
+  }
+
+  if (GEMINI_SONG_MODEL) {
+    _actions[songAction.name] = songAction;
+  }
+
+  if (GEMINI_PHOTO_MODEL) {
+    _actions[photoAction.name] = photoAction;
+  }
+
+  if (GEMINI_MOVIE_MODEL) {
+    _actions[movieAction.name] = movieAction;
+  }
 }
 
-if (GEMINI_SONG_MODEL) {
-  actions[songAction.name] = songAction;
-}
-
-if (GEMINI_PHOTO_MODEL) {
-  actions[photoAction.name] = photoAction;
-}
-
-if (GEMINI_MOVIE_MODEL) {
-  actions[movieAction.name] = movieAction;
-}
-
-actions.help = createAction(async function* () {
+_actions.help = createAction(async function* () {
   // TODO
 }, {
   name: "help",
   instructions: "Show help information.",
 });
 
-export default actions;
+export const actions = _actions;

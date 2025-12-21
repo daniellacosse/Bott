@@ -15,11 +15,11 @@ import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import {
   GEMINI_SONG_MODEL,
-  RATE_LIMIT_MUSIC,
-  SONG_GENERATION_DURATION_SECONDS,
+  ACTION_RATE_LIMIT_MUSIC,
+  ACTION_SONG_DURATION_SECONDS,
 } from "@bott/constants";
 import { BottEventType } from "@bott/model";
-import { BottServiceEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/services";
 import { prepareAttachmentFromFile } from "@bott/storage";
 
 import _gemini from "../client.ts";
@@ -27,7 +27,7 @@ import _gemini from "../client.ts";
 const settings: BottActionSettings = {
   name: "song",
   instructions: "Generate a song based on the prompt.",
-  limitPerMonth: RATE_LIMIT_MUSIC,
+  limitPerMonth: ACTION_RATE_LIMIT_MUSIC,
   shouldForwardOutput: true,
   parameters: [{
     name: "prompt",
@@ -38,7 +38,7 @@ const settings: BottActionSettings = {
     name: "duration",
     type: "number",
     description: "Duration of the song in seconds",
-    defaultValue: SONG_GENERATION_DURATION_SECONDS,
+    defaultValue: ACTION_SONG_DURATION_SECONDS,
     required: false,
   }],
 };
