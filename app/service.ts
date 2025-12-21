@@ -20,46 +20,91 @@ import {
 } from "@bott/service";
 
 export const startAppService: BottServiceFactory = () => {
-  const triggerEventGenerationPipeline = (
-    event: BottServiceEvent,
-  ) => {
-    if (!event.channel) return;
-    if (!event.user) return;
-    if (
-      event.type === BottActionEventType.ACTION_COMPLETE &&
-      event.detail.name === "simulateResponseForChannel"
-    ) return;
+  const channelSimulations = new Map<string, string>();
+
+  const callResponseSimulation = (event: BottServiceEvent) => {
+    if (event.channel) {
+      const currentSimulationId = channelSimulations.get(event.channel.id);
+
+      if (currentSimulationId) {
+        dispatchEvent(
+          new BottServiceEvent(
+            BottActionEventType.ACTION_ABORT,
+            {
+              detail: {
+                id: currentSimulationId,
+                name: "simulateResponseForChannel",
+              },
+              user: BOTT_USER,
+            },
+          ),
+        );
+      }
+    }
+
+    const id = crypto.randomUUID();
+
+    if (event.channel) {
+      channelSimulations.set(event.channel.id, id);
+    }
 
     dispatchEvent(
       new BottServiceEvent(
         BottActionEventType.ACTION_CALL,
         {
+          ...event,
           detail: {
-            id: crypto.randomUUID(),
+            id,
             name: "simulateResponseForChannel",
-            parameters: [{
-              name: "channelId",
-              value: event.channel.id,
-            }],
           },
-          user: event.user,
-          channel: event.channel,
         },
       ),
     );
   };
 
-  addEventListener(BottEventType.MESSAGE, triggerEventGenerationPipeline);
-  addEventListener(BottEventType.REPLY, triggerEventGenerationPipeline);
-  addEventListener(BottEventType.REACTION, triggerEventGenerationPipeline);
-  addEventListener(
-    BottActionEventType.ACTION_COMPLETE,
-    triggerEventGenerationPipeline,
-  );
+  const cleanupSimulation = (event: BottServiceEvent) => {
+    if (!event.channel) return;
+
+    const currentId = channelSimulations.get(event.channel.id);
+    if (currentId === event.detail.id) {
+      channelSimulations.delete(event.channel.id);
+    }
+  };
+
+  addEventListener(BottActionEventType.ACTION_COMPLETE, cleanupSimulation);
+  addEventListener(BottActionEventType.ACTION_ERROR, cleanupSimulation);
+
+  const triggerResponseIfNotSelf = (
+    event: BottServiceEvent,
+  ) => {
+    if (!event.user || event.user.id === BOTT_USER.id) return;
+
+    // Prevent loops: don't respond to our own errors/aborts for simulation
+    if (event.type === BottActionEventType.ACTION_ERROR && event.detail.name === "simulateResponseForChannel") return;
+
+    callResponseSimulation(event);
+  };
+
+  addEventListener(BottEventType.MESSAGE, triggerResponseIfNotSelf);
+  addEventListener(BottEventType.REPLY, triggerResponseIfNotSelf);
+  addEventListener(BottEventType.REACTION, triggerResponseIfNotSelf);
   addEventListener(
     BottActionEventType.ACTION_ERROR,
-    triggerEventGenerationPipeline,
+    triggerResponseIfNotSelf,
   );
+
+  addEventListener(BottActionEventType.ACTION_OUTPUT, (event) => {
+    const outputEvent = event.detail.event as BottServiceEvent;
+
+    if (event.detail.shouldInterpretOutput) {
+      callResponseSimulation(outputEvent);
+    }
+
+    if (event.detail.shouldForwardOutput) {
+      dispatchEvent(outputEvent);
+    }
+  });
+
 
   return Promise.resolve({
     user: BOTT_USER,

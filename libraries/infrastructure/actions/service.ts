@@ -70,6 +70,19 @@ export const startActionService: BottServiceFactory = (options) => {
         );
       }
 
+      if (!event.channel) {
+        return dispatchEvent(
+          new BottServiceEvent(BottActionEventType.ACTION_ERROR, {
+            detail: {
+              id: event.detail.id,
+              name: event.detail.name,
+              error: new Error(`Action calls require a channel`),
+            },
+            user: ACTION_SERVICE_USER,
+          }),
+        );
+      }
+
       controllerMap.set(event.detail.id, controller);
 
       try {
@@ -128,6 +141,8 @@ export const startActionService: BottServiceFactory = (options) => {
               signal: controller.signal,
               settings: action,
               globalSettings: options as unknown as BottGlobalSettings, // TODO: Fix
+              user: event.user,
+              channel: event.channel,
             },
             parameters,
           );
@@ -151,6 +166,8 @@ export const startActionService: BottServiceFactory = (options) => {
               name: action.name,
               id: event.detail.id,
               event: callResult,
+              shouldInterpretOutput: action.shouldInterpretOutput,
+              shouldForwardOutput: action.shouldForwardOutput,
             },
             user: ACTION_SERVICE_USER,
             channel: event.channel,

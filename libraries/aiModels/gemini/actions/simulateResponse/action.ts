@@ -35,20 +35,13 @@ const MS_IN_MINUTE = 60 * 1000;
 const settings: BottActionSettings = {
   name: "simulateResponseForChannel",
   instructions: "Simulate a response for a channel.",
-  parameters: [
-    {
-      name: "channelId",
-      type: "string",
-      description: "The ID of the channel to simulate a response for.",
-      required: true,
-    },
-  ],
+  shouldForwardOutput: true,
 };
 
 export const responseAction: BottAction = createAction(
-  async function* ({ channelId }) {
+  async function* () {
     const eventHistoryIds = getEventIdsForChannel(
-      channelId as string,
+      this.channel!.id,
     );
     const channelHistory = await getEvents(...eventHistoryIds);
 

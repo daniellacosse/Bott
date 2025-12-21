@@ -13,12 +13,12 @@ import { Buffer } from "node:buffer";
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { BottActionEventType } from "@bott/actions";
 import {
   GEMINI_SONG_MODEL,
   RATE_LIMIT_MUSIC,
   SONG_GENERATION_DURATION_SECONDS,
 } from "@bott/constants";
+import { BottEventType } from "@bott/model";
 import { BottServiceEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 
@@ -28,6 +28,7 @@ const settings: BottActionSettings = {
   name: "song",
   instructions: "Generate a song based on the prompt.",
   limitPerMonth: RATE_LIMIT_MUSIC,
+  shouldForwardOutput: true,
   parameters: [{
     name: "prompt",
     type: "string",
@@ -116,22 +117,19 @@ export const songAction: BottAction = createAction(
     const wavHeader = writeWavHeader(48000, 2, 16, allPcmData.length); // Lyria is 48kHz Stereo 16-bit
     const finalWav = Buffer.concat([wavHeader, allPcmData]);
 
-    const file = new File([finalWav], "song.wav", { type: "audio/wav" });
+    const file = new File([finalWav], "song.wav", { type: "audio/wav" }); // Keep file creation
 
+    // Create the event first
     const resultEvent = new BottServiceEvent(
-      BottActionEventType.ACTION_OUTPUT,
+      BottEventType.MESSAGE,
       {
         detail: {
-          id: this.id,
-          name: "song"
+          content: "Here is your song:",
         },
+        user: this.user,
+        channel: this.channel,
       },
     );
-
-    resultEvent.attachments = [await prepareAttachmentFromFile(
-      file,
-      resultEvent,
-    )];
 
     resultEvent.attachments = [await prepareAttachmentFromFile(
       file,

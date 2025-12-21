@@ -11,8 +11,8 @@
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { BottActionEventType } from "@bott/actions";
 import { GEMINI_PHOTO_MODEL, RATE_LIMIT_PHOTOS } from "@bott/constants";
+import { BottEventType } from "@bott/model";
 import { BottServiceEvent } from "@bott/service";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
@@ -30,6 +30,7 @@ const settings: BottActionSettings = {
   name: "photo",
   instructions: "Generate a photo based on the prompt.",
   limitPerMonth: RATE_LIMIT_PHOTOS,
+  shouldForwardOutput: true,
   parameters: [{
     name: "prompt",
     type: "string",
@@ -118,12 +119,13 @@ export const photoAction: BottAction = createAction(
 
     // Create the event first
     const resultEvent = new BottServiceEvent(
-      BottActionEventType.ACTION_OUTPUT,
+      BottEventType.MESSAGE,
       {
         detail: {
-          id: this.id,
-          name: "photo"
+          content: "Here is your photo:",
         },
+        user: this.user, // Or system user? Usually actions output as the bot.
+        channel: this.channel,
       },
     );
 

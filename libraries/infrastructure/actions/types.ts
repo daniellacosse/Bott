@@ -46,6 +46,8 @@ export type BottActionContext = {
   signal: AbortSignal;
   settings: BottActionSettings;
   globalSettings: BottGlobalSettings;
+  user?: BottUser;
+  channel?: BottChannel;
 };
 
 export type BottActionSettings = {
@@ -53,6 +55,8 @@ export type BottActionSettings = {
   instructions: string;
   limitPerMonth?: number;
   parameters?: NonEmptyArray<BottActionParameter>;
+  shouldInterpretOutput?: boolean;
+  shouldForwardOutput?: boolean;
 };
 
 export type BottActionParameterValue = string | number | boolean | File;
@@ -122,6 +126,8 @@ export type BottActionOutputEvent = BottEvent<
     name: string;
     id: string;
     event: BottEvent;
+    shouldInterpretOutput?: boolean;
+    shouldForwardOutput?: boolean;
   }
 >;
 
