@@ -76,7 +76,7 @@ Deno.test("_transformBottEventToContent - basic event", async () => {
   const context = createMockContext();
   const event = new BottServiceEvent(BottEventType.MESSAGE, {
     user: createMockUser(),
-    channel: context.channel,
+    channel: context.action.channel!,
     detail: { content: "test" },
   });
 

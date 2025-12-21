@@ -29,7 +29,7 @@ const eventStructure = await Deno.readTextFile(
 
 export interface QueryGeminiOptions {
   model?: string;
-  pipelineContext: EventPipelineContext;
+  pipeline: EventPipelineContext;
   responseSchema?: Schema;
   systemPrompt: string;
   useIdentity?: boolean;
@@ -40,7 +40,7 @@ export const queryGemini = async <O>(
   {
     systemPrompt,
     responseSchema,
-    pipelineContext: context,
+    pipeline,
     model = GEMINI_EVENT_MODEL,
     useIdentity = true,
   }: QueryGeminiOptions,
@@ -52,18 +52,22 @@ export const queryGemini = async <O>(
   }
 
   const config: GenerateContentConfig = {
-    abortSignal: context.actionContext.signal,
+    abortSignal: pipeline.action.signal,
     candidateCount: 1,
     systemInstruction: {
       parts: [
         ...(useIdentity
-          ? [{ text: context.actionContext.globalSettings.identity }]
+          ? [{ text: pipeline.action.service.settings.identity }]
           : []),
         {
           text: systemPrompt,
         },
         {
-          text: ejs.render(eventStructure, context),
+          text: ejs.render(eventStructure, {
+            ...pipeline.action,
+            settings: pipeline.action.service.settings,
+            actions: pipeline.action.service.settings.actions ?? {},
+          }),
         },
       ],
     },
@@ -80,7 +84,7 @@ export const queryGemini = async <O>(
   const response = await gemini.models.generateContent({
     model,
     contents: typeof input === "string" ? [input] : await Promise.all(
-      input.map((event) => _transformBottEventToContent(event, context)),
+      input.map((event) => _transformBottEventToContent(event, pipeline)),
     ),
     config,
   });
@@ -144,7 +148,7 @@ export const _transformBottEventToContent = async (
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
   const content: Content = {
-    role: (event.user && event.user.id === context.actionContext.user?.id)
+    role: (event.user && event.user.id === context.action.user?.id)
       ? "model"
       : "user",
     parts,

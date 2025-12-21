@@ -19,14 +19,14 @@ const systemPrompt = await Deno.readTextFile(
   new URL("./systemPrompt.md", import.meta.url),
 );
 
-export const segmentOutput: EventPipelineProcessor = async (context) => {
-  if (!context.data.output.length) {
-    return context;
+export const segmentOutput: EventPipelineProcessor = async function () {
+  if (!this.data.output.length) {
+    return;
   }
 
-  log.debug(`Segmenting ${context.data.output.length} events...`);
+  log.debug(`Segmenting ${this.data.output.length} events...`);
 
-  const output = context.data.output;
+  const output = this.data.output;
   const segmentPromises: Promise<BottEvent[]>[] = [];
 
   let pointer = 0;
@@ -44,8 +44,8 @@ export const segmentOutput: EventPipelineProcessor = async (context) => {
       output.slice(0, pointer + 1),
       {
         systemPrompt,
-        responseSchema: getEventSchema(context.actionContext.globalSettings),
-        pipelineContext: context,
+        responseSchema: getEventSchema(this.action.service.settings),
+        pipeline: this,
         useIdentity: false,
       },
     ));
@@ -54,11 +54,11 @@ export const segmentOutput: EventPipelineProcessor = async (context) => {
   }
 
   const segments = await Promise.all(segmentPromises);
-  context.data.output = segments.flat();
+  this.data.output = segments.flat();
 
   log.debug(
-    `Segmented events: ${context.data.output.length}. Content: ${JSON.stringify(
-      context.data.output.map((e) => ({
+    `Segmented events: ${this.data.output.length}. Content: ${JSON.stringify(
+      this.data.output.map((e) => ({
         type: e.type,
         content: e.detail?.content ?? "n/a",
       })),
@@ -66,5 +66,4 @@ export const segmentOutput: EventPipelineProcessor = async (context) => {
     }`,
   );
 
-  return context;
 };

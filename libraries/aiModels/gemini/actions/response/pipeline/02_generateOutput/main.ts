@@ -21,36 +21,33 @@ const systemPromptTemplate = await Deno.readTextFile(
   new URL("./systemPrompt.md.ejs", import.meta.url),
 );
 
-export const generateOutput: EventPipelineProcessor = async function (
-  context,
-) {
+export const generateOutput: EventPipelineProcessor = async function () {
   // If there's nothing to focus on, skip this step.
   if (
-    !context.data.input.some((event) =>
-      context.evaluationState.get(event)?.focusReasons?.length
+    !this.data.input.some((event) =>
+      this.evaluationState.get(event)?.focusReasons?.length
     )
   ) {
-    return context;
+    return;
   }
 
-  const systemPrompt = ejs.render(systemPromptTemplate, context);
+  const systemPrompt = ejs.render(systemPromptTemplate, this);
 
-  context.data.output = await queryGemini<BottEvent[]>(
-    context.data.input,
+  this.data.output = await queryGemini<BottEvent[]>(
+    this.data.input,
     {
       systemPrompt,
-      responseSchema: getEventSchema(context.actionContext.globalSettings),
-      pipelineContext: context,
+      responseSchema: getEventSchema(this.action.service.settings),
+      pipeline: this,
     },
   );
 
   log.debug(
-    `Raw generated output: ${JSON.stringify(context.data.output, (key, value) => {
+    `Raw generated output: ${JSON.stringify(this.data.output, (key, value) => {
       if (key === "parent") return value?.id;
       return value;
     })
     }`,
   );
 
-  return context;
 };

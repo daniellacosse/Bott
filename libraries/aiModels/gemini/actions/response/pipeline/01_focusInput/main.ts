@@ -20,16 +20,16 @@ const systemPrompt = await Deno.readTextFile(
   new URL("./systemPrompt.md", import.meta.url),
 );
 
-export const focusInput: EventPipelineProcessor = async (context) => {
-  const input = context.data.input;
-  const inputReasons = context.actionContext.globalSettings.reasons.input;
+export const focusInput: EventPipelineProcessor = async function () {
+  const input = this.data.input;
+  const inputReasons = this.action.service.settings.reasons.input;
   const inputRatingScales = [
     ...new Set(inputReasons.flatMap((reason) => reason.ratingScales ?? [])),
   ];
 
   // If we have no way to determine focus, skip this step.
   if (inputRatingScales.length === 0) {
-    return context;
+    return;
   }
 
   const responseSchema = {
@@ -70,7 +70,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
       continue;
     }
 
-    if (event.user?.id === context.actionContext.user?.id) {
+    if (event.user?.id === this.action.user?.id) {
       pointer++;
       continue;
     }
@@ -84,7 +84,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
         {
           systemPrompt,
           responseSchema,
-          pipelineContext: context,
+          pipeline: this,
           model: GEMINI_RATING_MODEL,
           useIdentity: false,
         },
@@ -106,7 +106,7 @@ export const focusInput: EventPipelineProcessor = async (context) => {
       const triggeredFocusReasons = Object.values(inputReasons)
         .filter((reason) => reason.validator(metadata));
 
-      context.evaluationState.set(event, {
+      this.evaluationState.set(event, {
         ratings,
         focusReasons: triggeredFocusReasons,
       });
@@ -125,7 +125,6 @@ export const focusInput: EventPipelineProcessor = async (context) => {
 
   await Promise.all(geminiCalls);
 
-  context.data.input = input;
+  this.data.input = input;
 
-  return context;
 };

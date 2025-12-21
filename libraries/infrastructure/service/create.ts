@@ -9,9 +9,14 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export { BottServiceEvent } from "./event/main.ts";
-export * from "./event/dispatcher.ts";
-export * from "./event/listener.ts";
-export * from "./registry.ts";
-export * from "./types.ts";
-export * from "./create.ts";
+import type { BottService, BottServiceContext } from "./types.ts";
+
+export const createService = (
+  service: BottService,
+  context: BottServiceContext,
+): BottService & { context: BottServiceContext } => {
+  return {
+    ...service,
+    context,
+  };
+};

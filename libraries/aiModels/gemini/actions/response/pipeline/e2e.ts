@@ -46,7 +46,7 @@ if (import.meta.main) {
 
   for (const processor of pipelineToTest) {
     log.perf(processor.name);
-    result = await processor(createMockContext());
+    result = await processor.call(createMockContext());
     log.perf(processor.name);
   }
 
@@ -216,16 +216,25 @@ export function createMockContext(): EventPipelineContext {
       ],
     },
     evaluationState: new Map(),
-    abortSignal: new AbortController().signal,
-    user: bott,
-    channel,
-    actions: {},
-    settings: {
-      identity: "I am a test bot.",
-      reasons: {
-        input: [inputRule],
-        output: [outputRule],
+    action: {
+      id: "test-action",
+      signal: new AbortController().signal,
+      settings: {
+        name: "test",
+        instructions: "test instructions",
       },
+      service: {
+        settings: {
+          identity: "I am a test bot.",
+          reasons: {
+            input: [inputRule],
+            output: [outputRule],
+          },
+          actions: {},
+        },
+      },
+      user: bott,
+      channel,
     },
   };
 }

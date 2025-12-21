@@ -12,10 +12,10 @@
 import type {
   BottChannel,
   BottEvent,
-  BottGlobalSettings,
   BottUser,
   NonEmptyArray,
 } from "@bott/model";
+import type { BottServiceContext } from "@bott/service";
 
 export enum BottActionEventType {
   ACTION_CALL = "action:call",
@@ -44,8 +44,8 @@ export type BottActionHandler = (
 export type BottActionContext = {
   id: string;
   signal: AbortSignal;
+  service: BottServiceContext;
   settings: BottActionSettings;
-  globalSettings: BottGlobalSettings;
   user?: BottUser;
   channel?: BottChannel;
 };

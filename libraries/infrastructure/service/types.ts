@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { AnyShape, BottUser } from "@bott/model";
+import type { AnyShape, BottGlobalSettings, BottUser } from "@bott/model";
 
 export type BottService = {
   user: BottUser;
@@ -19,3 +19,7 @@ export type BottService = {
 export type BottServiceFactory<T = AnyShape> = (
   options: T,
 ) => Promise<BottService>;
+
+export interface BottServiceContext {
+  settings: BottGlobalSettings;
+}

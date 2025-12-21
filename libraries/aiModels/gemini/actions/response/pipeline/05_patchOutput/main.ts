@@ -20,26 +20,26 @@ const systemPrompt = await Deno.readTextFile(
 );
 
 // TODO: how to handle metadata in this case?
-export const patchOutput: EventPipelineProcessor = async (context) => {
-  if (!context.data.output.length) {
-    return context;
+export const patchOutput: EventPipelineProcessor = async function () {
+  if (!this.data.output.length) {
+    return;
   }
 
-  log.debug(`Patching ${context.data.output.length} events...`);
+  log.debug(`Patching ${this.data.output.length} events...`);
 
-  context.data.output = await queryGemini<BottEvent[]>(
-    context.data.output,
+  this.data.output = await queryGemini<BottEvent[]>(
+    this.data.output,
     {
       systemPrompt,
-      responseSchema: getEventSchema(context.actionContext.globalSettings),
-      pipelineContext: context,
+      responseSchema: getEventSchema(this.action.service.settings),
+      pipeline: this,
       useIdentity: false,
     },
   );
 
   log.debug(
-    `Patched events: ${context.data.output.length}. Content: ${JSON.stringify(
-      context.data.output.map((e) => ({
+    `Patched events: ${this.data.output.length}. Content: ${JSON.stringify(
+      this.data.output.map((e) => ({
         type: e.type,
         content: e.detail?.content ?? "n/a",
       })),
@@ -51,11 +51,9 @@ export const patchOutput: EventPipelineProcessor = async (context) => {
   // Since this step is explicitly designed to fix issues, we treat its output as "trusted".
   // We automatically inject all active output reasons as "passed" for these events,
   // bypassing the need for a re-evaluation loop.
-  for (const event of context.data.output) {
-    context.evaluationState.set(event, {
-      outputReasons: context.actionContext.globalSettings.reasons.output,
+  for (const event of this.data.output) {
+    this.evaluationState.set(event, {
+      outputReasons: this.action.service.settings.reasons.output,
     });
   }
-
-  return context;
 };

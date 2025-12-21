@@ -21,19 +21,19 @@ const systemPrompt = await Deno.readTextFile(
   new URL("./systemPrompt.md", import.meta.url),
 );
 
-export const filterOutput: EventPipelineProcessor = async (context) => {
-  if (!context.data.output.length) {
-    return context;
+export const filterOutput: EventPipelineProcessor = async function () {
+  if (!this.data.output.length) {
+    return;
   }
 
-  const output = context.data.output;
-  const outputReasons = context.actionContext.globalSettings.reasons.output;
+  const output = this.data.output;
+  const outputReasons = this.action.service.settings.reasons.output;
   const outputRatingScales = [
     ...new Set(outputReasons.flatMap((reason) => reason.ratingScales ?? [])),
   ];
 
   if (!outputRatingScales.length) {
-    return context;
+    return;
   }
 
   const responseSchema = {
@@ -89,7 +89,7 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
         {
           systemPrompt,
           responseSchema,
-          pipelineContext: context,
+          pipeline: this,
           model: GEMINI_RATING_MODEL,
           useIdentity: false,
         },
@@ -115,7 +115,7 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
       const triggeredOutputReasons = Object.values(outputReasons)
         .filter((reason) => reason.validator(metadata));
 
-      context.evaluationState.set(event, {
+      this.evaluationState.set(event, {
         ratings,
         outputReasons: triggeredOutputReasons,
       });
@@ -134,7 +134,6 @@ export const filterOutput: EventPipelineProcessor = async (context) => {
 
   await Promise.all(geminiCalls);
 
-  context.data.output = output;
+  this.data.output = output;
 
-  return context;
 };

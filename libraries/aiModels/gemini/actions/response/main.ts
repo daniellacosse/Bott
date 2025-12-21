@@ -21,7 +21,7 @@ import { addEvents, getEventHistory } from "@bott/storage";
 import { delay } from "@std/async";
 
 import { prepareInputEvents, resolveOutputEvents } from "./common/events.ts";
-import pipeline, { type EventPipelineContext } from "./pipeline/main.ts";
+import pipelineProcess, { type EventPipelineContext } from "./pipeline/main.ts";
 
 const MS_IN_MINUTE = 60 * 1000;
 
@@ -36,22 +36,22 @@ export const responseAction: BottAction = createAction(
     const channelHistory = await getEventHistory(this.channel!);
     const preparedInput = prepareInputEvents(channelHistory);
 
-    let pipelineContext: EventPipelineContext = {
+    const pipeline: EventPipelineContext = {
       data: {
         input: preparedInput,
         output: [],
       },
       evaluationState: new Map(),
-      actionContext: this,
+      action: this,
     };
 
-    for (const processor of pipeline) {
+    for (const step of pipelineProcess) {
       try {
-        log.perf(processor.name);
-        pipelineContext = await processor(pipelineContext);
-        log.perf(processor.name);
+        log.perf(step.name);
+        await step.call(pipeline);
+        log.perf(step.name);
       } catch (error) {
-        log.error((error as Error).message, (error as Error).stack);
+        log.error(error);
         break;
       }
     }
@@ -61,7 +61,7 @@ export const responseAction: BottAction = createAction(
       const processingTime = new Date();
 
       await addEvents(
-        ...pipelineContext.data.input.map((event) => {
+        ...pipeline.data.input.map((event) => {
           event.lastProcessedAt = processingTime;
           return event;
         }),
@@ -70,8 +70,8 @@ export const responseAction: BottAction = createAction(
       log.warn(error);
     }
 
-    for (const event of await resolveOutputEvents(pipelineContext)) {
-      if (!pipelineContext.evaluationState.get(event)?.outputReasons?.length) {
+    for (const event of await resolveOutputEvents(pipeline)) {
+      if (!pipeline.evaluationState.get(event)?.outputReasons?.length) {
         continue;
       }
 

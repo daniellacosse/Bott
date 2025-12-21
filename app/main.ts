@@ -22,6 +22,7 @@ import { serviceRegistry } from "@bott/service";
 import { startEventStorageService } from "@bott/storage";
 
 import actions from "./settings/actions.ts";
+import { defaultSettings } from "./settings/main.ts";
 import { startAppService } from "./service.ts";
 
 if (import.meta.main) {
@@ -50,8 +51,9 @@ if (import.meta.main) {
   }
 
   if (ENABLED_SERVICES.includes("action")) {
+    const context = { settings: defaultSettings };
     serviceRegistry.register(
-      await startActionService({ actions }),
+      await startActionService({ actions, context }),
     );
   }
 

@@ -26,7 +26,7 @@ export interface PipelineEvaluationMetadata {
 }
 
 export interface EventPipelineContext {
-  actionContext: BottActionContext;
+  action: BottActionContext;
   data: {
     input: BottEvent[];
     output: BottEvent[];
@@ -36,7 +36,7 @@ export interface EventPipelineContext {
 }
 
 export type EventPipelineProcessor = (
-  context: EventPipelineContext,
-) => Promise<EventPipelineContext>;
+  this: EventPipelineContext,
+) => Promise<void>;
 
 export type EventPipeline = EventPipelineProcessor[];

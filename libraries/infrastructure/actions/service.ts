@@ -15,10 +15,11 @@ import type {
   BottActionAbortEvent,
 } from "@bott/actions";
 import { BottActionEventType } from "@bott/actions";
-import type { BottEvent, BottGlobalSettings, BottUser } from "@bott/model";
+import type { BottEvent, BottUser } from "@bott/model";
 import {
   addEventListener,
   BottServiceEvent,
+  type BottServiceContext,
   type BottServiceFactory,
   dispatchEvent,
 } from "@bott/service";
@@ -31,7 +32,10 @@ const ACTION_SERVICE_USER: BottUser = {
 };
 
 export const startActionService: BottServiceFactory = (options) => {
-  const { actions } = options as { actions: Record<string, BottAction> };
+  const { actions, context } = options as {
+    actions: Record<string, BottAction>;
+    context: BottServiceContext;
+  };
   const controllerMap = new Map<string, AbortController>();
 
   addEventListener(
@@ -140,7 +144,7 @@ export const startActionService: BottServiceFactory = (options) => {
               id: event.detail.id,
               signal: controller.signal,
               settings: action,
-              globalSettings: options as unknown as BottGlobalSettings, // TODO: Fix
+              service: context,
               user: event.user,
               channel: event.channel,
             },
