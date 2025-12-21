@@ -1,5 +1,4 @@
 name: Feature Request
-type: Feature
 description: Request a new feature!
 body:
   - type: checkboxes
