@@ -22,7 +22,7 @@ export function createAction(
   fn: BottActionHandler,
   settings: BottActionSettings,
 ): BottAction {
-  const wrapper: BottActionFunction = async function (
+  const wrapper: BottActionFunction = async function* (
     this: BottActionContext,
     parameters: BottActionParameterEntry[],
   ) {
@@ -30,8 +30,13 @@ export function createAction(
       (acc, p) => ({ ...acc, [p.name]: p.value }),
       {},
     );
+    // @ts-ignore: Bind context
     const boundFn = fn.bind(this);
-    return await boundFn(paramsObject);
+    // @ts-ignore: Call generator
+    const generator = boundFn(paramsObject);
+
+    // Yield all events and capture return value
+    return yield* generator;
   };
 
   const action = wrapper as unknown as BottAction;

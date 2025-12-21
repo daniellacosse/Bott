@@ -12,11 +12,10 @@
 import type {
   BottAction,
   BottActionCallEvent,
-  BottActionCancelEvent as BottActionAbortEvent,
-  BottActionResultEvent,
+  BottActionAbortEvent,
 } from "@bott/actions";
 import { BottActionEventType } from "@bott/actions";
-import type { BottGlobalSettings, BottUser } from "@bott/model";
+import type { BottEvent, BottGlobalSettings, BottUser } from "@bott/model";
 import {
   addEventListener,
   BottServiceEvent,
@@ -121,22 +120,43 @@ export const startActionService: BottServiceFactory = (options) => {
           }),
         );
 
-        await action.call(
-          {
-            id: event.detail.id,
-            signal: controller.signal,
-            settings: action,
-            globalSettings: options as unknown as BottGlobalSettings, // TODO: Fix
-            user: ACTION_SERVICE_USER,
-            channel: event.channel!,
-            dispatchResult: (resultEvent: BottActionResultEvent) => {
-              resultEvent.user = ACTION_SERVICE_USER;
-              resultEvent.channel = event.channel;
-              dispatchEvent(resultEvent);
+        let callResult: BottEvent | void;
+        try {
+          const iterator = action.call(
+            {
+              id: event.detail.id,
+              signal: controller.signal,
+              settings: action,
+              globalSettings: options as unknown as BottGlobalSettings, // TODO: Fix
             },
-          },
-          parameters,
-        );
+            parameters,
+          );
+
+          let next = await iterator.next();
+          while (!next.done) {
+            const yieldedEvent = next.value;
+            yieldedEvent.user = ACTION_SERVICE_USER;
+            yieldedEvent.channel = event.channel;
+            dispatchEvent(yieldedEvent);
+            next = await iterator.next();
+          }
+          callResult = next.value;
+        } catch (e) {
+          throw e;
+        }
+
+        if (callResult) {
+          const resultEvent = new BottServiceEvent(BottActionEventType.ACTION_OUTPUT, {
+            detail: {
+              name: action.name,
+              id: event.detail.id,
+              event: callResult,
+            },
+            user: ACTION_SERVICE_USER,
+            channel: event.channel,
+          });
+          dispatchEvent(resultEvent);
+        }
 
         dispatchEvent(
           new BottServiceEvent(BottActionEventType.ACTION_COMPLETE, {

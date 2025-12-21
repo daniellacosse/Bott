@@ -47,7 +47,7 @@ const settings: BottActionSettings = {
 };
 
 export const movieAction: BottAction = createAction(
-  async function ({ prompt, media }) {
+  async function* ({ prompt, media }) {
     if (!GEMINI_MOVIE_MODEL) {
       throw new Error("Gemini movie model is not configured");
     }
@@ -118,7 +118,7 @@ export const movieAction: BottAction = createAction(
     );
 
     const resultEvent = new BottServiceEvent(
-      BottActionEventType.ACTION_RESULT,
+      BottActionEventType.ACTION_OUTPUT,
       {
         detail: {
           id: this.id,
@@ -132,7 +132,7 @@ export const movieAction: BottAction = createAction(
       resultEvent,
     )];
 
-    this.dispatchResult(resultEvent);
+    yield resultEvent;
   },
   settings,
 );

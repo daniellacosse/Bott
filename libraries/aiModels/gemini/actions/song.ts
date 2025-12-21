@@ -70,7 +70,7 @@ export function writeWavHeader(
 }
 
 export const songAction: BottAction = createAction(
-  async function ({ prompt, duration }) {
+  async function* ({ prompt, duration }) {
     if (!GEMINI_SONG_MODEL) {
       throw new Error("Gemini song model is not configured");
     }
@@ -119,7 +119,7 @@ export const songAction: BottAction = createAction(
     const file = new File([finalWav], "song.wav", { type: "audio/wav" });
 
     const resultEvent = new BottServiceEvent(
-      BottActionEventType.ACTION_RESULT,
+      BottActionEventType.ACTION_OUTPUT,
       {
         detail: {
           id: this.id,
@@ -133,7 +133,12 @@ export const songAction: BottAction = createAction(
       resultEvent,
     )];
 
-    this.dispatchResult(resultEvent);
+    resultEvent.attachments = [await prepareAttachmentFromFile(
+      file,
+      resultEvent,
+    )];
+
+    yield resultEvent;
   },
   settings,
 );

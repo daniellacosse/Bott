@@ -44,7 +44,7 @@ const settings: BottActionSettings = {
 };
 
 export const photoAction: BottAction = createAction(
-  async function ({ prompt, media }) {
+  async function* ({ prompt, media }) {
     if (!GEMINI_PHOTO_MODEL) {
       throw new Error("Gemini photo model is not configured");
     }
@@ -118,7 +118,7 @@ export const photoAction: BottAction = createAction(
 
     // Create the event first
     const resultEvent = new BottServiceEvent(
-      BottActionEventType.ACTION_RESULT,
+      BottActionEventType.ACTION_OUTPUT,
       {
         detail: {
           id: this.id,
@@ -134,7 +134,7 @@ export const photoAction: BottAction = createAction(
 
     resultEvent.attachments = [attachment];
 
-    this.dispatchResult(resultEvent);
+    yield resultEvent;
   },
   settings,
 );

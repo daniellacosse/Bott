@@ -22,7 +22,7 @@ export enum BottActionEventType {
   ACTION_START = "action:start",
   ACTION_ABORT = "action:abort",
   ACTION_COMPLETE = "action:complete",
-  ACTION_RESULT = "action:result",
+  ACTION_OUTPUT = "action:output",
   ACTION_ERROR = "action:error",
 }
 
@@ -31,7 +31,7 @@ export type BottAction = BottActionFunction & BottActionSettings;
 export type BottActionFunction = (
   this: BottActionContext,
   parameters: BottActionParameterEntry[],
-) => Promise<void>;
+) => AsyncGenerator<BottEvent, BottEvent | void, void>;
 
 export type BottActionHandler = (
   this: BottActionContext,
@@ -39,14 +39,13 @@ export type BottActionHandler = (
     string,
     BottActionParameterValue | undefined
   >,
-) => Promise<void>;
+) => AsyncGenerator<BottEvent, BottEvent | void, void>;
 
 export type BottActionContext = {
   id: string;
   signal: AbortSignal;
   settings: BottActionSettings;
   globalSettings: BottGlobalSettings;
-  dispatchResult: (event: BottActionResultEvent) => void;
 };
 
 export type BottActionSettings = {
@@ -101,7 +100,7 @@ export type BottActionStartEvent = BottEvent<
   }
 >;
 
-export type BottActionCancelEvent = BottEvent<
+export type BottActionAbortEvent = BottEvent<
   BottActionEventType.ACTION_ABORT,
   {
     name: string;
@@ -117,12 +116,12 @@ export type BottActionCompleteEvent = BottEvent<
   }
 >;
 
-export type BottActionResultEvent = BottEvent<
-  BottActionEventType.ACTION_RESULT,
+export type BottActionOutputEvent = BottEvent<
+  BottActionEventType.ACTION_OUTPUT,
   {
     name: string;
     id: string;
-    content?: string;
+    event: BottEvent;
   }
 >;
 

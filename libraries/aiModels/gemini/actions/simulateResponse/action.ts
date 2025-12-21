@@ -23,7 +23,7 @@ import {
 } from "@bott/constants";
 import { log } from "@bott/log";
 import { BottAttachmentType, type BottEvent } from "@bott/model";
-import { BottServiceEvent, dispatchEvent } from "@bott/service";
+import { BottServiceEvent } from "@bott/service";
 import { addEvents, getEventIdsForChannel, getEvents } from "@bott/storage";
 
 import { delay } from "@std/async";
@@ -46,7 +46,7 @@ const settings: BottActionSettings = {
 };
 
 export const responseAction: BottAction = createAction(
-  async function ({ channelId }) {
+  async function* ({ channelId }) {
     const eventHistoryIds = getEventIdsForChannel(
       channelId as string,
     );
@@ -182,19 +182,17 @@ export const responseAction: BottAction = createAction(
         TYPING_MAX_TIME_MS,
       );
 
-      await delay(cappedDelayMs);
+      await delay(cappedDelayMs, { signal: this.signal });
 
-      dispatchEvent(
-        new BottServiceEvent(event.type, {
-          detail: event.detail,
-          // Gemini does not return the full parent event
-          parent: event.parent
-            ? (await getEvents(event.parent.id))[0]
-            : undefined,
-          channel,
-          user,
-        }),
-      );
+      yield new BottServiceEvent(event.type, {
+        detail: event.detail,
+        // Gemini does not return the full parent event
+        parent: event.parent
+          ? (await getEvents(event.parent.id))[0]
+          : undefined,
+        channel,
+        user,
+      });
     }
   },
   settings,
