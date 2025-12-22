@@ -9,7 +9,6 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEventActionParameterEntry } from "@bott/events";
 import type {
   BottAction,
   BottActionContext,
@@ -17,6 +16,7 @@ import type {
   BottActionHandler,
   BottActionSettings,
 } from "@bott/actions";
+import type { BottEventActionParameterEntry } from "@bott/events";
 
 export function createAction(
   fn: BottActionHandler,

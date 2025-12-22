@@ -10,21 +10,21 @@
  */
 
 import type {
-  BottActionParameter,
-  BottActionParameterEntry,
-} from "@bott/actions";
+  BottEventActionParameter,
+  BottEventActionParameterEntry,
+} from "@bott/events";
 import { assertEquals, assertThrows } from "@std/assert";
 import { applyParameterDefaults, validateParameters } from "./validation.ts";
 
 Deno.test("applyParameterDefaults", () => {
-  const schema: BottActionParameter[] = [
+  const schema: BottEventActionParameter[] = [
     { name: "p1", type: "string" },
     { name: "p2", type: "number", defaultValue: 42 },
     { name: "p3", type: "boolean", defaultValue: true },
     { name: "p4", type: "string", defaultValue: "default" },
   ];
 
-  const parameters: BottActionParameterEntry[] = [
+  const parameters: BottEventActionParameterEntry[] = [
     { name: "p1", value: "value1", type: "string" },
     { name: "p4", value: "overridden", type: "string" },
   ];
@@ -39,11 +39,11 @@ Deno.test("applyParameterDefaults", () => {
 });
 
 Deno.test("validateParameters - Valid parameters", () => {
-  const schema: BottActionParameter[] = [
+  const schema: BottEventActionParameter[] = [
     { name: "name", type: "string", required: true },
     { name: "age", type: "number" },
   ];
-  const params: BottActionParameterEntry[] = [
+  const params: BottEventActionParameterEntry[] = [
     { name: "name", value: "Alice", type: "string" },
     { name: "age", value: 30, type: "number" },
   ];
@@ -51,10 +51,10 @@ Deno.test("validateParameters - Valid parameters", () => {
 });
 
 Deno.test("validateParameters - Missing required parameter", () => {
-  const schema: BottActionParameter[] = [
+  const schema: BottEventActionParameter[] = [
     { name: "name", type: "string", required: true },
   ];
-  const params: BottActionParameterEntry[] = [];
+  const params: BottEventActionParameterEntry[] = [];
   assertThrows(
     () => validateParameters(schema, params),
     Error,
@@ -63,10 +63,10 @@ Deno.test("validateParameters - Missing required parameter", () => {
 });
 
 Deno.test("validateParameters - Invalid type (string expected)", () => {
-  const schema: BottActionParameter[] = [
+  const schema: BottEventActionParameter[] = [
     { name: "name", type: "string" },
   ];
-  const params: BottActionParameterEntry[] = [
+  const params: BottEventActionParameterEntry[] = [
     { name: "name", value: 123, type: "number" },
   ];
   assertThrows(
@@ -77,10 +77,10 @@ Deno.test("validateParameters - Invalid type (string expected)", () => {
 });
 
 Deno.test("validateParameters - Invalid type (number expected)", () => {
-  const schema: BottActionParameter[] = [
+  const schema: BottEventActionParameter[] = [
     { name: "age", type: "number" },
   ];
-  const params: BottActionParameterEntry[] = [
+  const params: BottEventActionParameterEntry[] = [
     { name: "age", value: "30", type: "string" },
   ];
   assertThrows(
@@ -91,10 +91,10 @@ Deno.test("validateParameters - Invalid type (number expected)", () => {
 });
 
 Deno.test("validateParameters - Invalid value (not allowed)", () => {
-  const schema: BottActionParameter[] = [
+  const schema: BottEventActionParameter[] = [
     { name: "color", type: "string", allowedValues: ["red", "blue"] },
   ];
-  const params: BottActionParameterEntry[] = [
+  const params: BottEventActionParameterEntry[] = [
     { name: "color", value: "green", type: "string" },
   ];
   assertThrows(
@@ -105,14 +105,10 @@ Deno.test("validateParameters - Invalid value (not allowed)", () => {
 });
 
 Deno.test("validateParameters - Unknown parameter", () => {
-  const schema: BottActionParameter[] = [];
-  const params: BottActionParameterEntry[] = [
+  const schema: BottEventActionParameter[] = [];
+  const params: BottEventActionParameterEntry[] = [
     { name: "extra", value: "value", type: "string" },
   ];
-  // Assuming strict validation, unknown parameters might be ignored or error.
-  // Let's implement strict validation for now, or just ignore unknown ones?
-  // Usually, extra parameters are just ignored in many systems,
-  // but strict validation helps catch typos. Let's decide to ERROR on unknown parameters.
   assertThrows(
     () => validateParameters(schema, params),
     Error,

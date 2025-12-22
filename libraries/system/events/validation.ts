@@ -10,14 +10,14 @@
  */
 
 import type {
-  BottActionParameter,
-  BottActionParameterEntry,
-} from "@bott/actions";
+  BottEventActionParameter,
+  BottEventActionParameterEntry,
+} from "@bott/events";
 
 export function applyParameterDefaults(
-  schema: BottActionParameter[],
-  parameters: BottActionParameterEntry[],
-): BottActionParameterEntry[] {
+  schema: BottEventActionParameter[],
+  parameters: BottEventActionParameterEntry[],
+): BottEventActionParameterEntry[] {
   const mergedParameters = [...parameters];
 
   for (const field of schema) {
@@ -36,8 +36,8 @@ export function applyParameterDefaults(
 }
 
 export function validateParameters(
-  schema: BottActionParameter[],
-  parameters: BottActionParameterEntry[],
+  schema: BottEventActionParameter[],
+  parameters: BottEventActionParameterEntry[],
 ) {
   // Check for unknown parameters
   for (const param of parameters) {
@@ -61,22 +61,20 @@ export function validateParameters(
           );
         }
       } else if (
-        field.type === "string" ||
-        field.type === "number" ||
-        field.type === "boolean"
+        (field.type === "string" && typeof param.value !== "string") ||
+        (field.type === "number" && typeof param.value !== "number") ||
+        (field.type === "boolean" && typeof param.value !== "boolean")
       ) {
-        // deno-lint-ignore valid-typeof
-        if (typeof param.value !== field.type) {
-          throw new Error(
-            `Parameter '${field.name}' must be of type ${field.type}`,
-          );
-        }
+        throw new Error(
+          `Parameter '${field.name}' must be of type ${field.type}`,
+        );
       }
 
       if (
-        field.type !== "file" && field.allowedValues &&
+        field.type === "string" &&
+        field.allowedValues &&
         !field.allowedValues.includes(
-          param.value as string | number | boolean,
+          param.value as string,
         )
       ) {
         throw new Error(

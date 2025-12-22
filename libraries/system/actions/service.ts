@@ -10,10 +10,12 @@
  */
 
 import {
+  applyParameterDefaults,
   type BottActionAbortEvent,
   type BottActionCallEvent,
   BottEvent,
   BottEventType,
+  validateParameters,
 } from "@bott/events";
 import type { BottUser } from "@bott/model";
 import {
@@ -22,7 +24,6 @@ import {
   createService,
 } from "@bott/services";
 import { commit, sql } from "@bott/storage";
-import { applyParameterDefaults, validateParameters } from "./validation.ts";
 
 const settings: BottServiceSettings = {
   name: "actions",

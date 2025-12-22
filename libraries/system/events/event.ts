@@ -101,20 +101,21 @@ type _ParameterBase = {
   required?: boolean;
 };
 
-type _NonFileParameter = _ParameterBase & {
-  type: "string" | "number" | "boolean";
-  allowedValues?: (string | number | boolean)[];
-  defaultValue?: string | number | boolean;
+type _StringParameter = _ParameterBase & {
+  type: "string";
+  allowedValues?: string[];
+  defaultValue?: string;
 };
 
-type _FileParameter = _ParameterBase & {
-  type: "file";
-  defaultValue?: File;
+type _NonStringParameter = _ParameterBase & {
+  type: "number" | "boolean" | "file";
+  allowedValues?: never;
+  defaultValue?: number | boolean | File;
 };
 
 export type BottEventActionParameter =
-  | _NonFileParameter
-  | _FileParameter;
+  | _StringParameter
+  | _NonStringParameter;
 
 export type BottEventActionParameterEntry = {
   name: string;

@@ -10,13 +10,14 @@
  */
 
 import type { BottEvent } from "@bott/events";
-
 import { log } from "@bott/log";
+
 import ejs from "ejs";
+
+import { resolveOutputEvents } from "../../common/events.ts";
 import { getEventSchema } from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
-import { resolveOutputEvents } from "../../common/events.ts";
 
 const systemPromptTemplate = await Deno.readTextFile(
   new URL("./systemPrompt.md.ejs", import.meta.url),

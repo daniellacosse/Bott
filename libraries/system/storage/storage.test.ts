@@ -10,14 +10,14 @@
  */
 
 import { BottEventType } from "@bott/events";
+import { BottEvent } from "@bott/events";
 import { log } from "@bott/log";
 import { BottServicesManager } from "@bott/services";
-import { BottEvent } from "@bott/events";
-
 import { assertEquals, assertExists } from "@std/assert";
-import { upsertEvents } from "./data/events/upsert.ts";
+
 import { getEvents } from "./data/events/get.ts";
 import { eventStorageService } from "./data/events/service.ts";
+import { upsertEvents } from "./data/events/upsert.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
 
 const createTestManager = () => {
