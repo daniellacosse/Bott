@@ -62,6 +62,50 @@ export const getEventSchema = (
         required: ["type", "detail"],
       },
       ...getActionSchema(settings.actions ?? {}),
+      {
+        type: GeminiStructuredResponseType.OBJECT,
+        description:
+          "Schema for aborting a previously started action. Send this event to cancel an action that is no longer needed (e.g., when starting a new action that supersedes a previous one).",
+        properties: {
+          type: {
+            type: GeminiStructuredResponseType.STRING,
+            enum: [BottEventType.ACTION_ABORT],
+            description:
+              `The type of event to generate, in this case '${BottEventType.ACTION_ABORT}'.`,
+          },
+          detail: {
+            type: GeminiStructuredResponseType.OBJECT,
+            description:
+              "The specifics of the abort request. You must provide the action name and ID to abort.",
+            properties: {
+              name: {
+                type: GeminiStructuredResponseType.STRING,
+                description:
+                  "The name of the action to abort. Must match the name from the ACTION_START or ACTION_OUTPUT event.",
+              },
+              id: {
+                type: GeminiStructuredResponseType.STRING,
+                description:
+                  "The unique ID of the action call to abort. Must match the id from the ACTION_CALL event.",
+              },
+            },
+            required: ["name", "id"],
+          },
+          parent: {
+            type: GeminiStructuredResponseType.OBJECT,
+            description:
+              "A reference to the ACTION_CALL or ACTION_START event being aborted.",
+            properties: {
+              id: {
+                type: GeminiStructuredResponseType.STRING,
+                description: "The ID of the event being aborted.",
+              },
+            },
+            required: ["id"],
+          },
+        },
+        required: ["type", "detail"],
+      },
     ],
   },
 });
