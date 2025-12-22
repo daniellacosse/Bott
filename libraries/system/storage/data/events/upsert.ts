@@ -146,7 +146,7 @@ const getAddUsersSql = (...users: BottUser[]) => {
   `;
 };
 
-export const addEvents = (
+export const upsertEvents = (
   ...bottEvents: BottEvent[]
 ): TransactionResults => {
   // Extract all unique entities (events, spaces, channels, users)

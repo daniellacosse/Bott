@@ -105,6 +105,8 @@ export const focusInput: EventPipelineProcessor = async function () {
         focusReasons: triggeredFocusReasons,
       });
 
+      event.lastProcessedAt = new Date();
+
       log.debug(event, scoresWithRationale, triggeredFocusReasons);
     })());
 

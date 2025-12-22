@@ -13,7 +13,7 @@ import { type BottEvent, BottEventType } from "@bott/events";
 import { log } from "@bott/log";
 import { type BottService, type BottServiceSettings, createService } from "@bott/services";
 
-import { addEvents } from "./add.ts";
+import { upsertEvents } from "./upsert.ts";
 
 const settings: BottServiceSettings = {
   name: "eventStorage",
@@ -32,7 +32,7 @@ const settings: BottServiceSettings = {
 export const eventStorageService: BottService = createService(
   function () {
     const saveEvent = (event: BottEvent) => {
-      const result = addEvents(event);
+      const result = upsertEvents(event);
 
       if ("error" in result) {
         log.error("Failed to add event to database:", result);

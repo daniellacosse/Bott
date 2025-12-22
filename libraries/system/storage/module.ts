@@ -10,7 +10,7 @@
  */
 
 export { eventStorageService } from "./data/events/service.ts";
-export { addEvents } from "./data/events/add.ts";
+export { upsertEvents } from "./data/events/upsert.ts";
 export { getEvents, getEventHistory } from "./data/events/get.ts";
 export {
   prepareAttachmentFromFile,

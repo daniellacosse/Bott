@@ -14,7 +14,7 @@ import { log } from "@bott/log";
 import { BottServiceEvent, BottServicesManager } from "@bott/services";
 
 import { assertEquals, assertExists } from "@std/assert";
-import { addEvents } from "./data/events/add.ts";
+import { upsertEvents } from "./data/events/upsert.ts";
 import { getEvents } from "./data/events/get.ts";
 import { eventStorageService } from "./data/events/service.ts";
 import { prepareHtmlAsMarkdown } from "./prepare/html.ts";
@@ -64,7 +64,7 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
 
   log.debug("Adding events.");
 
-  addEvents(nancyGreeting, bobReply, nancyReaction);
+  upsertEvents(nancyGreeting, bobReply, nancyReaction);
 
   log.debug("Getting events.");
 

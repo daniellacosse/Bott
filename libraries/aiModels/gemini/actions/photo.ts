@@ -11,9 +11,8 @@
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { GEMINI_PHOTO_MODEL, ACTION_RATE_LIMIT_PHOTOS } from "@bott/constants";
-import { BottEventType } from "@bott/events";
-import { BottServiceEvent } from "@bott/services";
+import { ACTION_RATE_LIMIT_PHOTOS, GEMINI_PHOTO_MODEL } from "@bott/constants";
+import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
   type GenerateContentParameters,
@@ -24,7 +23,8 @@ import {
 
 import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
 
-import _gemini from "../client.ts";
+import gemini from "../client.ts";
+import { generateFilename } from "./common.ts";
 
 const settings: BottActionSettings = {
   name: "photo",
@@ -39,7 +39,8 @@ const settings: BottActionSettings = {
   }, {
     name: "media",
     type: "file",
-    description: "Optional reference media for the image generation",
+    description:
+      "Optional reference media for the image generation. Only images are supported.",
     required: false,
   }],
 };
@@ -47,25 +48,35 @@ const settings: BottActionSettings = {
 export const photoAction: BottAction = createAction(
   async function* ({ prompt, media }) {
     if (!GEMINI_PHOTO_MODEL) {
-      throw new Error("Gemini photo model is not configured");
-    }
-
-    if (media && !((media as File)?.type.startsWith("image/"))) {
       throw new Error(
-        `Unsupported media type: ${(media as File)?.type
-        }. Only images are supported.`,
+        "Gemini photo model is not configured. Please ensure `GEMINI_PHOTO_MODEL` is set in your environment.",
       );
     }
 
-    const parts: Part[] = [{ text: prompt as string }];
+    const promptString = prompt as string;
+    const mediaFile = media as File;
 
-    if (media) {
-      parts.push({
-        inlineData: {
-          data: encodeBase64(await (media as File).arrayBuffer()),
-          mimeType: (media as File).type,
-        },
-      });
+    const parts: Part[] = [{ text: promptString }];
+
+    switch (mediaFile.type) {
+      case "image/jpeg":
+      case "image/png":
+      case "image/webp":
+      case "image/gif":
+      case "image/bmp":
+      case "image/tiff":
+      case "image/svg+xml":
+        parts.push({
+          inlineData: {
+            data: encodeBase64(await mediaFile.arrayBuffer()),
+            mimeType: mediaFile.type,
+          },
+        });
+        break;
+      default:
+        throw new Error(
+          `Unsupported media type: ${mediaFile.type}. Only images are supported.`,
+        );
     }
 
     const request: GenerateContentParameters = {
@@ -83,48 +94,22 @@ export const photoAction: BottAction = createAction(
       },
     };
 
-    const response = await _gemini.models.generateContent(request);
+    const response = await gemini.models.generateContent(request);
 
-    if (!response.candidates?.length) {
-      throw new Error("No candidates returned");
-    }
-
-    const candidate = response.candidates[0];
-    if (
-      candidate.finishReason !== "STOP" && candidate.finishReason !== undefined
-    ) {
-      throw new Error(`Generation stopped: ${candidate.finishReason}`);
-    }
-
-    let imageBytes: string | undefined;
-    let _mimeType: string | undefined;
-
-    for (const part of candidate.content?.parts ?? []) {
-      if (part.inlineData) {
-        imageBytes = part.inlineData.data;
-        _mimeType = part.inlineData.mimeType;
-        break;
-      }
-    }
-
-    if (!imageBytes) {
-      throw new Error("No image data found in response");
-    }
+    const imagePart = response.candidates![0].content!.parts!.find((
+      part,
+    ) => part.inlineData)!;
 
     const file = new File(
-      [decodeBase64(imageBytes)],
-      "photo.png",
-      { type: _mimeType ?? "image/png" },
+      [decodeBase64(imagePart.inlineData!.data!)],
+      generateFilename("png", promptString),
+      { type: imagePart.inlineData!.mimeType },
     );
 
-    // Create the event first
-    const resultEvent = new BottServiceEvent(
+    const resultEvent = new BottEvent(
       BottEventType.MESSAGE,
       {
-        detail: {
-          content: "Here is your photo:",
-        },
-        user: this.user, // Or system user? Usually actions output as the bot.
+        // user: this.user, // TODO?
         channel: this.channel,
       },
     );

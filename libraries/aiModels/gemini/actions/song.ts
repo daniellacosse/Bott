@@ -18,11 +18,11 @@ import {
   ACTION_RATE_LIMIT_MUSIC,
   ACTION_SONG_DURATION_SECONDS,
 } from "@bott/constants";
-import { BottEventType } from "@bott/events";
-import { BottServiceEvent } from "@bott/services";
+import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
 
 import _gemini from "../client.ts";
+import { generateFilename } from "./common.ts";
 
 const settings: BottActionSettings = {
   name: "song",
@@ -117,10 +117,10 @@ export const songAction: BottAction = createAction(
     const wavHeader = writeWavHeader(48000, 2, 16, allPcmData.length); // Lyria is 48kHz Stereo 16-bit
     const finalWav = Buffer.concat([wavHeader, allPcmData]);
 
-    const file = new File([finalWav], "song.wav", { type: "audio/wav" }); // Keep file creation
+    const file = new File([finalWav], generateFilename("wav", prompt), { type: "audio/wav" }); // Keep file creation
 
     // Create the event first
-    const resultEvent = new BottServiceEvent(
+    const resultEvent = new BottEvent(
       BottEventType.MESSAGE,
       {
         detail: {

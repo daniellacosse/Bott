@@ -9,16 +9,15 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { type BottEvent as BottEventInterface, BottEventType } from "@bott/events";
+import { BottEvent, BottEventType } from "@bott/events";
 import { log } from "@bott/log";
 import type {
-  AnyShape,
   BottChannel,
   BottRatingScale,
   BottReason,
   BottUser,
 } from "@bott/model";
-import { type BottServiceContext, BottServiceEvent } from "@bott/services";
+import type { BottServiceContext } from "@bott/services";
 
 import { faker } from "@faker-js/faker";
 
@@ -55,9 +54,7 @@ if (import.meta.main) {
     throw new Error("NO DATA");
   }
 
-  log.debug("--- INPUT ---", result.data.input);
-
-  log.debug("--- OUTPUT ---", result.data.output);
+  log.debug(result.data);
 
   log.perf("pipeline");
 }
@@ -82,73 +79,63 @@ function createMockChannel(): BottChannel {
   };
 }
 
-function createMockEvent(
-  user: BottUser,
-  channel: BottChannel,
-  type: BottEventType,
-  details?: AnyShape,
-  parent?: BottEventInterface,
-): BottEventInterface {
-  return new BottServiceEvent(type, {
-    detail: details ?? { content: faker.lorem.sentence() },
-    user: user,
-    channel: channel,
-    parent: parent,
-  });
-}
-
 export function createMockContext(): EventPipelineContext {
   const user1 = createMockUser("user1");
   const user2 = createMockUser("user2");
   const bott = createMockUser("bott");
   const channel = createMockChannel();
 
-  const inputEvent1 = createMockEvent(
-    user1,
-    channel,
+  const inputEvent1 = new BottEvent(
     BottEventType.MESSAGE,
-    { content: "Hello world!" },
+    {
+      detail: { content: "Hello world!" },
+      user: user1,
+      channel,
+      parent: undefined,
+    },
   );
-  const inputEvent2 = createMockEvent(
-    user2,
-    channel,
+  const inputEvent2 = new BottEvent(
     BottEventType.REPLY,
-    { content: "Hello to you too!" },
-    inputEvent1,
+    {
+      detail: { content: "Hello to you too!" },
+      user: user2,
+      channel,
+      parent: inputEvent1,
+    },
   );
-  const inputEvent3 = createMockEvent(
-    user1,
-    channel,
+  const inputEvent3 = new BottEvent(
     BottEventType.MESSAGE,
-    { content: "What is the capital of France?" },
+    {
+      detail: { content: "What is the capital of France?" },
+      user: user1,
+      channel,
+      parent: undefined,
+    },
   );
-  const inputEvent4 = createMockEvent(
-    user2,
-    channel,
+  const inputEvent4 = new BottEvent(
     BottEventType.REPLY,
-    { content: "Paris, of course." },
-    inputEvent3,
+    { detail: { content: "Paris, of course." }, parent: inputEvent3 },
   );
-  const inputEvent5 = createMockEvent(
-    user1,
-    channel,
+  const inputEvent5 = new BottEvent(
     BottEventType.MESSAGE,
-    { content: "And what about Germany?", focus: true },
+    {
+      detail: { content: "And what about Germany?", focus: true },
+      user: user1,
+      channel,
+      parent: undefined,
+    },
   );
 
-  const outputEvent1 = createMockEvent(
-    bott,
-    channel,
+  const outputEvent1 = new BottEvent(
     BottEventType.REPLY,
-    { content: "I can answer that for you." },
-    inputEvent5,
+    { detail: { content: "I can answer that for you." }, parent: inputEvent5 },
   );
-  const outputEvent2 = createMockEvent(
-    bott,
-    channel,
+  const outputEvent2 = new BottEvent(
     BottEventType.REPLY,
-    { content: "The capital of Germany is Berlin." },
-    outputEvent1,
+    {
+      detail: { content: "The capital of Germany is Berlin." },
+      parent: outputEvent1,
+    },
   );
 
   const ratingScale: BottRatingScale = {
@@ -181,27 +168,6 @@ export function createMockContext(): EventPipelineContext {
     ratingScales: [ratingScale2],
   };
 
-  const generateMedia = function (context: object) {
-    return context;
-  };
-
-  generateMedia.description = "Generate media based on a prompt.";
-  generateMedia.options = [
-    {
-      name: "prompt",
-      description: "The prompt to send to the model.",
-      type: "string",
-      required: true,
-    },
-    {
-      name: "type",
-      description: "The type of media to generate.",
-      type: "string",
-      allowedValues: ["image", "audio", "video"],
-      required: true,
-    },
-  ];
-
   return {
     data: {
       input: [
@@ -225,7 +191,10 @@ export function createMockContext(): EventPipelineContext {
         instructions: "test instructions",
       },
       service: {
-        user: bott,
+        user: {
+          id: "test-user",
+          name: "test-user",
+        },
         app: {
           response: {
             identity: "I am a test bot.",

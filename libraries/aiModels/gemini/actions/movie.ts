@@ -11,19 +11,23 @@
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { GEMINI_MOVIE_MODEL, ACTION_RATE_LIMIT_VIDEOS } from "@bott/constants";
-import { BottEventType } from "@bott/events";
-import { BottServiceEvent } from "@bott/services";
+import { ACTION_RATE_LIMIT_VIDEOS, GEMINI_MOVIE_MODEL } from "@bott/constants";
+import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
-  type GenerateVideosOperation,
   type GenerateVideosParameters,
   type Image,
   PersonGeneration,
 } from "@google/genai";
 import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
 
-import _gemini from "../client.ts";
+import gemini from "../client.ts";
+import { generateFilename } from "./common.ts";
+
+const MOVIE_ASPECT_RATIO = "16:9";
+const MOVIE_FPS = 24;
+const MOVIE_RESOLUTION = "720p";
+const MOVIE_JOB_INTERVAL_MS = 10000;
 
 const settings: BottActionSettings = {
   name: "movie",
@@ -38,122 +42,111 @@ const settings: BottActionSettings = {
   }, {
     name: "media",
     type: "file",
-    description: "Optional reference media for the video generation",
+    description:
+      "Optional reference media for the video generation (image or text)",
     required: false,
-    // ...
   }],
 };
 
 export const movieAction: BottAction = createAction(
   async function* ({ prompt, media }) {
     if (!GEMINI_MOVIE_MODEL) {
-      throw new Error("Gemini movie model is not configured");
+      throw new Error(
+        "Gemini movie model is not configured. Please ensure `GEMINI_MOVIE_MODEL` is set in your environment.",
+      );
     }
 
-    const request: GenerateVideosParameters = {
+    const mediaFile = media as File;
+
+    let promptString = prompt as string;
+    let mediaData;
+    switch (mediaFile.type) {
+      case "image/jpeg":
+      case "image/png":
+      case "image/gif":
+      case "image/webp":
+      case "image/avif":
+      case "image/bmp":
+      case "image/tiff":
+      case "image/svg+xml":
+        mediaData = {
+          inlineData: {
+            data: encodeBase64(await mediaFile.arrayBuffer()),
+            mimeType: mediaFile.type,
+          },
+        } as Image;
+        break;
+      case "text/plain":
+      case "text/markdown":
+        promptString += `\n\nAttachment: ${await mediaFile.text()}`;
+        break;
+      default:
+        throw new Error(
+          `Unsupported media type: ${mediaFile.type}. Only images are supported.`,
+        );
+    }
+
+    const file = await _doVideoJob({
       model: GEMINI_MOVIE_MODEL,
-      prompt: prompt as string,
+      prompt: promptString,
+      image: mediaData,
+      // source: {}, // TODO?
       config: {
         abortSignal: this.signal,
-        aspectRatio: "16:9",
+        aspectRatio: MOVIE_ASPECT_RATIO,
         enhancePrompt: true,
-        fps: 24,
+        fps: MOVIE_FPS,
         numberOfVideos: 1,
         personGeneration: PersonGeneration.ALLOW_ADULT,
-        resolution: "720p",
+        resolution: MOVIE_RESOLUTION,
       },
-    };
+    });
 
-    if ((media as File)?.type.startsWith("image/")) {
-      request.image = {
-        inlineData: {
-          data: encodeBase64(await (media as File).arrayBuffer()),
-          mimeType: (media as File).type,
-        },
-      } as Image;
-    } else if (media) {
-      throw new Error(
-        `Unsupported media type: ${(media as File)?.type
-        }. Only images are supported.`,
-      );
-    }
-
-    let operation = await _gemini.models.generateVideos(request);
-
-    operation = await _doVideoJob(operation, _gemini);
-
-    if (operation.error) {
-      throw new Error(
-        `Error generating video: ${JSON.stringify(operation.error)}`,
-      );
-    }
-
-    if (!operation.response) {
-      throw new Error("No response");
-    }
-
-    if (
-      !operation.response.generatedVideos ||
-      !operation.response.generatedVideos.length
-    ) {
-      throw new Error("No videos generated");
-    }
-
-    const [videoData] = operation.response.generatedVideos;
-
-    if (!videoData.video) {
-      throw new Error("No video data");
-    }
-
-    if (!videoData.video.videoBytes) {
-      throw new Error("No video bytes");
-    }
-
-    const file = new File(
-      [decodeBase64(videoData.video.videoBytes)],
-      "movie.mp4",
-      { type: "video/mp4" },
-    );
-
-    // Create the event first
-    const resultEvent = new BottServiceEvent(
+    const resultEvent = new BottEvent(
       BottEventType.MESSAGE,
       {
-        detail: {
-          content: "Here is your movie:",
-        },
-        user: this.user,
+        // user: this.user, // TODO?
         channel: this.channel,
       },
     );
 
-    resultEvent.attachments = [await prepareAttachmentFromFile(
-      file,
-      resultEvent,
-    )];
+    resultEvent.attachments = [
+      await prepareAttachmentFromFile(
+        file,
+        resultEvent,
+      ),
+    ];
 
     yield resultEvent;
   },
   settings,
 );
 
-function _doVideoJob(
-  job: GenerateVideosOperation,
-  gemini = _gemini,
-): Promise<GenerateVideosOperation> {
+async function _doVideoJob(
+  job: GenerateVideosParameters,
+): Promise<File> {
+  let operation = await gemini.models.generateVideos(job);
+
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(async () => {
-      if (job.done) {
-        resolve(job);
-        return clearInterval(intervalId);
-      }
-
       try {
-        job = await gemini.operations.getVideosOperation({ operation: job });
+        if (operation.done) {
+          const file = new File(
+            [decodeBase64(
+              operation.response!.generatedVideos![0].video!.videoBytes!,
+            )],
+            generateFilename("mp4", job.prompt),
+            { type: "video/mp4" },
+          );
+          resolve(file);
+          return clearInterval(intervalId);
+        }
+
+        operation = await gemini.operations.getVideosOperation({ operation });
       } catch (error) {
         reject(error);
         return clearInterval(intervalId);
       }
-    }, 10000);
+    }, MOVIE_JOB_INTERVAL_MS);
   });
 }

@@ -16,6 +16,7 @@ import ejs from "ejs";
 import { getEventSchema } from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
+import { resolveOutputEvents } from "../../common/events.ts";
 
 const systemPromptTemplate = await Deno.readTextFile(
   new URL("./systemPrompt.md.ejs", import.meta.url),
@@ -40,7 +41,9 @@ export const generateOutput: EventPipelineProcessor = async function () {
       responseSchema: getEventSchema(this.action.service.settings),
       pipeline: this,
     },
-  );
+  )
+
+  this.data.output = await resolveOutputEvents(this);
 
   log.debug(this.data.output);
 };

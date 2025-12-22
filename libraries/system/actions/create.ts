@@ -9,12 +9,12 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import type { BottEventActionParameterEntry } from "@bott/events";
 import type {
   BottAction,
   BottActionContext,
   BottActionFunction,
   BottActionHandler,
-  BottActionParameterEntry,
   BottActionSettings,
 } from "@bott/actions";
 
@@ -24,7 +24,7 @@ export function createAction(
 ): BottAction {
   const wrapper: BottActionFunction = async function* (
     this: BottActionContext,
-    parameters: BottActionParameterEntry[],
+    parameters: BottEventActionParameterEntry[],
   ) {
     const paramsObject = parameters.reduce(
       (acc, p) => ({ ...acc, [p.name]: p.value }),
