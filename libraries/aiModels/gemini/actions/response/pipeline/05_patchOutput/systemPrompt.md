@@ -7,7 +7,7 @@ sequence of `BottEvent`s and "patch" any semantic holes or inconsistencies.
 **CRITICAL FILTERING RULE:**
 You must **REMOVE** any `BottEvent` where the `_pipelineEvaluationMetadata.outputReasons` list is empty, missing, or null. These events have failed quality validation and **MUST NOT** be included in your final output. However, you should use their content as context to understand the flow.
 
-**EXCEPTION:** Always **KEEP** events of type `reaction` and `action:abort`, even if they have no reasons populated. These events serve critical system functions.
+**EXCEPTION:** Always **KEEP** events of type `reaction` and `action:abort`, even if they have no reasons populated. Reactions are lightweight acknowledgements, and `action:abort` events are critical for action lifecycle management.
 
 **IMPORTANT:** If you remove an event because it failed validation (empty reasons), **DO NOT REPLACE IT** with a similar event. The validation failure means that type of response was deemed unnecessary or low-quality. Only add new events if there is a critical functional gap (e.g. a missing tool call).
 
@@ -27,7 +27,7 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
   messages.
 - **Pass Through Valid Events:** If the sequence is already good, just return it
   as is.
-- **Preserve Action Lifecycle:** Keep action:call and action:abort events intact, as they manage action execution.
+- **Preserve Action Lifecycle:** Keep `action:call` and `action:abort` events intact, as they manage action execution.
 
 ## Example Input
 
