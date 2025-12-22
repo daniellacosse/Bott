@@ -91,33 +91,21 @@ export const focusInput: EventPipelineProcessor = async function () {
       );
 
       const ratings: Record<string, number> = {};
-      let logMessage = `Event ${event.id}:\n`;
       for (const ratingScale in scoresWithRationale) {
-        const { rating, rationale } = scoresWithRationale[ratingScale];
-        if (rationale) {
-          logMessage +=
-            `  ${ratingScale}: ${rating}. Rationale: ${rationale}\n`;
-        }
+        const { rating } = scoresWithRationale[ratingScale];
 
         ratings[ratingScale] = Number(rating);
       }
 
-      const metadata = { ratings };
       const triggeredFocusReasons = Object.values(inputReasons)
-        .filter((reason) => reason.validator(metadata));
+        .filter((reason) => reason.validator({ ratings }));
 
       this.evaluationState.set(event, {
         ratings,
         focusReasons: triggeredFocusReasons,
       });
 
-      log.debug(
-        logMessage +
-        (triggeredFocusReasons.length > 0
-          ? `    [TRIGGERED FOCUS REASONS]: ${triggeredFocusReasons.map(({ name }) => name).join(", ")
-          }`
-          : ""),
-      );
+      log.debug(event, scoresWithRationale, triggeredFocusReasons);
     })());
 
     pointer++;

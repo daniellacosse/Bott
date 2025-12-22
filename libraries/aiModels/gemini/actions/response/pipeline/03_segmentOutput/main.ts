@@ -24,8 +24,6 @@ export const segmentOutput: EventPipelineProcessor = async function () {
     return;
   }
 
-  log.debug(`Segmenting ${this.data.output.length} events...`);
-
   const output = this.data.output;
   const segmentPromises: Promise<BottEvent[]>[] = [];
 
@@ -56,14 +54,6 @@ export const segmentOutput: EventPipelineProcessor = async function () {
   const segments = await Promise.all(segmentPromises);
   this.data.output = segments.flat();
 
-  log.debug(
-    `Segmented events: ${this.data.output.length}. Content: ${JSON.stringify(
-      this.data.output.map((e) => ({
-        type: e.type,
-        content: e.detail?.content ?? "n/a",
-      })),
-    )
-    }`,
-  );
+  log.debug(this.data.output);
 
 };

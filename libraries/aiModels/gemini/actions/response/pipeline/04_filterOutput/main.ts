@@ -96,37 +96,21 @@ export const filterOutput: EventPipelineProcessor = async function () {
       );
 
       const ratings: Record<string, number> = {};
-      let logMessage = `Message Candidate:\n`;
-
-      logMessage += `  Content: ${event.detail?.content ?? "n/a"}\n`;
-      logMessage += `  Name: ${event.detail?.name ?? "n/a"}\n`;
-
       for (const ratingScale in scoresWithRationale) {
-        const { rating, rationale } = scoresWithRationale[ratingScale];
-        if (rationale) {
-          logMessage +=
-            `    ${ratingScale}: ${rating}. Rationale: ${rationale}\n`;
-        }
+        const { rating } = scoresWithRationale[ratingScale];
 
         ratings[ratingScale] = Number(rating);
       }
 
-      const metadata = { ratings };
       const triggeredOutputReasons = Object.values(outputReasons)
-        .filter((reason) => reason.validator(metadata));
+        .filter((reason) => reason.validator({ ratings }));
 
       this.evaluationState.set(event, {
         ratings,
         outputReasons: triggeredOutputReasons,
       });
 
-      log.debug(
-        logMessage +
-        (triggeredOutputReasons.length > 0
-          ? `    [TRIGGERED OUTPUT REASONS]: ${triggeredOutputReasons.map(({ name }) => name).join(", ")
-          }`
-          : ""),
-      );
+      log.debug(event, scoresWithRationale, triggeredOutputReasons);
     })());
 
     pointer++;

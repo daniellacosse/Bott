@@ -25,8 +25,6 @@ export const patchOutput: EventPipelineProcessor = async function () {
     return;
   }
 
-  log.debug(`Patching ${this.data.output.length} events...`);
-
   this.data.output = await queryGemini<BottEvent[]>(
     this.data.output,
     {
@@ -37,15 +35,7 @@ export const patchOutput: EventPipelineProcessor = async function () {
     },
   );
 
-  log.debug(
-    `Patched events: ${this.data.output.length}. Content: ${JSON.stringify(
-      this.data.output.map((e) => ({
-        type: e.type,
-        content: e.detail?.content ?? "n/a",
-      })),
-    )
-    }`,
-  );
+  log.debug(this.data.output);
 
   // Trusted Patching:
   // Since this step is explicitly designed to fix issues, we treat its output as "trusted".

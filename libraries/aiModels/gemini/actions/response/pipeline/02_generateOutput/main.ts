@@ -42,12 +42,5 @@ export const generateOutput: EventPipelineProcessor = async function () {
     },
   );
 
-  log.debug(
-    `Raw generated output: ${JSON.stringify(this.data.output, (key, value) => {
-      if (key === "parent") return value?.id;
-      return value;
-    })
-    }`,
-  );
-
+  log.debug(this.data.output);
 };
