@@ -89,8 +89,10 @@ export type BottReactionEvent = BottEvent<BottEventType.REACTION, {
 
 // The Action Events probably belong it @bott/actions?, however
 // having them here simplifies things greatly.
-// All of libraries/system modules (and to a lesser extent the whole app) 
+
+// All of the libraries/system modules (and to a lesser extent the whole app) 
 // are currently _loosely_ coupled, so I'll take the simplicity over the correctness.
+
 export type BottEventActionParameterValue = string | number | boolean | File;
 
 type _ParameterBase = {
