@@ -10,9 +10,21 @@
  */
 
 import type { BottAction } from "@bott/actions";
-import { SlashCommandBuilder } from "discord.js";
+import { SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT } from "@bott/constants";
 
-const COMMAND_DESCRIPTION_LIMIT = 100;
+import {
+  type SlashCommandAttachmentOption,
+  type SlashCommandBooleanOption,
+  SlashCommandBuilder,
+  type SlashCommandNumberOption,
+  type SlashCommandStringOption,
+} from "discord.js";
+
+type SlashCommandOption =
+  | SlashCommandBooleanOption
+  | SlashCommandStringOption
+  | SlashCommandNumberOption
+  | SlashCommandAttachmentOption;
 
 export function getCommandJson({
   name,
@@ -21,68 +33,64 @@ export function getCommandJson({
 }: BottAction) {
   const builder = new SlashCommandBuilder().setName(name);
 
-  builder.setDescription(instructions.slice(0, COMMAND_DESCRIPTION_LIMIT));
+  builder.setDescription(
+    instructions.slice(0, SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT),
+  );
 
-  if (parameters && parameters.length) {
-    for (const parameter of parameters) {
-      const {
-        name,
-        description,
-        type,
-        required,
-        defaultValue,
-      } = parameter;
+  if (!parameters?.length) {
+    return builder.toJSON();
+  }
 
-      // deno-lint-ignore no-explicit-any
-      const buildOption = (option: any) => {
-        option.setName(name);
+  for (
+    const {
+      name,
+      description,
+      type,
+      required,
+      allowedValues,
+      defaultValue,
+    } of parameters
+  ) {
+    const buildOption = <T extends SlashCommandOption>(option: T) => {
+      option.setName(name);
 
-        let finalDescription = description;
-        if (defaultValue !== undefined) {
-          finalDescription += ` (Default: ${defaultValue})`;
-        }
-
-        if (finalDescription) {
-          option.setDescription(finalDescription);
-        }
-
-        // Discord does not support pre-filled values:
-        // the workaround is to make the Discord option required only if
-        // there's no default.
-        if (required && defaultValue === undefined) {
-          option.setRequired(required);
-        }
-
-        if (
-          type !== "file" &&
-          parameter.allowedValues &&
-          parameter.allowedValues.length
-        ) {
-          option.addChoices(
-            ...parameter.allowedValues.map((v) => ({
-              name: String(v),
-              value: v,
-            })),
-          );
-        }
-
-        return option;
-      };
-
-      switch (type) {
-        case "string":
-          builder.addStringOption(buildOption);
-          break;
-        case "number":
-          builder.addNumberOption(buildOption);
-          break;
-        case "boolean":
-          builder.addBooleanOption(buildOption);
-          break;
-        case "file":
-          builder.addAttachmentOption(buildOption);
-          break;
+      if (description) {
+        option.setDescription(
+          (defaultValue
+            ? `${description} (Default: ${defaultValue})`
+            : description).slice(0, SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT),
+        );
       }
+
+      if (required && !defaultValue) {
+        option.setRequired(required);
+      }
+
+      if (allowedValues && type === "string") {
+        (option as SlashCommandStringOption).addChoices(
+          allowedValues.map((value) => ({
+            name: String(value),
+            value: String(value),
+          })),
+        );
+      }
+
+      return option;
+    };
+
+    switch (type) {
+      case "string":
+        builder.addStringOption(buildOption<SlashCommandStringOption>);
+        break;
+      case "number":
+        builder.addNumberOption(buildOption<SlashCommandNumberOption>);
+        break;
+      case "boolean":
+        builder.addBooleanOption(buildOption<SlashCommandBooleanOption>);
+        break;
+      case "file":
+        builder.addAttachmentOption(buildOption<SlashCommandAttachmentOption>);
+        break;
     }
   }
 

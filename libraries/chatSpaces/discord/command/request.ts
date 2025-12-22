@@ -9,13 +9,13 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type {
-  BottActionCallEvent,
-  BottActionParameterEntry,
-} from "@bott/actions";
-import { BottActionEventType } from "@bott/actions";
+import {
+  BottEvent,
+  BottEventType,
+  type BottActionCallEvent,
+  type BottEventActionParameterEntry,
+} from "@bott/events";
 import type { BottChannel } from "@bott/model";
-import { type BottServiceContext, BottServiceEvent } from "@bott/services";
 import {
   ApplicationCommandOptionType,
   ChannelType,
@@ -26,7 +26,6 @@ import {
 
 export async function resolveCommandRequestEvent(
   interaction: ChatInputCommandInteraction,
-  context: BottServiceContext,
 ): Promise<BottActionCallEvent> {
   let channel: BottChannel | undefined = undefined;
 
@@ -46,7 +45,7 @@ export async function resolveCommandRequestEvent(
     };
   }
 
-  return new BottServiceEvent(BottActionEventType.ACTION_CALL, {
+  return new BottEvent(BottEventType.ACTION_CALL, {
     detail: {
       id: crypto.randomUUID(),
       name: interaction.commandName,
@@ -55,7 +54,10 @@ export async function resolveCommandRequestEvent(
         interaction.options.data,
       ),
     },
-    user: context.user,
+    user: {
+      name: interaction.user.username,
+      id: interaction.user.id,
+    },
     channel,
   }) as BottActionCallEvent;
 }
@@ -63,8 +65,8 @@ export async function resolveCommandRequestEvent(
 async function extractResolvedOptions(
   interaction: ChatInputCommandInteraction,
   optionList: readonly CommandInteractionOption[],
-): Promise<BottActionParameterEntry[]> {
-  const options: BottActionParameterEntry[] = [];
+): Promise<BottEventActionParameterEntry[]> {
+  const options: BottEventActionParameterEntry[] = [];
 
   for (const opt of optionList) {
     switch (opt.type) {

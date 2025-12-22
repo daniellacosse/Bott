@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottAction, BottActionEventType } from "@bott/actions";
+import type { BottAction } from "@bott/actions";
 import type {
   BottEvent,
   BottEventType,
@@ -27,7 +27,7 @@ export interface BottServiceFunction {
 export interface BottServiceSettings {
   name: string;
   actions?: Record<string, BottAction>;
-  events?: Set<BottEventType | BottActionEventType>;
+  events?: Set<BottEventType>;
 }
 
 export interface BottServiceContext {
@@ -36,7 +36,7 @@ export interface BottServiceContext {
   app: BottResponseSettings;
   dispatchEvent: (event: BottEvent) => void;
   addEventListener: <E extends BottEvent>(
-    type: BottEventType | BottActionEventType,
+    type: BottEventType,
     listener: (event: E, context?: BottServiceContext) => unknown,
   ) => void;
 }

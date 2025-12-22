@@ -77,8 +77,7 @@ export const commit = (
         .slice(0, QUERY_DEBUG_MAX_LENGTH);
       const paramsString = JSON.stringify(currentInstruction.params);
       messageParts.push(
-        `Failed on instruction: "${querySnippet}${
-          querySnippet.length === QUERY_DEBUG_MAX_LENGTH ? "…" : ""
+        `Failed on instruction: "${querySnippet}${querySnippet.length === QUERY_DEBUG_MAX_LENGTH ? "…" : ""
         }" with parameters: ${paramsString}.`,
       );
     }
@@ -98,6 +97,7 @@ export const commit = (
       );
     }
 
+    // TODO: Maybe throw error instead? System is more resilient now.
     return {
       error: new Error(messageParts.join(" "), {
         cause: error as Error,

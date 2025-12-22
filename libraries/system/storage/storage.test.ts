@@ -11,7 +11,8 @@
 
 import { BottEventType } from "@bott/events";
 import { log } from "@bott/log";
-import { BottServiceEvent, BottServicesManager } from "@bott/services";
+import { BottServicesManager } from "@bott/services";
+import { BottEvent } from "@bott/events";
 
 import { assertEquals, assertExists } from "@std/assert";
 import { upsertEvents } from "./data/events/upsert.ts";
@@ -44,18 +45,18 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
   const nancy = { id: "1", name: "Nancy" };
   const bob = { id: "2", name: "Bob" };
 
-  const nancyGreeting = new BottServiceEvent(BottEventType.MESSAGE, {
+  const nancyGreeting = new BottEvent(BottEventType.MESSAGE, {
     detail: { content: "Hello, world!" },
     user: nancy,
     channel,
   });
-  const bobReply = new BottServiceEvent(BottEventType.REPLY, {
+  const bobReply = new BottEvent(BottEventType.REPLY, {
     detail: { content: "Hi Nancy!" },
     user: bob,
     channel,
     parent: nancyGreeting,
   });
-  const nancyReaction = new BottServiceEvent(BottEventType.REACTION, {
+  const nancyReaction = new BottEvent(BottEventType.REACTION, {
     detail: { content: "👍" },
     user: nancy,
     channel,
@@ -153,7 +154,7 @@ Deno.test("Storage - Global Listener Persistence", async () => {
   const _tempDir = Deno.makeTempDirSync();
   createTestManager();
 
-  const event = new BottServiceEvent(BottEventType.MESSAGE, {
+  const event = new BottEvent(BottEventType.MESSAGE, {
     detail: { content: "Global dispatch test" },
     user: { id: "listener-test", name: "Tester" },
     channel: { id: "1", name: "main", space: { id: "1", name: "space" } },

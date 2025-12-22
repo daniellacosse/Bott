@@ -14,9 +14,9 @@ import { Buffer } from "node:buffer";
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import {
-  GEMINI_SONG_MODEL,
   ACTION_RATE_LIMIT_MUSIC,
   ACTION_SONG_DURATION_SECONDS,
+  GEMINI_SONG_MODEL,
 } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
@@ -117,24 +117,26 @@ export const songAction: BottAction = createAction(
     const wavHeader = writeWavHeader(48000, 2, 16, allPcmData.length); // Lyria is 48kHz Stereo 16-bit
     const finalWav = Buffer.concat([wavHeader, allPcmData]);
 
-    const file = new File([finalWav], generateFilename("wav", prompt), { type: "audio/wav" }); // Keep file creation
+    const file = new File(
+      [finalWav],
+      generateFilename("wav", prompt as string),
+      { type: "audio/wav" },
+    );
 
-    // Create the event first
     const resultEvent = new BottEvent(
       BottEventType.MESSAGE,
       {
-        detail: {
-          content: "Here is your song:",
-        },
-        user: this.user,
+        // user: this.user, // TODO?
         channel: this.channel,
       },
     );
 
-    resultEvent.attachments = [await prepareAttachmentFromFile(
-      file,
-      resultEvent,
-    )];
+    resultEvent.attachments = [
+      await prepareAttachmentFromFile(
+        file,
+        resultEvent,
+      ),
+    ];
 
     yield resultEvent;
   },

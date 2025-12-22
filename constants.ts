@@ -32,6 +32,7 @@ export const SERVICE_LIST = resolveEnv(
 );
 
 export const SERVICE_DISCORD_TOKEN = Deno.env.get("SERVICE_DISCORD_TOKEN");
+export const SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT = 100;
 
 // -- Actions --
 

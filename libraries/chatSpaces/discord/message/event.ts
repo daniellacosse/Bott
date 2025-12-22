@@ -9,9 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { type BottEvent, BottEventType } from "@bott/events";
+import { BottEvent, BottEventType } from "@bott/events";
 
-import { BottServiceEvent } from "@bott/services";
 import { getEvents, prepareAttachmentFromUrl } from "@bott/storage";
 import type { Message } from "discord.js";
 
@@ -19,7 +18,7 @@ import { getMarkdownLinks } from "./markdown.ts";
 
 export const resolveEventFromMessage = async (
   message: Message<true>,
-): Promise<BottServiceEvent> => {
+): Promise<BottEvent> => {
   const [possibleEvent] = await getEvents(message.id);
 
   if (possibleEvent) {
@@ -42,7 +41,7 @@ export const resolveEventFromMessage = async (
     }
   }
 
-  const event = new BottServiceEvent(type, {
+  const event = new BottEvent(type, {
     detail: {
       content: (message.content || message.embeds.at(0)?.description) ?? "",
     },
@@ -63,8 +62,11 @@ export const resolveEventFromMessage = async (
     parent,
   });
 
-  event.id = message.id;
-  event.createdAt = new Date(message.createdTimestamp);
+  // TODO
+  Object.assign(event, {
+    id: message.id,
+    createdAt: new Date(message.createdTimestamp),
+  });
 
   const urls = [
     ...message.attachments.values().map(({ url }) => url),
