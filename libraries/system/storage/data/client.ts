@@ -11,7 +11,10 @@
 
 import { DatabaseSync } from "node:sqlite";
 import { STORAGE_DATA_LOCATION, STORAGE_FILE_ROOT } from "@bott/constants";
-import { schema } from "@bott/model";
+
+export const schema: string = Deno.readTextFileSync(
+  new URL("./schema.sql", import.meta.url).pathname,
+);
 
 Deno.mkdirSync(STORAGE_FILE_ROOT, { recursive: true });
 

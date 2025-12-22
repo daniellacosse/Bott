@@ -9,35 +9,27 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEvent } from "@bott/events";
 import type {
-  BottChannel,
-  BottUser,
-  NonEmptyArray,
-} from "@bott/model";
+  BottEventActionParameter,
+  BottEventActionParameterEntry,
+  BottEventActionParameterValue,
+  BottEvent,
+} from "@bott/events";
+import type { BottChannel, BottUser, NonEmptyArray } from "@bott/model";
 import type { BottServiceContext } from "@bott/services";
-
-export enum BottActionEventType {
-  ACTION_CALL = "action:call",
-  ACTION_START = "action:start",
-  ACTION_ABORT = "action:abort",
-  ACTION_COMPLETE = "action:complete",
-  ACTION_OUTPUT = "action:output",
-  ACTION_ERROR = "action:error",
-}
 
 export type BottAction = BottActionFunction & BottActionSettings;
 
 export type BottActionFunction = (
   this: BottActionContext,
-  parameters: BottActionParameterEntry[],
+  parameters: BottEventActionParameterEntry[],
 ) => AsyncGenerator<BottEvent, BottEvent | void, void>;
 
 export type BottActionHandler = (
   this: BottActionContext,
   params: Record<
     string,
-    BottActionParameterValue | undefined
+    BottEventActionParameterValue | undefined
   >,
 ) => AsyncGenerator<BottEvent, BottEvent | void, void>;
 
@@ -45,7 +37,7 @@ export type BottActionSettings = {
   instructions: string;
   limitPerMonth?: number;
   name: string;
-  parameters?: NonEmptyArray<BottActionParameter>;
+  parameters?: NonEmptyArray<BottEventActionParameter>;
   shouldForwardOutput?: boolean;
   shouldInterpretOutput?: boolean;
 };
@@ -58,85 +50,3 @@ export type BottActionContext = {
   signal: AbortSignal;
   user?: BottUser;
 };
-
-export type BottActionParameterValue = string | number | boolean | File;
-
-type BottActionParameterBase = {
-  name: string;
-  description?: string;
-  required?: boolean;
-};
-
-type BottActionParameterWithAllowedValues = BottActionParameterBase & {
-  type: "string" | "number" | "boolean";
-  allowedValues?: (string | number | boolean)[];
-  defaultValue?: string | number | boolean;
-};
-
-type BottActionParameterFile = BottActionParameterBase & {
-  type: "file";
-  defaultValue?: File;
-};
-
-export type BottActionParameter =
-  | BottActionParameterWithAllowedValues
-  | BottActionParameterFile;
-
-export type BottActionParameterEntry = {
-  name: string;
-  value: BottActionParameterValue;
-  type: BottActionParameter["type"];
-};
-
-export type BottActionCallEvent = BottEvent<
-  BottActionEventType.ACTION_CALL,
-  {
-    id: string;
-    name: string;
-    parameters: BottActionParameterEntry[];
-  }
->;
-
-export type BottActionStartEvent = BottEvent<
-  BottActionEventType.ACTION_START,
-  {
-    name: string;
-    id: string;
-  }
->;
-
-export type BottActionAbortEvent = BottEvent<
-  BottActionEventType.ACTION_ABORT,
-  {
-    name: string;
-    id: string;
-  }
->;
-
-export type BottActionCompleteEvent = BottEvent<
-  BottActionEventType.ACTION_COMPLETE,
-  {
-    name: string;
-    id: string;
-  }
->;
-
-export type BottActionOutputEvent = BottEvent<
-  BottActionEventType.ACTION_OUTPUT,
-  {
-    name: string;
-    id: string;
-    event: BottEvent;
-    shouldInterpretOutput?: boolean;
-    shouldForwardOutput?: boolean;
-  }
->;
-
-export type BottActionErrorEvent = BottEvent<
-  BottActionEventType.ACTION_ERROR,
-  {
-    name: string;
-    id: string;
-    error: Error;
-  }
->;

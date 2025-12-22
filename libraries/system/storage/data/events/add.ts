@@ -10,14 +10,14 @@
  */
 
 import type {
+  BottEvent,
+  BottEventAttachment,
+} from "@bott/events";
+import type {
   BottChannel,
   BottSpace,
   BottUser,
 } from "@bott/model";
-import type {
-  BottEvent,
-  BottEventAttachment,
-} from "@bott/events";
 
 import { commit, type TransactionResults } from "../commit.ts";
 import { sql } from "../sql.ts";

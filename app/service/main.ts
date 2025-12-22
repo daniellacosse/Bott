@@ -9,13 +9,13 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { APP_NAME } from "@bott/constants";
 import {
   type BottActionErrorEvent,
-  BottActionEventType,
   type BottActionOutputEvent,
-} from "@bott/actions";
-import { APP_NAME } from "@bott/constants";
-import { BottEvent, BottEventType } from "@bott/events";
+  BottEventType,
+  BottEvent,
+} from "@bott/events";
 import type { BottUser } from "@bott/model";
 import type {
   BottService,
@@ -26,10 +26,15 @@ import { createService } from "@bott/services";
 
 import { actions } from "./actions.ts";
 
-const RESPONSE_ACTION_NAME = "response";
+const RESPONSE_ACTION_NAME = actions.response.name;
 
 // Maps each channel ID to the ID of the in-flight response action
 const channelActionIndex = new Map<string, string>();
+
+const appUser: BottUser = {
+  id: APP_NAME,
+  name: APP_NAME,
+};
 
 const settings: BottServiceSettings = {
   name: APP_NAME,
@@ -37,21 +42,74 @@ const settings: BottServiceSettings = {
     BottEventType.MESSAGE,
     BottEventType.REPLY,
     BottEventType.REACTION,
-    BottActionEventType.ACTION_OUTPUT,
-    BottActionEventType.ACTION_COMPLETE,
-    BottActionEventType.ACTION_ERROR,
+    BottEventType.ACTION_OUTPUT,
+    BottEventType.ACTION_COMPLETE,
+    BottEventType.ACTION_ERROR,
   ]),
   actions,
 }
 
 export const appService: BottService = createService(
   function () {
+    const callResponseAction = (event: BottEvent) => {
+      if (!event.channel) return;
+
+      const actionId = channelActionIndex.get(event.channel.id);
+
+      if (actionId) {
+        this.dispatchEvent(
+          new BottEvent(
+            BottEventType.ACTION_ABORT,
+            {
+              detail: {
+                id: actionId,
+                name: RESPONSE_ACTION_NAME,
+              },
+              user: appUser,
+              channel: event.channel,
+            },
+          ),
+        );
+      }
+
+      const id = crypto.randomUUID();
+
+      channelActionIndex.set(event.channel.id, id);
+
+      this.dispatchEvent(
+        new BottEvent(
+          BottEventType.ACTION_CALL,
+          {
+            detail: {
+              id,
+              name: RESPONSE_ACTION_NAME,
+            },
+            user: appUser,
+            channel: event.channel,
+          },
+        ),
+      );
+    };
+
+    const respondIfNotSelf = (event: BottEvent) => {
+      if (!event.user || event.user.id === APP_NAME) return;
+
+      // Don't respond to errors/aborts from responses to prevent loops
+      if (
+        event.type === BottEventType.ACTION_ERROR &&
+        event.detail.name === RESPONSE_ACTION_NAME
+      ) return;
+
+      callResponseAction(event);
+    };
+
+
     this.addEventListener(BottEventType.MESSAGE, respondIfNotSelf);
     this.addEventListener(BottEventType.REPLY, respondIfNotSelf);
     this.addEventListener(BottEventType.REACTION, respondIfNotSelf);
 
     this.addEventListener(
-      BottActionEventType.ACTION_OUTPUT,
+      BottEventType.ACTION_OUTPUT,
       (output: BottActionOutputEvent) => {
         const { event, shouldInterpretOutput, shouldForwardOutput } =
           output.detail;
@@ -66,13 +124,23 @@ export const appService: BottService = createService(
       },
     );
 
+    const cleanupChannelActionIndex = (event: BottEvent) => {
+      if (!event.channel) return;
+
+      const actionId = channelActionIndex.get(event.channel.id);
+
+      if (actionId === event.detail.id) {
+        channelActionIndex.delete(event.channel.id);
+      }
+    };
+
     this.addEventListener(
-      BottActionEventType.ACTION_COMPLETE,
+      BottEventType.ACTION_COMPLETE,
       cleanupChannelActionIndex,
     );
 
     this.addEventListener(
-      BottActionEventType.ACTION_ERROR,
+      BottEventType.ACTION_ERROR,
       (event: BottActionErrorEvent) => {
         respondIfNotSelf(event);
         cleanupChannelActionIndex(event);
@@ -82,69 +150,3 @@ export const appService: BottService = createService(
   settings,
 );
 
-const appUser: BottUser = {
-  id: APP_NAME,
-  name: APP_NAME,
-};
-
-function callResponseAction(event: BottEvent) {
-  if (!event.channel) return;
-
-  const actionId = channelActionIndex.get(event.channel.id);
-
-  if (actionId) {
-    this.dispatchEvent(
-      new BottEvent(
-        BottActionEventType.ACTION_ABORT,
-        {
-          detail: {
-            id: actionId,
-            name: RESPONSE_ACTION_NAME,
-          },
-          user: appUser,
-          channel: event.channel,
-        },
-      ),
-    );
-  }
-
-  const id = crypto.randomUUID();
-
-  channelActionIndex.set(event.channel.id, id);
-
-  this.dispatchEvent(
-    new BottEvent(
-      BottActionEventType.ACTION_CALL,
-      {
-        detail: {
-          id,
-          name: RESPONSE_ACTION_NAME,
-        },
-        user: appUser,
-        channel: event.channel,
-      },
-    ),
-  );
-};
-
-function respondIfNotSelf(event: BottEvent) {
-  if (!event.user || event.user.id === APP_NAME) return;
-
-  // Don't respond to errors/aborts from responses to prevent loops
-  if (
-    event.type === BottActionEventType.ACTION_ERROR &&
-    event.detail.name === RESPONSE_ACTION_NAME
-  ) return;
-
-  callResponseAction(event);
-};
-
-function cleanupChannelActionIndex(event: BottEvent) {
-  if (!event.channel) return;
-
-  const actionId = channelActionIndex.get(event.channel.id);
-
-  if (actionId === event.detail.id) {
-    channelActionIndex.delete(event.channel.id);
-  }
-};

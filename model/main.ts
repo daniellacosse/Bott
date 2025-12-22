@@ -14,7 +14,3 @@ export * from "./types/common.ts";
 export * from "./types/entities.ts";
 export * from "./types/reasons.ts";
 export * from "./types/settings.ts";
-
-export const schema: string = Deno.readTextFileSync(
-  new URL("./schema.sql", import.meta.url).pathname,
-);

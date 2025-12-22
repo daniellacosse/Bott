@@ -12,8 +12,8 @@
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import {
-  TYPING_MAX_TIME_MS,
-  TYPING_WORDS_PER_MINUTE,
+  ACTION_RESPONSE_OUTPUT_TIME_LIMIT_MS as TYPING_MAX_TIME_MS,
+  ACTION_RESPONSE_OUTPUT_WORDS_PER_MINUTE as TYPING_WORDS_PER_MINUTE,
 } from "@bott/constants";
 import { log } from "@bott/log";
 import { addEvents, getEventHistory } from "@bott/storage";
@@ -57,6 +57,7 @@ export const responseAction: BottAction = createAction(
     }
 
     // Input events were processed, update their lastProcessedAt
+    // TODO: lastProcessedAt should be assigned in the pipeline
     try {
       const processingTime = new Date();
 

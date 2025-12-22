@@ -9,15 +9,15 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { BottEvent } from "@bott/events";
 import type { BottChannel } from "@bott/model";
-import { BottServiceEvent } from "@bott/services";
 
 import { commit } from "../commit.ts";
 import { sql } from "../sql.ts";
 
 export const getEvents = async (
   ...ids: string[]
-): Promise<BottServiceEvent[]> => {
+): Promise<BottEvent[]> => {
   const result = commit(
     sql`
       select
@@ -54,7 +54,7 @@ export const getEvents = async (
     throw result.error;
   }
 
-  const events = new Map<string, BottServiceEvent>();
+  const events = new Map<string, BottEvent>();
 
   for (
     const {
@@ -70,11 +70,18 @@ export const getEvents = async (
       continue;
     }
 
-    const event = new BottServiceEvent(type, {
+    let parent: BottEvent | undefined;
+
+    if (rowData.p_id) {
+      parent = (await getEvents(rowData.p_id))[0];
+    }
+
+    const event = new BottEvent(type, {
       detail: JSON.parse(detail),
       id,
       createdAt: new Date(createdAt),
       lastProcessedAt: lastProcessedAt ? new Date(lastProcessedAt) : undefined,
+      parent,
       channel: rowData.c_id
         ? {
           id: rowData.c_id,
@@ -116,6 +123,7 @@ export const getEvents = async (
 
     event.attachments.push({
       id: rowData.a_id,
+      type: rowData.a_type,
       originalSource: new URL(rowData.a_source_url),
       raw: {
         id: rowData.rf_id,
@@ -135,21 +143,10 @@ export const getEvents = async (
     });
   }
 
-  // Handle parent events
-  for (const rowData of result.reads) {
-    if (rowData.p_id && events.has(rowData.e_id)) {
-      const event = events.get(rowData.e_id)!;
-      if (!event.parent) {
-        // @ts-expect-error: parent is readonly but we need to hydrate it
-        [event.parent] = await getEvents(rowData.p_id);
-      }
-    }
-  }
-
   return [...events.values()];
 };
 
-export const getEventHistory = (channel: BottChannel): Promise<BottServiceEvent[]> => {
+export const getEventHistory = (channel: BottChannel): Promise<BottEvent[]> => {
   const result = commit(
     sql`
       select e.id

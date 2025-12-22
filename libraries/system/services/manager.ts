@@ -10,13 +10,10 @@
  */
 
 import type { BottAction } from "@bott/actions";
-import type { BottActionEventType } from "@bott/actions";
 import { STORAGE_DEPLOY_NONCE_LOCATION, STORAGE_ROOT } from "@bott/constants";
 import type { BottEvent, BottEventType } from "@bott/events";
 import { log } from "@bott/log";
-import type {
-  BottResponseSettings,
-} from "@bott/model";
+import type { BottResponseSettings } from "@bott/model";
 import type { BottService, BottServiceContext } from "./types.ts";
 
 const deploymentNonce = crypto.randomUUID();
@@ -28,7 +25,7 @@ export class BottServicesManager {
   private app: BottResponseSettings;
   private services: Map<string, BottService> = new Map();
   private actions: Map<string, BottAction> = new Map();
-  private events: Set<BottEventType | BottActionEventType> = new Set();
+  private events: Set<BottEventType> = new Set();
 
   constructor(app: BottResponseSettings) {
     this.nonce = deploymentNonce;
@@ -77,7 +74,7 @@ export class BottServicesManager {
   }
 
   addEventListener<E extends BottEvent>(
-    eventType: BottEventType | BottActionEventType,
+    eventType: BottEventType,
     handler: (
       event: E,
       context?: BottServiceContext,
@@ -103,11 +100,9 @@ export class BottServicesManager {
   }
 
   dispatchEvent(event: BottEvent) {
-    const eventType = event.type as BottEventType | BottActionEventType;
-
-    if (!this.events.has(eventType)) {
+    if (!this.events.has(event.type)) {
       log.warn(
-        `Event type "${eventType}" is not provided by any registered service. Refusing to dispatch.`,
+        `Event type "${event.type}" is not provided by any registered service. Refusing to dispatch.`,
       );
       return;
     }

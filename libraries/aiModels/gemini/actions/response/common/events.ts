@@ -9,20 +9,20 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { type BottActionCallEvent, BottActionEventType } from "@bott/actions";
 import {
-  INPUT_EVENT_COUNT_LIMIT,
-  INPUT_EVENT_TIME_LIMIT_MS,
-  INPUT_FILE_AUDIO_COUNT_LIMIT,
   ACTION_RESPONSE_FILE_TOKEN_LIMIT,
-  INPUT_FILE_VIDEO_COUNT_LIMIT,
+  ACTION_RESPONSE_EVENT_COUNT_LIMIT as INPUT_EVENT_COUNT_LIMIT,
+  ACTION_RESPONSE_HISTORY_SIZE_MS as INPUT_EVENT_TIME_LIMIT_MS,
+  ACTION_RESPONSE_AUDIO_COUNT_LIMIT as INPUT_FILE_AUDIO_COUNT_LIMIT,
+  ACTION_RESPONSE_VIDEO_COUNT_LIMIT as INPUT_FILE_VIDEO_COUNT_LIMIT,
 } from "@bott/constants";
 import {
   BottAttachmentType,
+  type BottActionCallEvent,
   type BottEvent,
+  BottEventType,
   type BottEventAttachment,
 } from "@bott/events";
-import type { BottServiceEvent } from "@bott/services";
 import { getEvents } from "@bott/storage";
 import type { EventPipelineContext } from "../pipeline/types.ts";
 
@@ -97,26 +97,29 @@ export const prepareInputEvents = (events: BottEvent[]): BottEvent[] => {
   return preparedInput;
 };
 
+// TODO: this should probably happen in queryGemini
 export const resolveOutputEvents = async (
   context: EventPipelineContext,
-): Promise<BottServiceEvent[]> => {
+): Promise<BottEvent[]> => {
   const attachmentIndex = makeAttachmentIndex(context);
   const outputEvents = context.data.output;
-  const resolvedEvents: BottServiceEvent[] = [];
+  const resolvedEvents: BottEvent[] = [];
 
   for (const unresolvedEvent of outputEvents) {
+    // TODO: create a new BottEvent instead of cloning so we don't have to force assign parent
     const event = structuredClone(unresolvedEvent);
 
     // Ensure full parent object is fetched
     if (event.parent) {
       const [fetchedParent] = await getEvents(event.parent.id);
 
-      event.parent = fetchedParent;
+      // Force read-only assignment
+      Object.assign(event.parent, fetchedParent);
     }
 
     // Ensure file parameters are resolved
     if (
-      event.type === BottActionEventType.ACTION_CALL &&
+      event.type === BottEventType.ACTION_CALL &&
       event.detail.parameters
     ) {
       const actionCallEvent = event as BottActionCallEvent;

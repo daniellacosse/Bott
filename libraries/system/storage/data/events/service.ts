@@ -9,7 +9,6 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottActionEventType } from "@bott/actions";
 import { type BottEvent, BottEventType } from "@bott/events";
 import { log } from "@bott/log";
 import { type BottService, type BottServiceSettings, createService } from "@bott/services";
@@ -22,11 +21,11 @@ const settings: BottServiceSettings = {
     BottEventType.MESSAGE,
     BottEventType.REPLY,
     BottEventType.REACTION,
-    BottActionEventType.ACTION_CALL,
-    BottActionEventType.ACTION_START,
-    BottActionEventType.ACTION_COMPLETE,
-    BottActionEventType.ACTION_ERROR,
-    BottActionEventType.ACTION_ABORT,
+    BottEventType.ACTION_CALL,
+    BottEventType.ACTION_START,
+    BottEventType.ACTION_COMPLETE,
+    BottEventType.ACTION_ERROR,
+    BottEventType.ACTION_ABORT,
   ]),
 };
 
@@ -46,23 +45,23 @@ export const eventStorageService: BottService = createService(
     this.addEventListener(BottEventType.REPLY, saveEvent);
     this.addEventListener(BottEventType.REACTION, saveEvent);
     this.addEventListener(
-      BottActionEventType.ACTION_CALL,
+      BottEventType.ACTION_CALL,
       saveEvent,
     );
     this.addEventListener(
-      BottActionEventType.ACTION_START,
+      BottEventType.ACTION_START,
       saveEvent,
     );
     this.addEventListener(
-      BottActionEventType.ACTION_COMPLETE,
+      BottEventType.ACTION_COMPLETE,
       saveEvent,
     );
     this.addEventListener(
-      BottActionEventType.ACTION_ERROR,
+      BottEventType.ACTION_ERROR,
       saveEvent,
     );
     this.addEventListener(
-      BottActionEventType.ACTION_ABORT,
+      BottEventType.ACTION_ABORT,
       saveEvent,
     );
   },

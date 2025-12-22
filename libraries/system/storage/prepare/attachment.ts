@@ -110,6 +110,7 @@ export async function prepareAttachmentFromUrl(
 
   return {
     id: attachmentId,
+    type: compressedFile.type as BottAttachmentType,
     originalSource: sourceUrl,
     raw: {
       id: crypto.randomUUID(),
@@ -171,6 +172,7 @@ export async function prepareAttachmentFromFile(
 
   return {
     id: attachmentId,
+    type,
     originalSource: new URL(`file://${rawPath}`),
     raw: {
       id: crypto.randomUUID(),

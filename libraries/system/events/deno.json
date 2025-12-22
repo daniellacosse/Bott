@@ -1,5 +1,5 @@
 {
   "name": "@bott/events",
-  "version": "0.1.0",
-  "exports": "./module.ts"
+  "exports": "./module.ts",
+  "private": true
 }

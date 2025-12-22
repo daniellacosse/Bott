@@ -9,12 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type {
-  BottAction,
-  BottActionParameter,
-} from "@bott/actions";
-import { BottActionEventType } from "@bott/actions";
-import { BottEventType } from "@bott/events";
+import type { BottAction } from "@bott/actions";
+import { type BottEventActionParameter, BottEventType } from "@bott/events";
 import type { BottServiceSettings } from "@bott/services";
 import {
   type Schema as GeminiStructuredResponseSchema,
@@ -89,9 +85,9 @@ export const getActionSchema = (
       properties: {
         type: {
           type: GeminiStructuredResponseType.STRING,
-          enum: [BottActionEventType.ACTION_CALL],
+          enum: [BottEventType.ACTION_CALL],
           description:
-            `The type of event to generate, in this case '${BottActionEventType.ACTION_CALL}'. Required so the system can anticipate the event structure.`,
+            `The type of event to generate, in this case '${BottEventType.ACTION_CALL}'. Required so the system can anticipate the event structure.`,
         },
         detail: {
           type: GeminiStructuredResponseType.OBJECT,
@@ -123,7 +119,7 @@ export const getActionSchema = (
 };
 
 const getActionParametersSchema = (
-  parameters: BottActionParameter[],
+  parameters: BottEventActionParameter[],
 ): GeminiStructuredResponseSchema => ({
   type: GeminiStructuredResponseType.ARRAY,
   items: {

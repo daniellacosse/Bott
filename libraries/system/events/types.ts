@@ -15,74 +15,42 @@ import type { AnyShape, BottChannel, BottUser } from "@bott/model";
  * Enumerates the different types of events that can occur in Bott.
  */
 export enum BottEventType {
-  /** A standard message event. */
   MESSAGE = "message",
-  /** A reply to a previous message. */
   REPLY = "reply",
-  /** A reaction (e.g., emoji) to a previous message. */
   REACTION = "reaction",
-}
-
-/**
- * Enumerates the different types of attachments that can be associated with a BottEvent.
- */
-export enum BottAttachmentType {
-  GIF = "image/gif",
-  HTML = "text/html",
-  JPEG = "image/jpeg",
-  MD = "text/markdown",
-  MP3 = "audio/mpeg",
-  MP4 = "video/mp4",
-  OPUS = "audio/opus",
-  PNG = "image/png",
-  TXT = "text/plain",
-  WAV = "audio/x-wav",
-  WEBP = "image/webp",
+  ACTION_CALL = "action:call",
+  ACTION_START = "action:start",
+  ACTION_ABORT = "action:abort",
+  ACTION_COMPLETE = "action:complete",
+  ACTION_OUTPUT = "action:output",
+  ACTION_ERROR = "action:error",
 }
 
 /**
  * Represents a generic event in Bott.
  */
-export interface BottEventSettings<
-  T extends string = string,
+export interface BottEvent<
+  T extends BottEventType = BottEventType,
   D extends AnyShape = AnyShape,
 > {
-  /** The type of the event. */
-  type: T;
-  /** The unique identifier of the event. */
   id: string;
-  /** Timestamp of when the event was created. */
+  type: T;
+  detail: D;
   createdAt: Date;
-  /** Timestamp of when the event was last scored/evaluated by the pipeline. */
   lastProcessedAt?: Date;
-  /** Optional channel where the event took place. */
   channel?: BottChannel;
-  /** Optional parent event, e.g., the message being replied or reacted to. */
-  parent?: BottEventSettings;
-  /** Optional user who triggered or is associated with the event. */
+  parent?: BottEvent;
   user?: BottUser;
-  /** Optional array of attachments associated with the event. */
   attachments?: BottEventAttachment[];
 }
-
-export interface BottMessageEventSettings extends BottEventSettings<BottEventType.MESSAGE, {
-  content: string;
-}> { }
-
-export interface BottReplyEventSettings extends BottEventSettings<BottEventType.REPLY, {
-  content: string;
-}> { }
-
-export interface BottReactionEventSettings extends BottEventSettings<BottEventType.REACTION, {
-  content: string;
-}> { }
 
 /**
  * Represents an attachment associated with a BottEvent.
  */
 export type BottEventAttachment = {
   id: string;
-  parent: BottEventSettings;
+  type: BottEventAttachmentType;
+  parent: BottEvent;
   originalSource: URL;
   raw: {
     id: string;
@@ -95,3 +63,20 @@ export type BottEventAttachment = {
     file: File;
   };
 };
+
+/**
+ * Enumerates the different types of attachments that can be associated with a BottEvent.
+ */
+export enum BottEventAttachmentType {
+  GIF = "image/gif",
+  HTML = "text/html",
+  JPEG = "image/jpeg",
+  MD = "text/markdown",
+  MP3 = "audio/mpeg",
+  MP4 = "video/mp4",
+  OPUS = "audio/opus",
+  PNG = "image/png",
+  TXT = "text/plain",
+  WAV = "audio/x-wav",
+  WEBP = "image/webp",
+}

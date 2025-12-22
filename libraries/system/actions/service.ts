@@ -9,12 +9,12 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type {
-  BottActionCallEvent,
-  BottActionAbortEvent,
-} from "@bott/actions";
-import { BottActionEventType } from "./types.ts";
-import { BottEvent } from "@bott/events";
+import {
+  type BottActionAbortEvent,
+  type BottActionCallEvent,
+  BottEvent,
+  BottEventType,
+} from "@bott/events";
 import type { BottUser } from "@bott/model";
 import {
   type BottService,
@@ -27,12 +27,12 @@ import { applyParameterDefaults, validateParameters } from "./validation.ts";
 const settings: BottServiceSettings = {
   name: "actions",
   events: new Set([
-    BottActionEventType.ACTION_CALL,
-    BottActionEventType.ACTION_ABORT,
-    BottActionEventType.ACTION_START,
-    BottActionEventType.ACTION_OUTPUT,
-    BottActionEventType.ACTION_COMPLETE,
-    BottActionEventType.ACTION_ERROR,
+    BottEventType.ACTION_CALL,
+    BottEventType.ACTION_ABORT,
+    BottEventType.ACTION_START,
+    BottEventType.ACTION_OUTPUT,
+    BottEventType.ACTION_COMPLETE,
+    BottEventType.ACTION_ERROR,
   ]),
 };
 
@@ -46,14 +46,14 @@ export const actionService: BottService = createService(
     const controllerMap = new Map<string, AbortController>();
 
     this.addEventListener(
-      BottActionEventType.ACTION_CALL,
+      BottEventType.ACTION_CALL,
       async (event: BottActionCallEvent) => {
         const controller = new AbortController();
 
         const action = this.settings.actions[event.detail.name];
         if (!action) {
           return dispatchEvent(
-            new BottEvent(BottActionEventType.ACTION_ERROR, {
+            new BottEvent(BottEventType.ACTION_ERROR, {
               detail: {
                 id: event.detail.id,
                 name: event.detail.name,
@@ -67,7 +67,7 @@ export const actionService: BottService = createService(
 
         if (controllerMap.has(event.detail.id)) {
           return this.dispatchEvent(
-            new BottEvent(BottActionEventType.ACTION_ERROR, {
+            new BottEvent(BottEventType.ACTION_ERROR, {
               detail: {
                 id: event.detail.id,
                 name: event.detail.name,
@@ -83,7 +83,7 @@ export const actionService: BottService = createService(
 
         if (!event.channel) {
           return this.dispatchEvent(
-            new BottEvent(BottActionEventType.ACTION_ERROR, {
+            new BottEvent(BottEventType.ACTION_ERROR, {
               detail: {
                 id: event.detail.id,
                 name: event.detail.name,
@@ -115,7 +115,7 @@ export const actionService: BottService = createService(
             const result = commit(sql`
           select count(*) as count
           from events
-          where type = ${BottActionEventType.ACTION_START}
+          where type = ${BottEventType.ACTION_START}
             and json_extract(detail, '$.name') = ${action.name}
             and created_at > ${oneMonthAgo.toISOString()}
         `);
@@ -134,7 +134,7 @@ export const actionService: BottService = createService(
           }
 
           this.dispatchEvent(
-            new BottEvent(BottActionEventType.ACTION_START, {
+            new BottEvent(BottEventType.ACTION_START, {
               detail: {
                 id: event.detail.id,
                 name: action.name,
@@ -162,7 +162,10 @@ export const actionService: BottService = createService(
             while (!next.done) {
               const yieldedEvent = next.value;
               // Bypass readonly to contextually bind user and channel
-              Object.assign(yieldedEvent, { user: actionUser, channel: event.channel });
+              Object.assign(yieldedEvent, {
+                user: actionUser,
+                channel: event.channel,
+              });
               dispatchEvent(yieldedEvent);
               next = await iterator.next();
             }
@@ -173,7 +176,7 @@ export const actionService: BottService = createService(
 
           if (callResult) {
             const resultEvent = new BottEvent(
-              BottActionEventType.ACTION_OUTPUT,
+              BottEventType.ACTION_OUTPUT,
               {
                 detail: {
                   name: action.name,
@@ -190,7 +193,7 @@ export const actionService: BottService = createService(
           }
 
           this.dispatchEvent(
-            new BottEvent(BottActionEventType.ACTION_COMPLETE, {
+            new BottEvent(BottEventType.ACTION_COMPLETE, {
               detail: {
                 id: event.detail.id,
                 name: action.name,
@@ -201,7 +204,7 @@ export const actionService: BottService = createService(
           );
         } catch (error) {
           this.dispatchEvent(
-            new BottEvent(BottActionEventType.ACTION_ERROR, {
+            new BottEvent(BottEventType.ACTION_ERROR, {
               detail: {
                 id: event.detail.id,
                 name: event.detail.name,
@@ -218,7 +221,7 @@ export const actionService: BottService = createService(
     );
 
     this.addEventListener(
-      BottActionEventType.ACTION_ABORT,
+      BottEventType.ACTION_ABORT,
       (event: BottActionAbortEvent) =>
         controllerMap.get(event.detail.id)?.abort(),
     );
