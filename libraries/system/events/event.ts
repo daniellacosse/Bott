@@ -11,8 +11,8 @@
 
 import type { AnyShape, BottChannel, BottUser } from "@bott/model";
 import type {
-  BottEventAttachment,
   BottEvent as BottEventInterface,
+  BottEventAttachment,
   BottEventType,
 } from "./types.ts";
 
@@ -87,7 +87,10 @@ export type BottReactionEvent = BottEvent<BottEventType.REACTION, {
   content: string;
 }>;
 
-
+// The Action Events probably belong it @bott/actions?, however
+// having them here simplifies things greatly.
+// All of libraries/system modules (and to a lesser extent the whole app) 
+// are currently _loosely_ coupled, so I'll take the simplicity over the correctness.
 export type BottEventActionParameterValue = string | number | boolean | File;
 
 type _ParameterBase = {
@@ -136,7 +139,6 @@ export type BottActionOutputEvent = BottEvent<BottEventType.ACTION_OUTPUT, {
   shouldForwardOutput?: boolean;
 }>;
 
-
 export type BottActionErrorEvent = BottEvent<BottEventType.ACTION_ERROR, {
   name: string;
   id: string;
@@ -152,4 +154,3 @@ export type BottActionAbortEvent = BottEvent<BottEventType.ACTION_ABORT, {
   name: string;
   id: string;
 }>;
-
