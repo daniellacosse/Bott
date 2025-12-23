@@ -37,7 +37,7 @@ export const upsertPersona = (persona: BottPersona): void => {
   let userId: string | null = null;
   if (persona.user) {
     userId = persona.user.id;
-  } else if (!persona.user) {
+  } else {
     // Create a new user with a random UUID
     userId = crypto.randomUUID();
   }
