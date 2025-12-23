@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { APP_USER } from "@bott/constants";
+import { ACTION_RESPONSE_DEBOUNCE_MS, APP_USER } from "@bott/constants";
 import {
   type BottActionCallEvent,
   type BottActionErrorEvent,
@@ -102,7 +102,10 @@ export const appService: BottService = createService(
         return debouncedCaller(event);
       }
 
-      debouncedCaller = debounce(callResponseAction, 2000);
+      debouncedCaller = debounce(
+        callResponseAction,
+        ACTION_RESPONSE_DEBOUNCE_MS,
+      );
 
       channelResponseStateIndex.set(event.channel.id, {
         debouncedCaller,
