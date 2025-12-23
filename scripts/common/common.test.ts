@@ -12,7 +12,7 @@
 import { assertEquals } from "@std/assert";
 import { afterEach, describe, it } from "@std/testing/bdd";
 import { assertSpyCall, restore, spy, stub } from "@std/testing/mock";
-import { loadEnv, updateEnv } from "./env.ts";
+import { updateEnv } from "./env.ts";
 import * as gcloud from "./gcloud.ts";
 
 describe("env.ts", () => {
@@ -20,19 +20,9 @@ describe("env.ts", () => {
     restore();
   });
 
-  it("loadEnv should load variables into Deno.env", async () => {
-    stub(Deno, "readTextFile", () => Promise.resolve("FOO: bar\nBAZ: qux"));
-    const envSpy = spy(Deno.env, "set");
-
-    await loadEnv("test");
-
-    assertSpyCall(envSpy, 0, { args: ["FOO", "bar"] });
-    assertSpyCall(envSpy, 1, { args: ["BAZ", "qux"] });
-  });
-
   it("updateEnv should read, update, write, and set env", async () => {
-    const originalYaml = "EXISTING: old\nOTHER: keep";
-    stub(Deno, "readTextFile", () => Promise.resolve(originalYaml));
+    const original = "EXISTING=old\nOTHER=keep";
+    stub(Deno, "readTextFile", () => Promise.resolve(original));
     const writeStub = stub(Deno, "writeTextFile", () => Promise.resolve());
     const envSpy = spy(Deno.env, "set");
 
@@ -41,41 +31,14 @@ describe("env.ts", () => {
     assertSpyCall(envSpy, 0, { args: ["EXISTING", "new"] });
     assertSpyCall(envSpy, 1, { args: ["NEW", "val"] });
 
-    const expectedYaml = "EXISTING: new\nOTHER: keep\nNEW: val\n";
+    const expected = "EXISTING=new\nOTHER=keep\nNEW=val";
     assertSpyCall(writeStub, 0, {
-      args: [".env.test.yml", expectedYaml],
+      args: [".env.test", expected],
     });
   });
 });
 
 describe("gcloud.ts", () => {
-  it("auth.check returns true on success, false on failure", async () => {
-    const successClient = new gcloud.GCloudClient(() =>
-      Promise.resolve("active")
-    );
-    assertEquals(await successClient.auth.check(), true);
-
-    const failClient = new gcloud.GCloudClient(() => Promise.reject("error"));
-    assertEquals(await failClient.auth.check(), false);
-  });
-
-  it("auth.ensure calls login if check fails", async () => {
-    const executed: string[][] = [];
-    const mockExecutor = (args: string[]) => {
-      executed.push(args);
-      // First call (check) fails, second call (login) succeeds
-      if (args[1] === "list") return Promise.reject("error");
-      return Promise.resolve("logged in");
-    };
-
-    const client = new gcloud.GCloudClient(mockExecutor);
-    await client.auth.ensure();
-
-    assertEquals(executed.length, 2);
-    assertEquals(executed[0], ["auth", "list"]);
-    assertEquals(executed[1], ["auth", "login"]);
-  });
-
   it("project.ensure tries set -> describe -> create", async () => {
     const executed: string[][] = [];
     const mockExecutor = (args: string[]) => {

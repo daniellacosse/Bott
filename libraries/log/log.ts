@@ -99,7 +99,7 @@ export const log: Logger = {
       const elapsed = performance.now() - startTime;
       perfTimers.delete(label);
       getLogger().info(
-        `PERF ${label}: ${new Date().toLocaleString()} ${elapsed.toFixed(2)}ms`,
+        `PERF ${new Date().toLocaleString()} ${label}: ${elapsed.toFixed(2)}ms`,
       );
     } else {
       // Start a new timer
