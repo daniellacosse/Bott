@@ -48,13 +48,13 @@ export const getPersona = async (
 
   return {
     id: row.p_id,
-    displayName: row.p_display_name ?? undefined,
+    displayName: row.p_display_name,
     handle: row.p_handle,
     space,
     user: row.u_id
       ? {
         id: row.u_id,
-        name: row.u_name ?? undefined,
+        name: row.u_name,
       }
       : undefined,
   };
