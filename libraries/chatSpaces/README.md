@@ -34,7 +34,10 @@ Chat space integrations should:
 1. Create or update personas for users when they interact in a space
 2. Store the persona with:
    - `id`: The platform-specific user ID
-   - `handle`: The user's handle/username (e.g., "john_doe")
+   - `handle`: The user's handle/username (e.g., "john_doe"). Must be unique per
+     space. Should contain only alphanumeric characters, underscores, and
+     hyphens. Platform-specific validations may apply stricter rules (e.g., no
+     leading/trailing hyphens).
    - `displayName`: The user's display name if different from handle (e.g.,
      "John Doe")
    - `space`: The space the persona belongs to

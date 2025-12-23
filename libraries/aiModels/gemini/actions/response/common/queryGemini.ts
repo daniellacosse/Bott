@@ -114,6 +114,7 @@ export const queryGemini = async <O>(
 
 /**
  * Transforms persona mentions from @<personaId> to @handle format for better LLM processing.
+ * Persona IDs are expected to be alphanumeric with hyphens and underscores.
  * @internal Exported for testing purposes only
  */
 export const _transformMentionsToHandles = async (
@@ -124,8 +125,8 @@ export const _transformMentionsToHandles = async (
     return content;
   }
 
-  // Match @<personaId> patterns
-  const mentionPattern = /@<([^>]+)>/g;
+  // Match @<personaId> patterns - restricting to alphanumeric, hyphens, and underscores
+  const mentionPattern = /@<([a-zA-Z0-9_-]+)>/g;
   const matches = [...content.matchAll(mentionPattern)];
 
   let transformedContent = content;

@@ -100,6 +100,11 @@ export const prepareInputEvents = (events: BottEvent[]): BottEvent[] => {
 /**
  * Transforms persona mentions from @handle back to @<personaId> format.
  * This is done by querying the database for personas matching the handle in the given space.
+ * 
+ * Handle format: alphanumeric characters, underscores, and hyphens ([\w-]+).
+ * While the regex allows hyphens anywhere, platform-specific validations should
+ * enforce stricter rules (e.g., no leading/trailing hyphens, no consecutive hyphens).
+ * 
  * @internal Exported for testing purposes only
  */
 export const _transformHandlesToMentions = async (
@@ -118,6 +123,7 @@ export const _transformHandlesToMentions = async (
   const handles = [...new Set(matches.map((match) => match[1]))];
 
   // Query database for all matching personas
+  // The sql template function properly parameterizes the array
   const result = commit(
     sql`
       select id, handle
