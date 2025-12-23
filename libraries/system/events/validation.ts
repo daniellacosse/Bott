@@ -15,9 +15,13 @@ import type {
 } from "@bott/events";
 
 export function applyParameterDefaults(
-  schema: BottEventActionParameterDefinition[],
-  parameters: BottEventActionParameterRecord,
+  schema?: BottEventActionParameterDefinition[],
+  parameters?: BottEventActionParameterRecord,
 ): BottEventActionParameterRecord {
+  if (!schema || !parameters) {
+    return {};
+  }
+
   const mergedParameters = { ...parameters };
 
   for (const field of schema) {
@@ -28,9 +32,13 @@ export function applyParameterDefaults(
 }
 
 export function validateParameters(
-  schema: BottEventActionParameterDefinition[],
-  parameters: BottEventActionParameterRecord,
+  schema?: BottEventActionParameterDefinition[],
+  parameters?: BottEventActionParameterRecord,
 ) {
+  if (!schema || !parameters) {
+    return;
+  }
+
   // Check for unknown parameters
   for (const param of Object.keys(parameters)) {
     if (!schema.find((s) => s.name === param)) {

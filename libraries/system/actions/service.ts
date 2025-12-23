@@ -46,74 +46,55 @@ export const actionService: BottService = createService(
   function () {
     const controllerMap = new Map<string, AbortController>();
 
-    this.addEventListener(
-      BottEventType.ACTION_CALL,
-      async (event: BottActionCallEvent) => {
-        const controller = new AbortController();
+    const handleActionCall = async (event: BottActionCallEvent) => {
+      const controller = new AbortController();
+      const { id: actionCallId, name: actionCallName, parameters: actionCallParameters } =
+        event.detail;
+      const actionCallLocation = event.channel;
 
-        const action = this.settings.actions[event.detail.name];
-        if (!action) {
-          return dispatchEvent(
-            new BottEvent(BottEventType.ACTION_ERROR, {
-              detail: {
-                id: event.detail.id,
-                name: event.detail.name,
-                error: new Error(`Action ${event.detail.name} not found`),
-              },
-              user: actionUser,
-              channel: event.channel,
-            }),
-          );
-        }
+      const _dispatch = (
+        type: BottEventType,
+        detail: Record<string, unknown> = {},
+      ) => {
+        this.dispatchEvent(
+          new BottEvent(type, {
+            detail: {
+              id: actionCallId,
+              name: actionCallName,
+              ...detail,
+            },
+            user: actionUser,
+            channel: actionCallLocation,
+          }),
+        );
+      };
 
-        if (controllerMap.has(event.detail.id)) {
-          return this.dispatchEvent(
-            new BottEvent(BottEventType.ACTION_ERROR, {
-              detail: {
-                id: event.detail.id,
-                name: event.detail.name,
-                error: new Error(
-                  `Action ${event.detail.name} already in progress`,
-                ),
-              },
-              user: actionUser,
-              channel: event.channel,
-            }),
-          );
-        }
+      if (controllerMap.has(actionCallId)) {
+        return _dispatch(BottEventType.ACTION_ERROR, {
+          error: new Error(
+            `An action with id ${actionCallId} is already in progress`,
+          ),
+        });
+      }
 
-        if (!event.channel) {
-          return this.dispatchEvent(
-            new BottEvent(BottEventType.ACTION_ERROR, {
-              detail: {
-                id: event.detail.id,
-                name: event.detail.name,
-                error: new Error(`Action calls require a channel`),
-              },
-              user: actionUser,
-              channel: event.channel,
-            }),
-          );
-        }
+      if (!actionCallLocation) {
+        return _dispatch(BottEventType.ACTION_ERROR, {
+          error: new Error(`Can't call action ${actionCallName}: missing channel`),
+        });
+      }
 
-        controllerMap.set(event.detail.id, controller);
+      const action = this.settings.actions[actionCallName];
+      if (!action) {
+        return _dispatch(BottEventType.ACTION_ERROR, {
+          error: new Error(`Can't call action ${actionCallName}: there's no action with that name registered`),
+        });
+      }
 
-        try {
-          let parameters = event.detail.parameters;
+      if (action.limitPerMonth) {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-          if (action.parameters) {
-            parameters = applyParameterDefaults(
-              action.parameters,
-              event.detail.parameters,
-            );
-            validateParameters(action.parameters, parameters);
-          }
-
-          if (action.limitPerMonth) {
-            const oneMonthAgo = new Date();
-            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-            const result = commit(sql`
+        const result = commit(sql`
           select count(*) as count
           from events
           where type = ${BottEventType.ACTION_START}
@@ -121,104 +102,73 @@ export const actionService: BottService = createService(
             and created_at > ${oneMonthAgo.toISOString()}
         `);
 
-            if ("error" in result) {
-              throw result.error;
-            }
-
-            const count = result.reads[0]?.count as number;
-
-            if (count >= action.limitPerMonth) {
-              throw new Error(
-                `Rate limit exceeded for action '${action.name}'. Limit: ${action.limitPerMonth}/month. Usage: ${count}`,
-              );
-            }
-          }
-
-          this.dispatchEvent(
-            new BottEvent(BottEventType.ACTION_START, {
-              detail: {
-                id: event.detail.id,
-                name: action.name,
-              },
-              user: actionUser,
-              channel: event.channel,
-            }),
-          );
-
-          let callResult: BottEvent | void;
-          try {
-            const iterator = action.call(
-              {
-                id: event.detail.id,
-                signal: controller.signal,
-                settings: action,
-                service: this,
-                user: event.user,
-                channel: event.channel,
-              },
-              parameters,
-            );
-
-            let next = await iterator.next();
-            while (!next.done) {
-              const yieldedEvent = next.value;
-              // Bypass readonly to contextually bind user and channel
-              Object.assign(yieldedEvent, {
-                user: actionUser,
-                channel: event.channel,
-              });
-              dispatchEvent(yieldedEvent);
-              next = await iterator.next();
-            }
-            callResult = next.value;
-          } catch (e) {
-            throw e;
-          }
-
-          if (callResult) {
-            const resultEvent = new BottEvent(
-              BottEventType.ACTION_OUTPUT,
-              {
-                detail: {
-                  name: action.name,
-                  id: event.detail.id,
-                  event: callResult,
-                  shouldInterpretOutput: action.shouldInterpretOutput,
-                  shouldForwardOutput: action.shouldForwardOutput,
-                },
-                user: actionUser,
-                channel: event.channel,
-              },
-            );
-            this.dispatchEvent(resultEvent);
-          }
-
-          this.dispatchEvent(
-            new BottEvent(BottEventType.ACTION_COMPLETE, {
-              detail: {
-                id: event.detail.id,
-                name: action.name,
-              },
-              user: actionUser,
-              channel: event.channel,
-            }),
-          );
-        } catch (error) {
-          this.dispatchEvent(
-            new BottEvent(BottEventType.ACTION_ERROR, {
-              detail: {
-                id: event.detail.id,
-                name: event.detail.name,
-                error: error as Error,
-              },
-              user: actionUser,
-              channel: event.channel,
-            }),
-          );
+        if ("error" in result) {
+          return _dispatch(BottEventType.ACTION_ERROR, {
+            error: result.error,
+          });
         }
 
-        controllerMap.delete(event.detail.id);
-      },
+        const count = result.reads[0]?.count ?? 0;
+
+        if (count >= action.limitPerMonth) {
+          return _dispatch(BottEventType.ACTION_ERROR, {
+            error: new Error(
+              `Rate limit exceeded for action '${action.name}'. Limit: ${action.limitPerMonth}/month. Usage: ${count}`,
+            ),
+          });
+        }
+      }
+
+      controllerMap.set(actionCallId, controller);
+
+      try {
+        const parameters = applyParameterDefaults(
+          action.parameters,
+          actionCallParameters,
+        );
+
+        validateParameters(action.parameters, parameters);
+
+        _dispatch(BottEventType.ACTION_START, {
+          name: action.name,
+        });
+
+        const actionOutputIterator = action.call(
+          {
+            id: event.detail.id,
+            signal: controller.signal,
+            settings: action,
+            service: this,
+            user: event.user,
+            channel: event.channel,
+          },
+          parameters,
+        );
+
+        for await (const event of actionOutputIterator) {
+          _dispatch(BottEventType.ACTION_OUTPUT, {
+            name: action.name,
+            event,
+            shouldInterpretOutput: action.shouldInterpretOutput,
+            shouldForwardOutput: action.shouldForwardOutput,
+          });
+        }
+
+        _dispatch(BottEventType.ACTION_COMPLETE, {
+          name: action.name,
+        });
+      } catch (error) {
+        _dispatch(BottEventType.ACTION_ERROR, {
+          error: error as Error,
+        });
+      }
+
+      controllerMap.delete(event.detail.id);
+    };
+
+    this.addEventListener(
+      BottEventType.ACTION_CALL,
+      handleActionCall,
     );
 
     this.addEventListener(

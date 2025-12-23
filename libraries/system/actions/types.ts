@@ -22,7 +22,7 @@ export type BottAction = BottActionFunction & BottActionSettings;
 export type BottActionFunction = (
   this: BottActionContext,
   parameters: BottEventActionParameterRecord,
-) => AsyncGenerator<BottEvent, BottEvent | void, void>;
+) => AsyncGenerator<BottEvent, void, void>;
 
 export type BottActionSettings = {
   instructions: string;
