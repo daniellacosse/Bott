@@ -16,7 +16,7 @@ messages.
 - **Maintain Context:** If you split a `reply`, the first event should be the
   `reply` (referencing the parent), and subsequent events should be `message`s
   (so they don't look like nested replies).
-- **Keep Non-Message Events:** Pass through `reaction` and `actionCall` events
+- **Keep Non-Message Events:** Pass through `reaction`, `action:call`, and `action:abort` events
   exactly as they are.
 
 ## Example Input
