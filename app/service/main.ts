@@ -24,7 +24,7 @@ import { debounce } from "@std/async";
 
 import { actions } from "./actions.ts";
 
-const RESPONSE_ACTION_NAME = actions.response.name;
+const RESPONSE_ACTION_NAME = actions.response?.name;
 
 const settings: BottServiceSettings = {
   name: APP_USER.name,
@@ -115,7 +115,9 @@ export const appService: BottService = createService(
     };
 
     const respondIfNotSelf = (event: BottEvent) => {
-      if (!event.user || event.user.id === APP_USER.id) return;
+      if (
+        !RESPONSE_ACTION_NAME || !event.user || event.user.id === APP_USER.id
+      ) return;
 
       // Don't respond to errors/aborts from response actions to prevent loops
       if (

@@ -63,6 +63,7 @@ await gcloud.project.addIamBinding({
 });
 
 log.info(`Deploying ${GCP_SERVICE_NAME} to ${GCP_REGION}...`);
+
 await gcloud.deploy(GCP_SERVICE_NAME, {
   source: ".",
   region: GCP_REGION,
@@ -72,7 +73,7 @@ await gcloud.deploy(GCP_SERVICE_NAME, {
   memory: "1.5Gi",
   maxInstances: 1,
   port: 8080,
-  envVarsFile: `.env.${ENV}.yml`,
+  envVarsFile: `.env.${ENV}`,
   allowUnauthenticated: GCP_ALLOW_UNAUTHENTICATED,
 });
 

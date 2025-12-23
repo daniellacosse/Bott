@@ -27,6 +27,7 @@
     "@std/assert/equals": "jsr:@std/assert@^1.0.12/equals",
     "@std/async": "jsr:@std/async@^1.0.12",
     "@std/async/delay": "jsr:@std/async@^1.0.12/delay",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.2",
     "@std/encoding": "jsr:@std/encoding@^1.0.9",
     "@std/encoding/base64": "jsr:@std/encoding@^1.0.9/base64",
     "@std/log": "jsr:@std/log@^0.224",

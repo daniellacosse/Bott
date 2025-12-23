@@ -29,13 +29,13 @@ please open an issue to discuss it!
 
 #### Instructions
 
-1. Copy `.env.example.yml` to `.env.local.yml`:
+1. Copy `.env.example` to `.env.local`:
 
 ```sh
-cp .env.example.yml .env.local.yml
+cp .env.example .env.local
 ```
 
-2. Open the `.env.local.yml` file and add the relevant credentials.
+2. Open the `.env.local` file and add the relevant credentials.
 3. Run `./exec` to start the application.
 
 ### Pull Requests
@@ -53,13 +53,13 @@ helps protect both you as a contributor and the project.
 
 At present, we only support deploying Bott via Google Cloud Run.
 
-1. Create a `.env.production.yml` file:
+1. Create a `.env.production` file:
 
 ```sh
-cp .env.example.yml .env.production.yml
+cp .env.example .env.production
 ```
 
-2. Open the `.env.production.yml` file and add the relevant credentials.
+2. Open the `.env.production` file and add the relevant credentials.
 
 3. Execute the deployment task:
 

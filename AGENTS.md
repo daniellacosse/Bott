@@ -12,8 +12,8 @@ content generation capabilities.
 
 ### Initial Setup
 
-- Copy configuration template: `cp .env.example.yml .env.local.yml`
-- Configure settings in `.env.local.yml`:
+- Copy configuration template: `cp .env.example .env.local`
+- Configure settings in `.env.local`:
   - `GCP_PROJECT` - GCP project ID
   - `GCP_REGION` - GCP region (e.g., us-central1)
   - `GEMINI_ACCESS_TOKEN` - GCP access token
@@ -72,7 +72,7 @@ content generation capabilities.
 ├── deno.json             # Deno configuration and tasks
 ├── Containerfile         # Container build instructions
 ├── Brewfile              # macOS dependencies via Homebrew
-├── .env.example.yml      # Environment configuration template
+├── .env.example          # Environment configuration template
 ├── .devcontainer/        # Devcontainer configuration
 ├── app/                  # Main application
 │   ├── README.md        # Application layer documentation
@@ -109,7 +109,7 @@ content generation capabilities.
 ### Debugging
 
 - Check logs in the terminal where Bott is running
-- Verify configuration is set correctly in `.env.*.yml`
+- Verify configuration is set correctly in `.env.*`
 - Test network connectivity to Discord API and Google Cloud APIs
 - Validate file permissions for `FILE_SYSTEM_ROOT` directory (default:
   `./.output/fsRoot`)

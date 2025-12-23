@@ -20,6 +20,6 @@ $RUNNER run -it --rm \
   -v "$PWD":/workspace \
   -w /workspace \
   -e ENV="${ENV:-local}" \
-  --env-file ".env.${ENV:-local}.yml" \
+  --env-file ".env.${ENV:-local}" \
   $IMAGE \
   "$@"

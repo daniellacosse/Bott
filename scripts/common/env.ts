@@ -9,28 +9,21 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { AnyShape } from "@bott/model";
-import { parse, stringify } from "@std/yaml";
+import { load, parse, stringify } from "@std/dotenv";
 
 export async function loadEnv(envName: string) {
-  const text = await Deno.readTextFile(`.env.${envName}.yml`);
-  const data = parse(text) as AnyShape;
-
-  for (const [key, value] of Object.entries(data)) {
-    if (typeof value !== "string") {
-      continue;
-    }
-
-    Deno.env.set(key.trim(), value.trim());
-  }
+  await load({
+    envPath: `.env.${envName}`,
+    export: true,
+  });
 }
 
 export async function updateEnv(
   envName: string,
   updates: Record<string, string>,
 ) {
-  const path = `.env.${envName}.yml`;
-  const data = parse(await Deno.readTextFile(path)) as AnyShape;
+  const path = `.env.${envName}`;
+  const data = await parse(await Deno.readTextFile(path));
 
   for (const [key, value] of Object.entries(updates)) {
     const trimKey = key.trim();
@@ -40,3 +33,4 @@ export async function updateEnv(
 
   await Deno.writeTextFile(path, stringify(data));
 }
+
