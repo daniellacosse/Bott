@@ -10,12 +10,26 @@
  */
 
 import { BottEvent, BottEventType } from "@bott/events";
+import { BottServicesManager } from "@bott/services";
+import { upsertPersona, eventStorageService } from "@bott/storage";
 import { assertEquals } from "@std/assert/equals";
 import { createMockContext, createMockUser } from "../pipeline/e2e.ts";
 import {
   _formatTimestampAsRelative,
   _transformBottEventToContent,
+  _transformMentionsToHandles,
 } from "./queryGemini.ts";
+import { _transformHandlesToMentions } from "./events.ts";
+
+const createTestManager = () => {
+  const manager = new BottServicesManager({
+    identity: "test",
+    reasons: { input: [], output: [] },
+  });
+  manager.register(eventStorageService);
+  manager.start("eventStorage");
+  return manager;
+};
 
 Deno.test("_formatTimestampAsRelative - just now", () => {
   const now = new Date();
@@ -82,4 +96,118 @@ Deno.test("_transformBottEventToContent - basic event", async () => {
   const result = await _transformBottEventToContent(event, context);
   assertEquals(result.role, "user");
   assertEquals(result.parts?.length, 1);
+});
+
+Deno.test("_transformMentionsToHandles - transforms persona mentions", async () => {
+  const _tempDir = Deno.makeTempDirSync();
+  createTestManager();
+
+  const space = { id: "space123", name: "Test Space" };
+  const channel = { id: "channel123", name: "general", space };
+
+  // Create personas
+  upsertPersona({
+    id: "persona1",
+    handle: "john_doe",
+    displayName: "John Doe",
+    space,
+  });
+
+  upsertPersona({
+    id: "persona2",
+    handle: "alice_smith",
+    displayName: "Alice Smith",
+    space,
+  });
+
+  const event = new BottEvent(BottEventType.MESSAGE, {
+    user: createMockUser(),
+    channel,
+    detail: { content: "Hello @<persona1>, can you help @<persona2>?" },
+  });
+
+  const result = await _transformMentionsToHandles(
+    "Hello @<persona1>, can you help @<persona2>?",
+    event,
+  );
+
+  assertEquals(result, "Hello @john_doe, can you help @alice_smith?");
+});
+
+Deno.test("_transformMentionsToHandles - no mentions", async () => {
+  const event = new BottEvent(BottEventType.MESSAGE, {
+    user: createMockUser(),
+    channel: {
+      id: "channel123",
+      name: "general",
+      space: { id: "space123", name: "Test Space" },
+    },
+    detail: { content: "Hello world" },
+  });
+
+  const result = await _transformMentionsToHandles("Hello world", event);
+
+  assertEquals(result, "Hello world");
+});
+
+Deno.test("_transformHandlesToMentions - transforms handles to persona IDs", async () => {
+  const _tempDir = Deno.makeTempDirSync();
+  createTestManager();
+
+  const space = { id: "space456", name: "Test Space 2" };
+
+  // Create personas
+  upsertPersona({
+    id: "persona3",
+    handle: "bob_jones",
+    space,
+  });
+
+  upsertPersona({
+    id: "persona4",
+    handle: "carol_white",
+    space,
+  });
+
+  const result = await _transformHandlesToMentions(
+    "Hey @bob_jones and @carol_white, how are you?",
+    space.id,
+  );
+
+  assertEquals(
+    result,
+    "Hey @<persona3> and @<persona4>, how are you?",
+  );
+});
+
+Deno.test("_transformHandlesToMentions - no handles", async () => {
+  const _tempDir = Deno.makeTempDirSync();
+  createTestManager();
+
+  const result = await _transformHandlesToMentions(
+    "Hello world",
+    "space789",
+  );
+
+  assertEquals(result, "Hello world");
+});
+
+Deno.test("_transformHandlesToMentions - non-existent handles unchanged", async () => {
+  const _tempDir = Deno.makeTempDirSync();
+  createTestManager();
+
+  const space = { id: "space999", name: "Test Space 3" };
+
+  upsertPersona({
+    id: "persona5",
+    handle: "existing_user",
+    space,
+  });
+
+  const result = await _transformHandlesToMentions(
+    "Hello @existing_user and @nonexistent_user",
+    space.id,
+  );
+
+  assertEquals(result, "Hello @<persona5> and @nonexistent_user");
 });
