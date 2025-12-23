@@ -70,35 +70,18 @@ export const getEventSchema = (
           type: {
             type: GeminiStructuredResponseType.STRING,
             enum: [BottEventType.ACTION_ABORT],
-            description:
-              `The type of event to generate, in this case '${BottEventType.ACTION_ABORT}'.`,
           },
           detail: {
             type: GeminiStructuredResponseType.OBJECT,
-            description:
-              "The specifics of the abort request. You must provide the action ID to abort.",
             properties: {
-
               id: {
                 type: GeminiStructuredResponseType.STRING,
                 description:
-                  "The unique ID of the action call to abort. Must match the id from the ACTION_CALL event.",
+                  "The unique ID of the action call you want to abort.",
               },
             },
             required: ["id"],
-          },
-          parent: {
-            type: GeminiStructuredResponseType.OBJECT,
-            description:
-              "A reference to the ACTION_CALL or ACTION_START event being aborted.",
-            properties: {
-              id: {
-                type: GeminiStructuredResponseType.STRING,
-                description: "The ID of the event being aborted.",
-              },
-            },
-            required: ["id"],
-          },
+          }
         },
         required: ["type", "detail"],
       },
@@ -121,13 +104,11 @@ export const getActionSchema = (
     const schema: GeminiStructuredResponseSchema = {
       type: GeminiStructuredResponseType.OBJECT,
       description:
-        `Schema for a call event to the '${name}' action. Send this type of event to call the action.`,
+        `Schema for a call to the '${name}' action.`,
       properties: {
         type: {
           type: GeminiStructuredResponseType.STRING,
           enum: [BottEventType.ACTION_CALL],
-          description:
-            `The type of event to generate, in this case '${BottEventType.ACTION_CALL}'. Required so the system can anticipate the event structure.`,
         },
         detail: {
           type: GeminiStructuredResponseType.OBJECT,
@@ -136,8 +117,6 @@ export const getActionSchema = (
             name: {
               type: GeminiStructuredResponseType.STRING,
               enum: [name],
-              description:
-                "The name of this action. Required so the action can be identified.",
             },
           },
           required: ["name"],
@@ -184,7 +163,9 @@ const getActionParametersSchema = (
       enum: parameter.type !== "file"
         ? parameter.allowedValues?.map(String)
         : undefined,
-      description: parameter.description,
+      description: parameter.type === "file"
+        ? parameter.description + " IMPORTANT: This is a 'file' parameter. You must send an attachment ID as the string. The system will automatically resolve the attachment by its ID."
+        : parameter.description,
     };
 
     if (parameter.required && !parameter.defaultValue) {

@@ -27,9 +27,6 @@ import { actions } from "./actions.ts";
 
 const RESPONSE_ACTION_NAME = actions.response.name;
 
-// Maps each channel ID to the ID of the in-flight response action
-const channelActionIndex = new Map<string, string>();
-
 const settings: BottServiceSettings = {
   name: APP_USER.name,
   events: new Set([
@@ -44,6 +41,9 @@ const settings: BottServiceSettings = {
   ]),
   actions,
 }
+
+// Maps each channel ID to the ID of the in-flight response action
+const channelActionIndex = new Map<string, string>();
 
 export const appService: BottService = createService(
   function () {

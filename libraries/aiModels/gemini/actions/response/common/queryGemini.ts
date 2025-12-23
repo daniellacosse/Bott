@@ -121,6 +121,7 @@ export const _transformBottEventToContent = async (
     attachments: _attachments,
     parent: _parent,
     channel: _channel, // don't need this
+    detail: _detail,
     createdAt,
     ...rest
   } = structuredClone(event);
@@ -139,10 +140,15 @@ export const _transformBottEventToContent = async (
 
   const metadata = context.evaluationState.get(event);
 
+  // The system handles these, not Gemini
+  delete _detail.shouldInterpretOutput;
+  delete _detail.shouldForwardOutput;
+
   const eventToSerialize = {
     ...rest,
     createdAt: _formatTimestampAsRelative(createdAt),
     parent,
+    detail: _detail,
     _pipelineEvaluationMetadata: {
       focusReasons: metadata?.focusReasons?.map(({ name, instruction }) => ({
         name,
