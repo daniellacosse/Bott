@@ -75,7 +75,7 @@ export const actionService: BottService = createService(
       if (controllerMap.has(actionCallId)) {
         return _dispatch(BottEventType.ACTION_ERROR, {
           error: new Error(
-            `actionService: An action with id ${actionCallId} is already in progress`,
+            `An action with id ${actionCallId} is already in progress`,
           ),
         });
       }
@@ -83,7 +83,7 @@ export const actionService: BottService = createService(
       if (!actionCallLocation) {
         return _dispatch(BottEventType.ACTION_ERROR, {
           error: new Error(
-            `actionService: Can't call action ${actionCallName}: missing call location`,
+            `Can't call action ${actionCallName}: missing call location`,
           ),
         });
       }
@@ -92,7 +92,7 @@ export const actionService: BottService = createService(
       if (!action) {
         return _dispatch(BottEventType.ACTION_ERROR, {
           error: new Error(
-            `actionService: Can't call action ${actionCallName}: there's no action with that name registered`,
+            `Can't call action ${actionCallName}: there's no action with that name registered`,
           ),
         });
       }

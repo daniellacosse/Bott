@@ -10,7 +10,7 @@
  */
 
 import { BaseHandler, ConsoleHandler, getLogger } from "@std/log";
-import { _setLoggerTopics } from "./log.ts";
+import { _setLoggerTopics, formatter } from "./log.ts";
 
 // Simple log record for testing
 export interface TestLogRecord {
@@ -34,7 +34,9 @@ export class TestHandler extends BaseHandler {
   }
 }
 
-export const testHandler: TestHandler = new TestHandler("NOTSET");
+export const testHandler: TestHandler = new TestHandler("NOTSET", {
+  formatter,
+});
 export const testLogs = testHandler.logs;
 
 export function clearTestLogs(): void {
@@ -44,11 +46,15 @@ export function clearTestLogs(): void {
 export function setupTestLogger(): void {
   _setLoggerTopics(["debug", "info", "warn", "error", "perf"]);
 
-  const logger = getLogger();
-
+  const logger = getLogger("default"); // Use specific default logger
   logger.levelName = "NOTSET";
-  logger.handlers = [
-    new ConsoleHandler("NOTSET"),
-    testHandler,
-  ];
+
+  // also setup perf logger
+  const perfLogger = getLogger("perf");
+  perfLogger.levelName = "NOTSET";
+
+  const consoleHandler = new ConsoleHandler("NOTSET", { formatter });
+
+  logger.handlers = [consoleHandler, testHandler];
+  perfLogger.handlers = [consoleHandler, testHandler];
 }

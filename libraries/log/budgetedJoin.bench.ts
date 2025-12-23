@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { budgetedStringify } from "./budgetedStringify.ts";
+import { budgetedJoin } from "./budgetedJoin.ts";
 
 // Large test data for benchmarking
 const largeString = "a".repeat(10000);
@@ -34,22 +34,22 @@ const deeplyNestedObject = (() => {
 })();
 const largeArray = Array.from({ length: 1000 }, (_, i) => `string ${i}`);
 
-Deno.bench("budgetedStringify - large string exceeds budget", () => {
-  budgetedStringify(largeString, 100);
+Deno.bench("budgetedJoin - large string exceeds budget", () => {
+  budgetedJoin([largeString], 100);
 });
 
-Deno.bench("budgetedStringify - large object exceeds budget", () => {
-  budgetedStringify(largeObject, 500);
+Deno.bench("budgetedJoin - large object exceeds budget", () => {
+  budgetedJoin([largeObject], 500);
 });
 
-Deno.bench("budgetedStringify - deeply nested object", () => {
-  budgetedStringify(deeplyNestedObject, 1000);
+Deno.bench("budgetedJoin - deeply nested object", () => {
+  budgetedJoin([deeplyNestedObject], 1000);
 });
 
-Deno.bench("budgetedStringify - large array of strings", () => {
-  budgetedStringify(largeArray, 500);
+Deno.bench("budgetedJoin - large array of strings", () => {
+  budgetedJoin(largeArray, 500);
 });
 
-Deno.bench("budgetedStringify - very tight budget on large object", () => {
-  budgetedStringify(largeObject, 50);
+Deno.bench("budgetedJoin - very tight budget on large object", () => {
+  budgetedJoin([largeObject], 50);
 });

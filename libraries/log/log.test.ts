@@ -34,7 +34,7 @@ Deno.test("Logger methods can be called without errors", () => {
   log.perf("test perf start"); // This call ends the timer and logs elapsed time
 });
 
-Deno.test("Logger testHandler captures log messages", () => {
+Deno.test("Logger testHandler captures log messages with new format", () => {
   // Clear previous logs
   testHandler.clear();
 
@@ -47,21 +47,25 @@ Deno.test("Logger testHandler captures log messages", () => {
   assert(testHandler.logs.length >= 3, "Should have captured at least 3 logs");
 
   const messages = testHandler.logs.map((l) => l.msg);
-  assert(
-    messages.some((msg) => msg.includes("test message 1")),
-    "Should capture info message",
-  );
-  assert(
-    messages.some((msg) => msg.includes("test message 2")),
-    "Should capture warn message",
-  );
-  assert(
-    messages.some((msg) => msg.includes("test message 3")),
-    "Should capture error message",
-  );
+
+  // Format should be: LEVEL <ts: ...> <c: ...> Message
+  // We check for key parts
+
+  const infoMsg = messages.find((msg) => msg.includes("test message 1"));
+  assert(infoMsg, "Should capture info message");
+  assert(infoMsg!.startsWith("INFO <ts:"), "Should start with LEVEL <ts:");
+  assert(infoMsg!.includes("<c:"), "Should include caller metadata");
+
+  const warnMsg = messages.find((msg) => msg.includes("test message 2"));
+  assert(warnMsg, "Should capture warn message");
+  assert(warnMsg!.startsWith("WARN <ts:"), "Should start with LEVEL <ts:");
+
+  const errorMsg = messages.find((msg) => msg.includes("test message 3"));
+  assert(errorMsg, "Should capture error message");
+  assert(errorMsg!.startsWith("ERROR <ts:"), "Should start with LEVEL <ts:");
 });
 
-Deno.test("Logger perf works like console.time/timeEnd", async () => {
+Deno.test("Logger perf works like console.time/timeEnd with new format", async () => {
   // Clear previous logs
   testHandler.clear();
 
@@ -79,7 +83,10 @@ Deno.test("Logger perf works like console.time/timeEnd", async () => {
   const perfMessage = messages.find((msg) => msg.includes("timer1:"));
 
   assert(perfMessage, "Should log timing message");
-  assert(perfMessage!.includes("PERF"), "Should include 'PERF' prefix");
+  // PERF <ts: ...> <c: ...> Label: Time ms
+  assert(perfMessage!.includes("PERF"), "Should include 'PERF' label");
+  assert(perfMessage!.includes("<ts:"), "Should include timestamp metadata");
+  assert(perfMessage!.includes("<c:"), "Should include caller metadata");
   assert(perfMessage!.includes("ms"), "Should include 'ms' in message");
 
   // Extract the time value and verify it's reasonable

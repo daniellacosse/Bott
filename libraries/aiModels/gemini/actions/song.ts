@@ -52,7 +52,7 @@ export const songAction: BottAction = createAction(
   async function* ({ prompt }) {
     if (!GEMINI_SONG_MODEL) {
       throw new Error(
-        "songAction: Gemini song model is not configured. Please ensure `GEMINI_SONG_MODEL` is set in your environment.",
+        "Gemini song model is not configured. Please ensure `GEMINI_SONG_MODEL` is set in your environment.",
       );
     }
 

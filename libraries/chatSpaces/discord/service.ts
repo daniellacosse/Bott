@@ -55,7 +55,7 @@ export const discordService: BottService = createService(
 
     if (!SERVICE_DISCORD_TOKEN) {
       throw new Error(
-        "discordService: Cannot start: the `SERVICE_DISCORD_TOKEN` is not set",
+        "Cannot start: the `SERVICE_DISCORD_TOKEN` is not set",
       );
     }
 
@@ -63,7 +63,7 @@ export const discordService: BottService = createService(
 
     if (!client.user) {
       throw new Error(
-        "discordService: Failed to start: the `client.user` was not set",
+        "Failed to start: the `client.user` was not set",
       );
     }
 

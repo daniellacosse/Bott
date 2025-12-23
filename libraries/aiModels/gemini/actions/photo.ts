@@ -84,7 +84,7 @@ export const photoAction: BottAction = createAction(
           break;
         default:
           throw new Error(
-            `photoAction: Unsupported media type: ${mediaFile.type}. Only images and text are supported.`,
+            `Unsupported media type: ${mediaFile.type}. Only images and text are supported.`,
           );
       }
     }

@@ -55,7 +55,7 @@ export const movieAction: BottAction = createAction(
   async function* ({ prompt, media }) {
     if (!GEMINI_MOVIE_MODEL) {
       throw new Error(
-        "movieAction: Gemini movie model is not configured. Please ensure `GEMINI_MOVIE_MODEL` is set in your environment.",
+        "Gemini movie model is not configured. Please ensure `GEMINI_MOVIE_MODEL` is set in your environment.",
       );
     }
 
