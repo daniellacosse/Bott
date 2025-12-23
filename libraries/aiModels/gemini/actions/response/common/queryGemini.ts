@@ -17,7 +17,6 @@ import type {
   Part,
   Schema,
 } from "@google/genai";
-
 import { encodeBase64 } from "@std/encoding/base64";
 import ejs from "ejs";
 import gemini from "../../../client.ts";
@@ -75,13 +74,23 @@ export const queryGemini = async <O>(
     config.responseMimeType = "application/json";
   }
 
-  const response = await gemini.models.generateContent({
-    model,
-    contents: typeof input === "string" ? [input] : await Promise.all(
-      input.map((event) => _transformBottEventToContent(event, pipeline)),
-    ),
-    config,
-  });
+  let response;
+  try {
+    response = await gemini.models.generateContent({
+      model,
+      contents: typeof input === "string" ? [input] : await Promise.all(
+        input.map((event) => _transformBottEventToContent(event, pipeline)),
+      ),
+      config,
+    });
+  } catch (error) {
+    const geminiError = error as Error;
+
+    // Gemini errors are often empty...
+    geminiError.message ||= "queryGemini: Error generating content. Gemini provided no error message: you are likely unauthenticated.";
+
+    throw geminiError;
+  }
 
   const result = response.candidates?.[0]?.content?.parts
     ?.filter((part: Part) => "text" in part && typeof part.text === "string")

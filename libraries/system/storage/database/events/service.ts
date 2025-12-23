@@ -38,11 +38,28 @@ export const eventStorageService: BottService = createService(
     const saveEvent = (event: BottEvent) => {
       const result = upsertEvents(event);
 
+      if (event.type === BottEventType.ACTION_ERROR) {
+        log.error(
+          "eventStorageService: Action error recieved:",
+          event.id,
+          event.detail.error,
+        );
+      }
+
       // Not important enough for the system to know about.
       if ("error" in result) {
-        log.error("eventStorageService: Failed to store event:", result);
+        log.error(
+          "eventStorageService: Failed to store event:",
+          event.id,
+          event.type,
+          result.error,
+        );
       } else {
-        log.info("eventStorageService: Event stored:", result);
+        log.info(
+          "eventStorageService: Event stored:",
+          event.id,
+          event.type,
+        );
       }
     };
 

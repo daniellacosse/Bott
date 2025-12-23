@@ -12,6 +12,7 @@
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
 import {
+  ACTION_RESPONSE_NAME,
   ACTION_RESPONSE_OUTPUT_TIME_LIMIT_MS,
   ACTION_RESPONSE_OUTPUT_WORDS_PER_MINUTE,
 } from "@bott/constants";
@@ -24,7 +25,7 @@ import { prepareInputEvents } from "./common/events.ts";
 import pipelineProcess, { type EventPipelineContext } from "./pipeline/main.ts";
 
 const settings: BottActionSettings = {
-  name: "response",
+  name: ACTION_RESPONSE_NAME,
   instructions: "Simulate a response for a channel.",
   shouldForwardOutput: true,
 };

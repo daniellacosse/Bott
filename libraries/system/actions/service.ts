@@ -26,7 +26,7 @@ import {
 import { commit, sql } from "@bott/storage";
 
 const settings: BottServiceSettings = {
-  name: "actions",
+  name: "action",
   events: new Set([
     BottEventType.ACTION_CALL,
     BottEventType.ACTION_ABORT,
@@ -38,8 +38,8 @@ const settings: BottServiceSettings = {
 };
 
 const actionUser: BottUser = {
-  id: "actions",
-  name: "actions",
+  id: "service:action",
+  name: "action",
 };
 
 export const actionService: BottService = createService(

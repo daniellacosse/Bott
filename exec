@@ -13,13 +13,29 @@ set -o pipefail
 
 RUNNER="${RUNNER:-docker}"
 IMAGE="bott:latest"
+TARGET_ENV="${ENV:-local}"
+
+GCLOUD_HOST_DIR="$PWD/.output/gcloud"
+mkdir -p "$GCLOUD_HOST_DIR"
 
 $RUNNER build -t $IMAGE .
 
+if [ "$TARGET_ENV" = "local" ]; then
+  if [ ! -f "$GCLOUD_HOST_DIR/application_default_credentials.json" ]; then
+    echo "No Application Default Credentials found in $GCLOUD_HOST_DIR"
+    echo "Launching container to authenticate..."
+    $RUNNER run -it --rm \
+      -v "$GCLOUD_HOST_DIR":/root/.config/gcloud \
+      $IMAGE \
+      gcloud auth application-default login
+  fi
+fi
+
 $RUNNER run -it --rm \
   -v "$PWD":/workspace \
+  -v "$GCLOUD_HOST_DIR":/root/.config/gcloud \
   -w /workspace \
-  -e ENV="${ENV:-local}" \
-  --env-file ".env.${ENV:-local}" \
+  -e ENV="$TARGET_ENV" \
+  --env-file ".env.$TARGET_ENV" \
   $IMAGE \
   "$@"

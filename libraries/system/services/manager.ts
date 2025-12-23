@@ -58,12 +58,14 @@ export class BottServicesManager {
     if (service.events) {
       this.events = new Set([...this.events, ...service.events]);
     }
+
+    log.info(`serviceManager: Service "${service.name}" registered`);
   }
 
   start(serviceName: string) {
     const service = this.services.get(serviceName);
     if (!service) {
-      throw new Error(`Service ${serviceName} not found`);
+      throw new Error(`Service "${serviceName}" not found`);
     }
 
     const context = this.rootContext;
@@ -71,6 +73,8 @@ export class BottServicesManager {
     context.settings.name = serviceName;
 
     service.call(context);
+
+    log.info(`serviceManager: Service "${serviceName}" started`);
   }
 
   addEventListener<E extends BottEvent>(
@@ -82,7 +86,7 @@ export class BottServicesManager {
   ): void {
     if (!this.events.has(eventType)) {
       log.warn(
-        `Event type "${eventType}" is not provided by any registered service.`,
+        `serviceManager: Event type "${eventType}" is not declared by any registered service.`,
       );
     }
 
@@ -94,7 +98,7 @@ export class BottServicesManager {
       try {
         await handler(bottEvent, this.rootContext);
       } catch (error) {
-        log.warn("Failed to handle event", error);
+        log.warn("serviceManager: Failed to handle event", error);
       }
     });
   }
@@ -102,7 +106,7 @@ export class BottServicesManager {
   dispatchEvent(event: BottEvent) {
     if (!this.events.has(event.type)) {
       log.warn(
-        `Event type "${event.type}" is not provided by any registered service. Refusing to dispatch.`,
+        `serviceManager: Event type "${event.type}" is not declared by any registered service. Refusing to dispatch.`,
       );
       return;
     }

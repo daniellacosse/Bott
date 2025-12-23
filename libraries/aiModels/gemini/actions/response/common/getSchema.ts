@@ -10,6 +10,7 @@
  */
 
 import type { BottAction } from "@bott/actions";
+import { ACTION_RESPONSE_NAME } from "@bott/constants";
 import {
   type BottEventActionParameterDefinition,
   BottEventType,
@@ -102,6 +103,11 @@ export const getActionSchema = (
   const schemas = [];
 
   for (const name in actions) {
+    // Don't include the response action: we are already calling it
+    if (name === ACTION_RESPONSE_NAME) {
+      continue;
+    }
+
     const action = actions[name];
 
     const schema: GeminiStructuredResponseSchema = {
@@ -167,7 +173,7 @@ const getActionParametersSchema = (
         : undefined,
       description: parameter.type === "file"
         ? parameter.description +
-          " IMPORTANT: This is a 'file' parameter. You must send an attachment ID as the string. The system will automatically resolve the attachment by its ID."
+        " IMPORTANT: This is a 'file' parameter. You must send an attachment ID as the string. The system will automatically resolve the attachment by its ID."
         : parameter.description,
     };
 

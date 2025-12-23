@@ -12,28 +12,7 @@
 import { createExecutor, Executor, FlagRecord } from "./exec.ts";
 
 export class GCloudClient {
-  constructor(private readonly executor: Executor = createExecutor("gcloud")) {}
-
-  readonly auth = {
-    login: async () => {
-      await this.executor(["auth", "login"], { capture: false });
-    },
-    check: async (): Promise<boolean> => {
-      try {
-        const account = await this.executor(["auth", "list"], {
-          flags: { filter: "status:ACTIVE", format: "value(account)" },
-        });
-        return account.length > 0;
-      } catch {
-        return false;
-      }
-    },
-    ensure: async () => {
-      if (!(await this.auth.check())) {
-        await this.auth.login();
-      }
-    },
-  };
+  constructor(private readonly executor: Executor = createExecutor("gcloud")) { }
 
   readonly project = {
     set: async (project: string) => {

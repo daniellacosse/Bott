@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { ACTION_RESPONSE_DEBOUNCE_MS, APP_USER } from "@bott/constants";
+import { ACTION_RESPONSE_DEBOUNCE_MS, APP_USER, ACTION_RESPONSE_NAME } from "@bott/constants";
 import {
   type BottActionCallEvent,
   type BottActionErrorEvent,
@@ -23,8 +23,6 @@ import { createService } from "@bott/services";
 import { debounce } from "@std/async";
 
 import { actions } from "./actions.ts";
-
-const RESPONSE_ACTION_NAME = actions.response?.name;
 
 const settings: BottServiceSettings = {
   name: APP_USER.name,
@@ -77,7 +75,7 @@ export const appService: BottService = createService(
         BottEventType.ACTION_CALL,
         {
           detail: {
-            name: RESPONSE_ACTION_NAME,
+            name: ACTION_RESPONSE_NAME,
           },
           user: APP_USER,
           channel: event.channel,
@@ -116,13 +114,13 @@ export const appService: BottService = createService(
 
     const respondIfNotSelf = (event: BottEvent) => {
       if (
-        !RESPONSE_ACTION_NAME || !event.user || event.user.id === APP_USER.id
+        !ACTION_RESPONSE_NAME || !event.user || event.user.id === APP_USER.id
       ) return;
 
       // Don't respond to errors/aborts from response actions to prevent loops
       if (
         event.type === BottEventType.ACTION_ERROR &&
-        event.parent?.detail?.name === RESPONSE_ACTION_NAME
+        event.parent?.detail?.name === ACTION_RESPONSE_NAME
       ) return;
 
       debouncedCallResponseAction(event);

@@ -19,7 +19,6 @@ import { loadEnv } from "./common/env.ts";
 import { gcloud } from "./common/gcloud.ts";
 
 await loadEnv(ENV);
-await gcloud.auth.ensure();
 
 if (!GCP_PROJECT) {
   console.error("GCP_PROJECT is not set. Please ensure it is deployed.");

@@ -10,8 +10,8 @@
  */
 
 import type { BottEvent } from "@bott/events";
-import { log } from "@bott/log";
 
+import { log } from "@bott/log";
 import ejs from "ejs";
 
 import { resolveOutputEvents } from "../../common/events.ts";

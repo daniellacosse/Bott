@@ -15,7 +15,7 @@ into context the other events provided.
 Each generated output event will be evaluated against the following criteria. Pay
 close attention to these rules to ensure high-quality responses:
 
-<% for (const reason of settings.reasons.output) { %>
+<% for (const reason of action.service.app.reasons.output) { %>
 
 ### <%= reason.name %>
 

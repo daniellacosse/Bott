@@ -22,7 +22,6 @@ import { loadEnv, updateEnv } from "./common/env.ts";
 import { gcloud } from "./common/gcloud.ts";
 
 await loadEnv(ENV);
-await gcloud.auth.ensure();
 
 let project = GCP_PROJECT;
 

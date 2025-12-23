@@ -12,6 +12,7 @@
 import { actionService } from "@bott/actions";
 import { PORT, SERVICE_LIST } from "@bott/constants";
 import { discordService } from "@bott/discord";
+import { log } from "@bott/log";
 import { BottServicesManager } from "@bott/services";
 import { eventStorageService } from "@bott/storage";
 
@@ -33,6 +34,11 @@ if (import.meta.main) {
 
 // Need to respond to GCP health probe:
 Deno.serve(
-  { port: PORT },
+  {
+    port: PORT,
+    onListen: ({ port, hostname }) => {
+      log.info(`main: Listening on ${hostname}:${port}`);
+    },
+  },
   () => new Response("OK", { status: 200 }),
 );

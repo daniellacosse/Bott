@@ -50,25 +50,33 @@ const perfTimers = new Map<string, number>();
 export const log: Logger = {
   debug(...args: unknown[]): void {
     if (_loggerTopics.includes("debug")) {
-      getLogger().debug(budgetedStringify(args, LOG_CHARACTER_LIMIT));
+      getLogger().debug(
+        `${new Date().toLocaleString()} ${budgetedStringify(args, LOG_CHARACTER_LIMIT)}`,
+      );
     }
   },
 
   info(...args: unknown[]): void {
     if (_loggerTopics.includes("info")) {
-      getLogger().info(budgetedStringify(args, LOG_CHARACTER_LIMIT));
+      getLogger().info(
+        `${new Date().toLocaleString()} ${budgetedStringify(args, LOG_CHARACTER_LIMIT)}`,
+      );
     }
   },
 
   warn(...args: unknown[]): void {
     if (_loggerTopics.includes("warn")) {
-      getLogger().warn(budgetedStringify(args, LOG_CHARACTER_LIMIT));
+      getLogger().warn(
+        `${new Date().toLocaleString()} ${budgetedStringify(args, LOG_CHARACTER_LIMIT)}`,
+      );
     }
   },
 
   error(...args: unknown[]): void {
     if (_loggerTopics.includes("error")) {
-      getLogger().error(budgetedStringify(args, LOG_CHARACTER_LIMIT));
+      getLogger().error(
+        `${new Date().toLocaleString()} ${budgetedStringify(args, LOG_CHARACTER_LIMIT)}`,
+      );
     }
   },
 
@@ -82,7 +90,9 @@ export const log: Logger = {
       const startTime = perfTimers.get(label)!;
       const elapsed = performance.now() - startTime;
       perfTimers.delete(label);
-      getLogger().info(`PERF ${label}: ${elapsed.toFixed(2)}ms`);
+      getLogger().info(
+        `PERF ${label}: ${new Date().toLocaleString()} ${elapsed.toFixed(2)}ms`,
+      );
     } else {
       // Start a new timer
       perfTimers.set(label, performance.now());
