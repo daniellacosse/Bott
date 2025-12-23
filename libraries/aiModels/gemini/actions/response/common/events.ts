@@ -97,7 +97,6 @@ export const prepareInputEvents = (events: BottEvent[]): BottEvent[] => {
   return preparedInput;
 };
 
-// TODO: this should probably happen in queryGemini
 export const resolveOutputEvents = async (
   context: EventPipelineContext,
 ): Promise<BottEvent[]> => {
@@ -123,25 +122,21 @@ export const resolveOutputEvents = async (
       event.detail.parameters
     ) {
       const actionCallEvent = event as BottActionCallEvent;
+      const actionName = actionCallEvent.detail.name;
+      const action = context.action.service.settings.actions[actionName];
 
-      for (const parameter of actionCallEvent.detail.parameters) {
-        if (parameter.type !== "file") continue;
+      if (action?.parameters) {
+        for (const parameterDefinition of action.parameters) {
+          if (parameterDefinition.type !== "file") continue;
 
-        const attachment = attachmentIndex.get(
-          parameter.value as string,
-        );
+          const attachmentId = actionCallEvent.detail.parameters[parameterDefinition.name];
 
-        if (attachment?.compressed?.file) {
-          parameter.value = attachment.compressed.file;
-        } else if (attachment?.raw?.file) {
-          // Fallback to raw if compressed isn't available
-          parameter.value = attachment.raw.file;
-        } else {
-          // Remove parameter by object reference if attachment isn't found
-          actionCallEvent.detail.parameters = actionCallEvent.detail.parameters
-            .filter(
-              (param) => param !== parameter,
-            );
+          if (!attachmentId) continue;
+
+          const attachment = attachmentIndex.get(attachmentId as string);
+
+          actionCallEvent.detail.parameters[parameterDefinition.name] =
+            attachment?.compressed?.file ?? attachment?.raw?.file;
         }
       }
     }

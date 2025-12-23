@@ -149,7 +149,6 @@ export const getActionSchema = (
     if (action.parameters?.length) {
       schema.properties!.detail!.properties!.parameters =
         getActionParametersSchema(action.parameters);
-      schema.properties!.detail!.required!.push("parameters");
     }
 
     schemas.push(schema);
@@ -160,59 +159,42 @@ export const getActionSchema = (
 
 const getActionParametersSchema = (
   parameters: BottEventActionParameterDefinition[],
-): GeminiStructuredResponseSchema => ({
-  type: GeminiStructuredResponseType.ARRAY,
-  items: {
-    // We can't enforce all parameters, unfortunately.
-    anyOf: parameters.map(
-      (parameter) => {
-        let valueType: GeminiStructuredResponseType;
+): GeminiStructuredResponseSchema => {
+  const properties: Record<string, GeminiStructuredResponseSchema> = {};
+  const required: string[] = [];
 
-        switch (parameter.type) {
-          case "number":
-            valueType = GeminiStructuredResponseType.NUMBER;
-            break;
-          case "boolean":
-            valueType = GeminiStructuredResponseType.BOOLEAN;
-            break;
-          case "string":
-          default:
-            valueType = GeminiStructuredResponseType.STRING;
-            break;
-        }
+  for (const parameter of parameters) {
+    let type: GeminiStructuredResponseType;
 
-        const schema: GeminiStructuredResponseSchema = {
-          type: GeminiStructuredResponseType.OBJECT,
-          properties: {
-            name: {
-              type: GeminiStructuredResponseType.STRING,
-              enum: [parameter.name],
-              description:
-                "The name of this parameter. Required so the parameter can be identified.",
-            },
-            value: {
-              type: valueType,
-              enum: parameter.type !== "file"
-                ? parameter.allowedValues?.map(String)
-                : undefined,
-              description:
-                "The value of this parameter. In the case of 'file', provide the attachment ID you'd like to pass to the action. The system will resolve the file data for you.",
-            },
-            type: {
-              type: GeminiStructuredResponseType.STRING,
-              enum: [parameter.type],
-              description:
-                "The type of this parameter. Providing this here accellerates system performance.",
-            },
-          },
-          description: parameter.description,
-          required: parameter.required
-            ? ["name", "value", "type"]
-            : ["name", "value"],
-        };
+    switch (parameter.type) {
+      case "number":
+        type = GeminiStructuredResponseType.NUMBER;
+        break;
+      case "boolean":
+        type = GeminiStructuredResponseType.BOOLEAN;
+        break;
+      case "string":
+      default:
+        type = GeminiStructuredResponseType.STRING;
+        break;
+    }
 
-        return schema;
-      },
-    ),
-  },
-});
+    properties[parameter.name] = {
+      type,
+      enum: parameter.type !== "file"
+        ? parameter.allowedValues?.map(String)
+        : undefined,
+      description: parameter.description,
+    };
+
+    if (parameter.required && !parameter.defaultValue) {
+      required.push(parameter.name);
+    }
+  }
+
+  return {
+    type: GeminiStructuredResponseType.OBJECT,
+    properties,
+    required: required.length ? required : undefined,
+  };
+};

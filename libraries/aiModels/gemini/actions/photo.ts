@@ -79,7 +79,7 @@ export const photoAction: BottAction = createAction(
         break;
       default:
         throw new Error(
-          `Unsupported media type: ${mediaFile.type}. Only images and text are supported.`,
+          `photoAction: Unsupported media type: ${mediaFile.type}. Only images and text are supported.`,
         );
     }
 
@@ -99,7 +99,6 @@ export const photoAction: BottAction = createAction(
     };
 
     const response = await gemini.models.generateContent(request);
-
     const imagePart = response.candidates![0].content!.parts!.find((
       part,
     ) => part.inlineData)!;

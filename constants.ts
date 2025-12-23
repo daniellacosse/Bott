@@ -43,8 +43,8 @@ export const ACTION_RATE_LIMIT_PHOTOS = resolveEnv(
   "ACTION_RATE_LIMIT_PHOTOS",
   100,
 );
-export const ACTION_RATE_LIMIT_MUSIC = resolveEnv(
-  "ACTION_RATE_LIMIT_MUSIC",
+export const ACTION_RATE_LIMIT_SONGS = resolveEnv(
+  "ACTION_RATE_LIMIT_SONGS",
   25,
 );
 export const ACTION_RATE_LIMIT_VIDEOS = resolveEnv(

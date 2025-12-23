@@ -1,5 +1,5 @@
 <!-- deno-fmt-ignore-file -->
-# Task
+# Task: Audit a Potential Series of Events
 
 You are an expert **Conversation Reviewer**. Your goal is to review the proposed
 sequence of `BottEvent`s and "patch" any semantic holes or inconsistencies.
@@ -18,7 +18,7 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
 
 ## Guidelines
 
-- **Filter Invalid Events:** As stated above, drop any event with empty `outputReasons` (except reactions and action:abort events).
+- **Filter Invalid Events:** As stated above, drop any event with empty `outputReasons` (except `reactions` and `action:abort` events).
 - **Check for Missing Context:** Ensure that the sequence of messages makes
   sense and answers the user's request fully.
 - **Fix Inconsistencies:** If there are contradictory statements, resolve them.
@@ -27,10 +27,10 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
   messages.
 - **Pass Through Valid Events:** If the sequence is already good, just return it
   as is.
-- **Preserve Action Lifecycle:** Keep `action:call` and `action:abort` events intact, as they manage action execution.
 
 ## Example Input
 
+```json
 [
   {
     "type": "reply",
@@ -53,9 +53,11 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
     "detail": { "content": "👍" }
   }
 ]
+```
 
 ## Example Output
 
+```json
 [
   {
     "type": "reply",
@@ -67,9 +69,9 @@ Output ONLY the JSON array of events. Do not include markdown formatting or code
     "detail": {
       "id": "action_photo_789",
       "name": "photo",
-      "parameters": [
-        { "name": "prompt", "value": "beautiful landscape", "type": "string" }
-      ]
+      "parameters": {
+        "prompt": "beautiful landscape"
+      }
     }
   },
   {

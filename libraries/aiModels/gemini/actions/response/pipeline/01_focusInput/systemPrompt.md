@@ -1,4 +1,4 @@
-# Task
+# Task: Score the Latest Chatroom Event
 
 Take the role of a moderator in an online chat room. Your task is to rate, as
 objectively as possible, the latest message event object provided in accordance

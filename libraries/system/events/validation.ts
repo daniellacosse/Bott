@@ -15,30 +15,22 @@ import type {
 } from "@bott/events";
 
 export function applyParameterDefaults(
-  schema?: BottEventActionParameterDefinition[],
-  parameters?: BottEventActionParameterRecord,
+  schema: BottEventActionParameterDefinition[] = [],
+  parameters: BottEventActionParameterRecord = {},
 ): BottEventActionParameterRecord {
-  if (!schema || !parameters) {
-    return {};
-  }
-
-  const mergedParameters = structuredClone(parameters);
+  const result = structuredClone(parameters);
 
   for (const field of schema) {
-    mergedParameters[field.name] ??= field.defaultValue;
+    result[field.name] ??= field.defaultValue;
   }
 
-  return mergedParameters;
+  return result;
 }
 
 export function validateParameters(
-  schema?: BottEventActionParameterDefinition[],
-  parameters?: BottEventActionParameterRecord,
+  schema: BottEventActionParameterDefinition[] = [],
+  parameters: BottEventActionParameterRecord = {},
 ) {
-  if (!schema || !parameters) {
-    return;
-  }
-
   // Check for unknown parameters
   for (const param of Object.keys(parameters)) {
     if (!schema.find((s) => s.name === param)) {
@@ -50,7 +42,7 @@ export function validateParameters(
     const param = parameters[field.name];
 
     if (field.required && param === undefined) {
-      throw new Error(`Missing required parameter: ${field.name}`);
+      throw new Error(`validateParameters: Missing required parameter: ${field.name}`);
     }
 
     if (param !== undefined) {
@@ -78,7 +70,7 @@ export function validateParameters(
         )
       ) {
         throw new Error(
-          `Parameter '${field.name}' has invalid value '${param}'. Allowed values: ${field.allowedValues.join(", ")}`,
+          `validateParameters: Parameter '${field.name}' has invalid value '${param}'. Allowed values: ${field.allowedValues.join(", ")}`,
         );
       }
     }

@@ -11,7 +11,7 @@
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { APP_USER, ACTION_RATE_LIMIT_MUSIC, GEMINI_SONG_MODEL } from "@bott/constants";
+import { APP_USER, ACTION_RATE_LIMIT_SONGS, GEMINI_SONG_MODEL } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import { delay } from "@std/async";
@@ -23,7 +23,7 @@ const settings: BottActionSettings = {
   name: "song",
   instructions:
     "Generate a song based on the prompt. Duration is fixed to 15 seconds.",
-  limitPerMonth: ACTION_RATE_LIMIT_MUSIC,
+  limitPerMonth: ACTION_RATE_LIMIT_SONGS,
   shouldForwardOutput: true,
   parameters: [{
     name: "prompt",
@@ -48,7 +48,7 @@ export const songAction: BottAction = createAction(
   async function* ({ prompt }) {
     if (!GEMINI_SONG_MODEL) {
       throw new Error(
-        "Gemini song model is not configured. Please ensure `GEMINI_SONG_MODEL` is set in your environment.",
+        "songAction: Gemini song model is not configured. Please ensure `GEMINI_SONG_MODEL` is set in your environment.",
       );
     }
 

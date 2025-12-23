@@ -111,9 +111,16 @@ export const _transformBottEventToContent = async (
   event: BottEvent,
   context: EventPipelineContext,
 ): Promise<Content> => {
+  if (!event.user) {
+    throw new Error(
+      "_transformBottEventToContent: Event must have a user",
+    );
+  }
+
   const {
     attachments: _attachments,
     parent: _parent,
+    channel: _channel, // don't need this
     createdAt,
     ...rest
   } = structuredClone(event);
@@ -148,7 +155,7 @@ export const _transformBottEventToContent = async (
 
   const parts: Part[] = [{ text: JSON.stringify(eventToSerialize) }];
   const content: Content = {
-    role: (event.user && event.user.id === context.action.user?.id)
+    role: (event.user?.id === context.action.user?.id)
       ? "model"
       : "user",
     parts,

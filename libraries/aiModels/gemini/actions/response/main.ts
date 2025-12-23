@@ -32,11 +32,10 @@ const settings: BottActionSettings = {
 export const responseAction: BottAction = createAction(
   async function* () {
     const channelHistory = await getEventHistory(this.channel!);
-    const preparedInput = prepareInputEvents(channelHistory);
 
     const pipeline: EventPipelineContext = {
       data: {
-        input: preparedInput,
+        input: prepareInputEvents(channelHistory),
         output: [],
       },
       evaluationState: new Map(),

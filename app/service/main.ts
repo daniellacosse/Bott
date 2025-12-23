@@ -9,14 +9,13 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { APP_NAME } from "@bott/constants";
+import { APP_USER } from "@bott/constants";
 import {
   type BottActionErrorEvent,
   type BottActionOutputEvent,
   BottEventType,
   BottEvent,
 } from "@bott/events";
-import type { BottUser } from "@bott/model";
 import type {
   BottService,
   BottServiceSettings,
@@ -31,17 +30,14 @@ const RESPONSE_ACTION_NAME = actions.response.name;
 // Maps each channel ID to the ID of the in-flight response action
 const channelActionIndex = new Map<string, string>();
 
-const appUser: BottUser = {
-  id: APP_NAME,
-  name: APP_NAME,
-};
-
 const settings: BottServiceSettings = {
-  name: APP_NAME,
+  name: APP_USER.name,
   events: new Set([
     BottEventType.MESSAGE,
     BottEventType.REPLY,
     BottEventType.REACTION,
+    BottEventType.ACTION_CALL,
+    BottEventType.ACTION_ABORT,
     BottEventType.ACTION_OUTPUT,
     BottEventType.ACTION_COMPLETE,
     BottEventType.ACTION_ERROR,
@@ -64,7 +60,7 @@ export const appService: BottService = createService(
               detail: {
                 id: actionId,
               },
-              user: appUser,
+              user: APP_USER,
               channel: event.channel,
             },
           ),
@@ -83,7 +79,7 @@ export const appService: BottService = createService(
               id,
               name: RESPONSE_ACTION_NAME,
             },
-            user: appUser,
+            user: APP_USER,
             channel: event.channel,
           },
         ),
@@ -91,7 +87,7 @@ export const appService: BottService = createService(
     };
 
     const respondIfNotSelf = (event: BottEvent) => {
-      if (!event.user || event.user.id === APP_NAME) return;
+      if (!event.user || event.user.id === APP_USER.id) return;
 
       // Don't respond to errors/aborts from response actions to prevent loops
       if (

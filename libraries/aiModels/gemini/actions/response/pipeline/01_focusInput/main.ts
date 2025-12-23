@@ -9,8 +9,9 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { GEMINI_RATING_MODEL } from "@bott/constants";
+import { APP_USER, GEMINI_RATING_MODEL } from "@bott/constants";
 
+import { BottEventType } from "@bott/events";
 import { log } from "@bott/log";
 import { type Schema, Type } from "@google/genai";
 import { queryGemini } from "../../common/queryGemini.ts";
@@ -70,7 +71,21 @@ export const focusInput: EventPipelineProcessor = async function () {
       continue;
     }
 
-    if (event.user?.id === this.action.user?.id) {
+    if (
+      event.user?.id === this.action.user?.id || event.user?.id === APP_USER.id
+    ) {
+      pointer++;
+      continue;
+    }
+
+    if (
+      [
+        BottEventType.ACTION_START,
+        BottEventType.ACTION_OUTPUT,
+        BottEventType.ACTION_COMPLETE,
+        BottEventType.ACTION_ABORT,
+      ].includes(event.type)
+    ) {
       pointer++;
       continue;
     }
@@ -116,5 +131,4 @@ export const focusInput: EventPipelineProcessor = async function () {
   await Promise.all(geminiCalls);
 
   this.data.input = input;
-
 };

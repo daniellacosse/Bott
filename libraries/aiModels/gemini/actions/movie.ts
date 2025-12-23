@@ -32,7 +32,6 @@ import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
 import gemini from "../client.ts";
 import { generateFilename } from "./common.ts";
 
-
 const settings: BottActionSettings = {
   name: "movie",
   instructions: "Generate a movie based on the prompt.",
@@ -56,13 +55,13 @@ export const movieAction: BottAction = createAction(
   async function* ({ prompt, media }) {
     if (!GEMINI_MOVIE_MODEL) {
       throw new Error(
-        "Gemini movie model is not configured. Please ensure `GEMINI_MOVIE_MODEL` is set in your environment.",
+        "movieAction: Gemini movie model is not configured. Please ensure `GEMINI_MOVIE_MODEL` is set in your environment.",
       );
     }
 
     const mediaFile = media as File;
-
     let promptString = prompt as string;
+
     let mediaData;
     switch (mediaFile.type) {
       case "image/jpeg":
@@ -86,7 +85,7 @@ export const movieAction: BottAction = createAction(
         break;
       default:
         throw new Error(
-          `Unsupported media type: ${mediaFile.type}. Only images are supported.`,
+          `movieAction: Unsupported media type: ${mediaFile.type}. Only images are supported.`,
         );
     }
 
