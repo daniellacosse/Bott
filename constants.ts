@@ -11,140 +11,181 @@
 
 import { join } from "@std/path";
 
-// -- Infrastructure & Environment --
-export const ENV = Deno.env.get("ENV") ?? "local";
-export const PORT = Number(Deno.env.get("PORT") ?? 8080);
-export const OUTPUT_ROOT = Deno.env.get("OUTPUT_ROOT") ?? "./.output";
-
-// GCP
-export const GCP_PROJECT = Deno.env.get("GCP_PROJECT");
-export const GCP_REGION = Deno.env.get("GCP_REGION") ??
-  Deno.env.get("GCP_LOCATION") ?? "us-central1";
-
-export const GCP_ALLOW_UNAUTHENTICATED =
-  Deno.env.get("GCP_ALLOW_UNAUTHENTICATED") ?? true;
-
-export const GCP_SERVICE_NAME = Deno.env.get("GCP_SERVICE_NAME") ??
-  `bott-${ENV}`;
-
-// Storage
-const MEGABYTE = 1024 * 1024;
 const SECOND_TO_MS = 1000;
 const MINUTE_TO_MS = 60 * SECOND_TO_MS;
-
-export const STORAGE_ROOT = Deno.env.get("FILE_SYSTEM_ROOT") ??
-  join(OUTPUT_ROOT, "fsRoot");
-export const STORAGE_FILE_ROOT = join(STORAGE_ROOT, "files");
-export const STORAGE_DATA_LOCATION = join(STORAGE_ROOT, "data.db");
-export const STORAGE_DEPLOY_NONCE_LOCATION = join(
-  STORAGE_ROOT,
-  ".deployNonce",
-);
-export const STORAGE_MAX_FILE_SIZE = 50 * MEGABYTE;
-export const STORAGE_MAX_TEXT_FILE_WORDS = 600;
-export const STORAGE_MAX_ATTACHMENT_DIMENSION = 480;
-export const STORAGE_FETCH_TIMEOUT_MS = 30 * SECOND_TO_MS;
-export const STORAGE_FFMPEG_TIMEOUT_MS = 5 * MINUTE_TO_MS;
-
-// Logger
-export const LOGGER_TOPICS =
-  (Deno.env.get("LOGGER_TOPICS") ?? "info,warn,error")
-    .split(/,\s*/)
-    .map((topic) => topic.trim().toLowerCase())
-    .filter((topic) => topic.length > 0);
-export const LOGGER_MAX_CHARACTER_LENGTH = 256;
-
-// -- Actions --
-export const ACTION_DEFAULT_RESPONSE_SWAPS = 6;
-export const ACTION_MAX_PROMPT_LENGTH = 10000;
-
-// Rate Limits
 const DAY_MS = 24 * 60 * MINUTE_TO_MS;
 const FOUR_WEEKS_MS = 4 * 7 * DAY_MS;
+const MEGABYTE = 1024 * 1024;
 
-export const RATE_LIMIT_WINDOW_MS = FOUR_WEEKS_MS;
-
-export const RATE_LIMIT_IMAGES = Number(
-  Deno.env.get("RATE_LIMIT_IMAGES") ?? 100,
-);
-export const RATE_LIMIT_MUSIC = Number(
-  Deno.env.get("RATE_LIMIT_MUSIC") ?? 25,
-);
-export const RATE_LIMIT_VIDEOS = Number(
-  Deno.env.get("RATE_LIMIT_VIDEOS") ?? 10,
-);
+// -- App --
+export const APP_NAME = Deno.env.get("APP_NAME") ?? "Bott";
+const APP_ID = Deno.env.get("APP_ID") ?? "service:bott";
+export const APP_USER = {
+  id: APP_ID,
+  name: APP_NAME,
+};
 
 // -- Services --
-export const ENABLED_SERVICES =
-  (Deno.env.get("ENABLED_SERVICES") ?? "main,eventStorage,discord")
-    .split(/,\s*/)
-    .filter((s) => s.length > 0);
+export const SERVICE_LIST = readEnv(
+  "SERVICE_LIST",
+  [APP_NAME, "action", "eventStorage", "discord"],
+);
 
-export const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
+export const SERVICE_DISCORD_TOKEN = Deno.env.get("SERVICE_DISCORD_TOKEN");
+export const SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT = 100;
+
+// -- Actions --
+
+// Rate Limits
+export const ACTION_RATE_LIMIT_WINDOW_MS = FOUR_WEEKS_MS;
+
+export const ACTION_RATE_LIMIT_PHOTOS = readEnv(
+  "ACTION_RATE_LIMIT_PHOTOS",
+  100,
+);
+export const ACTION_RATE_LIMIT_SONGS = readEnv(
+  "ACTION_RATE_LIMIT_SONGS",
+  25,
+);
+export const ACTION_RATE_LIMIT_VIDEOS = readEnv(
+  "ACTION_RATE_LIMIT_VIDEOS",
+  10,
+);
+
+// Inputs
+export const ACTION_PROMPT_LENGTH_LIMIT = 10000;
+
+export const ACTION_RESPONSE_HISTORY_SIZE_MS = readEnv(
+  "ACTION_RESPONSE_HISTORY_SIZE_MS",
+  DAY_MS,
+);
+export const ACTION_RESPONSE_DEBOUNCE_MS = readEnv(
+  "ACTION_RESPONSE_DEBOUNCE_MS",
+  2000,
+);
+export const ACTION_RESPONSE_EVENT_COUNT_LIMIT = readEnv(
+  "ACTION_RESPONSE_EVENT_COUNT_LIMIT",
+  2000,
+);
+export const ACTION_RESPONSE_FILE_TOKEN_LIMIT = readEnv(
+  "ACTION_RESPONSE_FILE_TOKEN_LIMIT",
+  500_000,
+);
+export const ACTION_RESPONSE_FILE_COUNT_LIMIT = readEnv(
+  "ACTION_RESPONSE_FILE_COUNT_LIMIT",
+  1,
+);
+export const ACTION_RESPONSE_AUDIO_COUNT_LIMIT = readEnv(
+  "ACTION_RESPONSE_AUDIO_COUNT_LIMIT",
+  1,
+);
+export const ACTION_RESPONSE_VIDEO_COUNT_LIMIT = readEnv(
+  "ACTION_RESPONSE_VIDEO_COUNT_LIMIT",
+  10,
+);
+
+// Outputs
+export const ACTION_RESPONSE_NAME = "response";
+export const ACTION_RESPONSE_OUTPUT_WORDS_PER_MINUTE = 200;
+export const ACTION_RESPONSE_OUTPUT_TIME_LIMIT_MS = 3 * SECOND_TO_MS;
+
+export const ACTION_MOVIE_ASPECT_RATIO = "16:9";
+export const ACTION_MOVIE_FPS = 24;
+export const ACTION_MOVIE_RESOLUTION = "720p";
+export const ACTION_MOVIE_JOB_INTERVAL_MS = 10000;
 
 // -- Models --
 
-/**
- * The model provider to use.
- * - "gemini": Explicitly select Gemini (requires GCP credentials).
- * - "auto": Automatically select the best available provider (currently behaves the same as "gemini" and uses Gemini if GCP credentials are present).
- *
- * Note: Both "gemini" and "auto" currently use Gemini if GCP credentials are present.
- * The "auto" option is reserved for future extensibility, where additional providers may be supported.
- */
-export const MODEL_PROVIDER = Deno.env.get("MODEL_PROVIDER") ?? "auto";
+// Gemini
+export const GEMINI_AVAILABLE = Boolean(Deno.env.get("GCP_PROJECT"));
 
-export const GEMINI_ACCESS_TOKEN = Deno.env.get("GEMINI_ACCESS_TOKEN");
-const isGeminiAvailable = ["gemini", "auto"].includes(MODEL_PROVIDER) &&
-  GCP_PROJECT;
-
-export const ERROR_MODEL = Deno.env.get("ERROR_MODEL") ??
-  (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
-
-export const EVENT_MODEL = Deno.env.get("EVENT_MODEL") ??
-  (isGeminiAvailable ? "gemini-2.5-flash" : "not_available");
-
-export const RATING_MODEL = Deno.env.get("RATING_MODEL") ??
-  (isGeminiAvailable ? "gemini-2.5-flash-lite" : "not_available");
-
-export const ESSAY_MODEL = Deno.env.get("ESSAY_MODEL") ??
-  (isGeminiAvailable ? "gemini-3-pro-preview" : "not_available");
-
-export const PHOTO_MODEL = Deno.env.get("PHOTO_MODEL") ??
-  (isGeminiAvailable ? "gemini-3-pro-image-preview" : "not_available");
-
-export const SONG_MODEL = Deno.env.get("SONG_MODEL") ??
-  (isGeminiAvailable ? "lyria-002" : "not_available");
-
-export const MOVIE_MODEL = Deno.env.get("MOVIE_MODEL") ??
-  (isGeminiAvailable ? "veo-3.1-fast-generate-001" : "not_available");
-
-// Input processing limits
-export const INPUT_FILE_TOKEN_LIMIT = Number(
-  Deno.env.get("INPUT_FILE_TOKEN_LIMIT") ?? 500_000,
+export const GEMINI_EVENT_MODEL = readEnv(
+  "GEMINI_EVENT_MODEL",
+  "gemini-2.5-flash",
 );
-export const INPUT_FILE_AUDIO_COUNT_LIMIT = Number(
-  Deno.env.get("INPUT_FILE_AUDIO_COUNT_LIMIT") ?? 1,
+export const GEMINI_RATING_MODEL = readEnv(
+  "GEMINI_RATING_MODEL",
+  "gemini-2.5-flash-lite",
 );
-export const INPUT_FILE_VIDEO_COUNT_LIMIT = Number(
-  Deno.env.get("INPUT_FILE_VIDEO_COUNT_LIMIT") ?? 10,
+export const GEMINI_PHOTO_MODEL = readEnv(
+  "GEMINI_PHOTO_MODEL",
+  "gemini-3-pro-image-preview",
 );
-export const INPUT_EVENT_COUNT_LIMIT = Number(
-  Deno.env.get("INPUT_EVENT_COUNT_LIMIT") ?? 2000,
+export const GEMINI_SONG_MODEL = readEnv(
+  "GEMINI_SONG_MODEL",
+  "lyria-realtime",
 );
-export const INPUT_EVENT_TIME_LIMIT_MS = Number(
-  Deno.env.get("INPUT_EVENT_TIME_LIMIT_MS") ?? DAY_MS,
+export const GEMINI_MOVIE_MODEL = readEnv(
+  "GEMINI_MOVIE_MODEL",
+  "veo-3.1-fast-generate-001",
 );
 
-// -- App --
-export const BOTT_NAME = Deno.env.get("BOTT_NAME") ?? "Bott";
-const BOTT_ID = Deno.env.get("BOTT_ID") ?? "system:bott";
-export const BOTT_SERVICE = {
-  user: {
-    id: BOTT_ID,
-    name: BOTT_NAME,
-  },
-};
+export const GEMINI_ACCESS_TOKEN = readEnv("GEMINI_ACCESS_TOKEN", "");
 
-export const TYPING_WORDS_PER_MINUTE = 200;
-export const TYPING_MAX_TIME_MS = 3 * SECOND_TO_MS;
+// -- Infrastructure & Environment --
+export const ENV = readEnv("ENV", "local");
+export const PORT = Number(readEnv("PORT", "8080"));
+export const OUTPUT_ROOT = readEnv("OUTPUT_ROOT", "./.output");
+
+// GCP
+export const GCP_PROJECT = readEnv("GCP_PROJECT", "");
+export const GCP_REGION = readEnv("GCP_REGION", "global");
+export const GCP_SERVICE_NAME = readEnv("GCP_SERVICE_NAME", `bott-${ENV}`);
+export const GCP_ALLOW_UNAUTHENTICATED = readEnv(
+  "GCP_ALLOW_UNAUTHENTICATED",
+  "true",
+);
+
+// Storage
+export const STORAGE_ROOT = readEnv(
+  "STORAGE_ROOT",
+  join(OUTPUT_ROOT, "fsRoot"),
+);
+export const STORAGE_FILE_ROOT = readEnv(
+  "STORAGE_FILE_ROOT",
+  join(STORAGE_ROOT, "files"),
+);
+export const STORAGE_DATA_LOCATION = readEnv(
+  "STORAGE_DATA_LOCATION",
+  join(STORAGE_ROOT, "data.db"),
+);
+export const STORAGE_DEPLOY_NONCE_LOCATION = readEnv(
+  "STORAGE_DEPLOY_NONCE_LOCATION",
+  join(STORAGE_ROOT, ".deployNonce"),
+);
+export const STORAGE_FILE_SIZE_LIMIT = 50 * MEGABYTE;
+export const STORAGE_FILE_WORD_LIMIT = 600;
+export const STORAGE_FILE_DIMENSION_LIMIT = 480;
+export const STORAGE_FETCH_TIME_LIMIT_MS = 30 * SECOND_TO_MS;
+export const STORAGE_FFMPEG_TIME_LIMIT_MS = 5 * MINUTE_TO_MS;
+
+// Log
+export const LOG_TOPICS = readEnv(
+  "LOG_TOPICS",
+  ["info", "warn", "error"],
+);
+export const LOG_CHARACTER_LIMIT = 1024;
+
+// -- Common --
+function readEnv<T>(key: string, defaultValue: T): T {
+  const value = Deno.env.get(key);
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  if (Array.isArray(defaultValue)) {
+    return value.split(/,\s*/).map((item) => item.trim()).filter((item) =>
+      item.length > 0
+    ) as T;
+  }
+
+  switch (typeof defaultValue) {
+    case "number":
+      return Number(value) as T;
+    case "boolean":
+      return Boolean(value) as T;
+    default:
+      return value as T;
+  }
+}

@@ -12,7 +12,14 @@
     ]
   },
   "imports": {
+    "@bott/actions": "./libraries/system/actions/module.ts",
     "@bott/constants": "./constants.ts",
+    "@bott/discord": "./libraries/chatSpaces/discord/module.ts",
+    "@bott/events": "./libraries/system/events/module.ts",
+    "@bott/gemini": "./libraries/aiModels/gemini/module.ts",
+    "@bott/log": "./libraries/log/module.ts",
+    "@bott/services": "./libraries/system/services/module.ts",
+    "@bott/storage": "./libraries/system/storage/module.ts",
     "@extractus/article-extractor": "npm:@extractus/article-extractor@^8.0.19",
     "@faker-js/faker": "npm:@faker-js/faker",
     "@google/genai": "npm:@google/genai@^1.30.0",
@@ -20,6 +27,7 @@
     "@std/assert/equals": "jsr:@std/assert@^1.0.12/equals",
     "@std/async": "jsr:@std/async@^1.0.12",
     "@std/async/delay": "jsr:@std/async@^1.0.12/delay",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.2",
     "@std/encoding": "jsr:@std/encoding@^1.0.9",
     "@std/encoding/base64": "jsr:@std/encoding@^1.0.9/base64",
     "@std/log": "jsr:@std/log@^0.224",
@@ -41,10 +49,11 @@
   "nodeModulesDir": "auto",
   "workspace": [
     "./model",
-    "./libraries/infrastructure/log",
-    "./libraries/infrastructure/service",
-    "./libraries/infrastructure/storage",
-    "./libraries/infrastructure/task",
+    "./libraries/log",
+    "./libraries/system/events",
+    "./libraries/system/actions",
+    "./libraries/system/services",
+    "./libraries/system/storage",
     "./libraries/aiModels/gemini",
     "./libraries/chatSpaces/discord",
     "./app"

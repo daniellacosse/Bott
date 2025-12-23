@@ -9,59 +9,88 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import type { BottAction } from "@bott/actions";
+import { SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT } from "@bott/constants";
+
 import {
-  type AnyShape,
-  type BottAction,
-  BottActionOptionType,
-} from "@bott/model";
+  type SlashCommandAttachmentOption,
+  type SlashCommandBooleanOption,
+  SlashCommandBuilder,
+  type SlashCommandNumberOption,
+  type SlashCommandStringOption,
+} from "discord.js";
 
-import { SlashCommandBuilder } from "discord.js";
+type SlashCommandOption =
+  | SlashCommandBooleanOption
+  | SlashCommandStringOption
+  | SlashCommandNumberOption
+  | SlashCommandAttachmentOption;
 
-const COMMAND_DESCRIPTION_LIMIT = 100;
-
-export function getCommandJson<
-  O extends Record<string, unknown> = Record<string, unknown>,
->({
+export function actionToCommandJSON({
   name,
-  description,
-  options,
-}: BottAction<O, AnyShape>) {
+  instructions,
+  parameters,
+}: BottAction) {
   const builder = new SlashCommandBuilder().setName(name);
 
-  if (description) {
-    builder.setDescription(description.slice(0, COMMAND_DESCRIPTION_LIMIT));
+  builder.setDescription(
+    instructions.slice(0, SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT),
+  );
+
+  if (!parameters?.length) {
+    return builder.toJSON();
   }
 
-  if (options && options.length) {
-    for (const { name, description, type, required } of options) {
-      // deno-lint-ignore no-explicit-any
-      const buildOption = (option: any) => {
-        if (name) {
-          option.setName(name);
-        }
+  for (
+    const {
+      name,
+      description,
+      type,
+      required,
+      allowedValues,
+      defaultValue,
+    } of parameters
+  ) {
+    const buildOption = <T extends SlashCommandOption>(option: T) => {
+      option.setName(name);
 
-        if (description) {
-          option.setDescription(description);
-        }
-
-        if (required) {
-          option.setRequired(required);
-        }
-
-        return option;
-      };
-
-      switch (type) {
-        case BottActionOptionType.STRING:
-          builder.addStringOption(buildOption);
-          break;
-        case BottActionOptionType.INTEGER:
-          builder.addIntegerOption(buildOption);
-          break;
-        case BottActionOptionType.BOOLEAN:
-          builder.addBooleanOption(buildOption);
-          break;
+      if (description) {
+        option.setDescription(
+          (defaultValue && type !== "file"
+            ? `${description} (Default: ${defaultValue})`
+            : description).slice(0, SERVICE_DISCORD_COMMAND_DESCRIPTION_LIMIT),
+        );
       }
+
+      if (required && !defaultValue) {
+        option.setRequired(required);
+      }
+
+      if (allowedValues && type === "string") {
+        (option as SlashCommandStringOption).addChoices(
+          allowedValues.map((value) => ({
+            name: String(value),
+            value: String(value),
+          })),
+        );
+      }
+
+      return option;
+    };
+
+    switch (type) {
+      case "string":
+        builder.addStringOption(buildOption<SlashCommandStringOption>);
+        break;
+      case "number":
+        builder.addNumberOption(buildOption<SlashCommandNumberOption>);
+        break;
+      case "boolean":
+        builder.addBooleanOption(buildOption<SlashCommandBooleanOption>);
+        break;
+      case "file":
+        builder.addAttachmentOption(buildOption<SlashCommandAttachmentOption>);
+        break;
     }
   }
 

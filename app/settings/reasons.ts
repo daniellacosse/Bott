@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BOTT_NAME } from "@bott/constants";
+import { APP_NAME } from "@bott/constants";
 import type { BottReason } from "@bott/model";
 
 import {
@@ -25,7 +25,7 @@ import {
 export const whenAddressed: BottReason = {
   name: "whenAddressed",
   description:
-    `You should respond to events that have a \`directedAt${BOTT_NAME}\` rating of 5 or 4, or at 3 when \`visibility\` or \`urgency\` is also 4 or greater.`,
+    `You should respond to events that have a \`directedAt${APP_NAME}\` rating of 5 or 4, or at 3 when \`visibility\` or \`urgency\` is also 4 or greater.`,
   instruction: "You have been addressed. Reply to this message.",
   ratingScales: [directedAt, visibility, urgency],
   validator: (metadata) => {
@@ -35,7 +35,7 @@ export const whenAddressed: BottReason = {
       return false;
     }
 
-    const directedAtUser = ratings[`directedAt${BOTT_NAME}`];
+    const directedAtUser = ratings[`directedAt${APP_NAME}`];
     const visibility = ratings.visibility;
     const urgency = ratings.urgency;
 

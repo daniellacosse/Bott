@@ -12,12 +12,12 @@ content generation capabilities.
 
 ### Initial Setup
 
-- Copy configuration template: `cp .env.example.yml .env.local.yml`
-- Configure settings in `.env.local.yml`:
+- Copy configuration template: `cp .env.example .env.local`
+- Configure settings in `.env.local`:
   - `GCP_PROJECT` - GCP project ID
   - `GCP_REGION` - GCP region (e.g., us-central1)
   - `GEMINI_ACCESS_TOKEN` - GCP access token
-  - `DISCORD_TOKEN` - Discord bot token
+  - `SERVICE_DISCORD_TOKEN` - Discord bot token
 
 ### Development Workflow
 
@@ -72,21 +72,26 @@ content generation capabilities.
 ├── deno.json             # Deno configuration and tasks
 ├── Containerfile         # Container build instructions
 ├── Brewfile              # macOS dependencies via Homebrew
-├── .env.example.yml      # Environment configuration template
+├── .env.example          # Environment configuration template
 ├── .devcontainer/        # Devcontainer configuration
 ├── app/                  # Main application
 │   ├── README.md        # Application layer documentation
 │   ├── main.ts          # Entry point
 │   ├── tasks.ts         # Task management
-│   └── actions/         # Bot tool/action handlers
+│   ├── service/         # App Service logic
+│   └── settings/        # App identity and reasons
 ├── libraries/           # Modular libraries
-│   ├── discord/        # Discord integration
-│   ├── gemini/         # AI Model integration
-│   ├── logger/         # Logging
-│   ├── storage/        # Data persistence
-│   │   └── README.md   # Storage documentation
-│   └── task/           # Task queue
-├── model/              # Type definitions
+│   ├── aiModels/       # AI Model integrations
+│   │   └── gemini/     # Google Gemini integration
+│   ├── chatSpaces/     # Chat platform integrations
+│   │   └── discord/    # Discord integration
+│   ├── log/            # Logging
+│   └── system/         # Core system libraries
+│       ├── actions/    # Action definitions
+│       ├── events/     # Event types and handling
+│       ├── services/   # Service infrastructure
+│       └── storage/    # Data persistence (SQLite)
+├── model/              # Shared types
 │   └── README.md       # Data model documentation
 └── .github/            # CI/CD workflows
 ```
@@ -95,15 +100,16 @@ content generation capabilities.
 
 ### Adding New Features
 
-- Bot commands: Add handlers in `app/actions/`
-- New AI capabilities: Extend `libraries/gemini/`
-- Data models: Update `model/types/`
-- Storage functionality: Modify `libraries/storage/`
+- Bot commands: Add handlers in `app/service/actions.ts` (or
+  `libraries/system/actions`)
+- New AI capabilities: Extend `libraries/aiModels/gemini/`
+- Data models: Update `libraries/system/events/` (or `model/`)
+- Storage functionality: Modify `libraries/system/storage/`
 
 ### Debugging
 
 - Check logs in the terminal where Bott is running
-- Verify configuration is set correctly in `.env.*.yml`
+- Verify configuration is set correctly in `.env.*`
 - Test network connectivity to Discord API and Google Cloud APIs
 - Validate file permissions for `FILE_SYSTEM_ROOT` directory (default:
   `./.output/fsRoot`)

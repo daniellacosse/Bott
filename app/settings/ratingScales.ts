@@ -9,26 +9,26 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BOTT_NAME } from "@bott/constants";
+import { APP_NAME } from "@bott/constants";
 import type { BottRatingScale } from "@bott/model";
 
 export const directedAt: BottRatingScale = {
-  name: `directedAt${BOTT_NAME}`,
+  name: `directedAt${APP_NAME}`,
   definition:
-    `Whether the message is directly addressed to "${BOTT_NAME}". A high score indicates a direct request or question.`,
+    `Whether the message is directly addressed to "${APP_NAME}". A high score indicates a direct request or question.`,
   examples: {
     1: ["Hey other user, how are you this evening?"],
     3: [
-      `I wonder if ${BOTT_NAME} has anything to say about this?`,
-      `lol ${BOTT_NAME} would love this`,
+      `I wonder if ${APP_NAME} has anything to say about this?`,
+      `lol ${APP_NAME} would love this`,
     ],
     4: [
       "<message of an ongoing conversation with you>",
       "That makes sense, but what about the cost?",
     ],
     5: [
-      `Hey ${BOTT_NAME.toLocaleLowerCase()}, do a dance for me.`,
-      `@${BOTT_NAME}, can you write me a story?`,
+      `Hey ${APP_NAME.toLocaleLowerCase()}, do a dance for me.`,
+      `@${APP_NAME}, can you write me a story?`,
     ],
   },
 };

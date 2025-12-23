@@ -9,15 +9,14 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottEventType } from "@bott/model";
+import { BottEvent, BottEventType } from "@bott/events";
 
-import { BottEvent } from "@bott/service";
 import { getEvents, prepareAttachmentFromUrl } from "@bott/storage";
 import type { Message } from "discord.js";
 
 import { getMarkdownLinks } from "./markdown.ts";
 
-export const resolveBottEventFromMessage = async (
+export const messageToEvent = async (
   message: Message<true>,
 ): Promise<BottEvent> => {
   const [possibleEvent] = await getEvents(message.id);
@@ -32,7 +31,7 @@ export const resolveBottEventFromMessage = async (
   if (message.reference?.messageId) {
     type = BottEventType.REPLY;
     try {
-      parent = await resolveBottEventFromMessage(
+      parent = await messageToEvent(
         await message.channel.messages.fetch(message.reference.messageId),
       );
     } catch {
@@ -43,15 +42,17 @@ export const resolveBottEventFromMessage = async (
   }
 
   const event = new BottEvent(type, {
+    id: message.id,
+    createdAt: new Date(message.createdTimestamp),
     detail: {
       content: (message.content || message.embeds.at(0)?.description) ?? "",
     },
     channel: {
       id: message.channel.id,
-      name: message.channel.name as string,
+      name: message.channel.name,
       space: {
-        id: message.guild?.id as string,
-        name: message.guild?.name as string,
+        id: message.guild.id,
+        name: message.guild.name,
       },
     },
     user: message.author
@@ -62,9 +63,6 @@ export const resolveBottEventFromMessage = async (
       : undefined,
     parent,
   });
-
-  event.id = message.id;
-  event.createdAt = new Date(message.createdTimestamp);
 
   const urls = [
     ...message.attachments.values().map(({ url }) => url),

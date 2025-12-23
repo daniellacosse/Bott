@@ -48,14 +48,14 @@ Bott: the autonomous groupchat agent!
   <tr>
     <td>
       <figure>
-        <img width="360" alt="origin_of_bott" src="./gallery/origin.png" />
+        <img width="360" alt="origin_of_bott" src="./docs/gallery/origin.png" />
         <br />
         <figcaption><i>Bott's origin</i></figcaption>
       </figure>
     </td>
     <td>
       <figure>
-        <img width="360" src="./gallery/concept.png" alt="concept" />
+        <img width="360" src="./docs/gallery/concept.png" alt="concept" />
         <br />
         <figcaption><i>Concept art by <a href="https://DanielLaCos.se">DanielLaCos.se</a></i></figcaption>
       </figure>

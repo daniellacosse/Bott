@@ -10,4 +10,3 @@
  */
 
 export * from "./service.ts";
-export * from "./message/embed/info.ts";

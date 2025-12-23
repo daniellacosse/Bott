@@ -9,33 +9,28 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { Buffer } from "node:buffer";
+import { APP_USER, SERVICE_DISCORD_TOKEN } from "@bott/constants";
+import { BottEvent, BottEventType } from "@bott/events";
+import type { BottUser } from "@bott/model";
 import {
-  BOTT_ATTACHMENT_TYPE_LOOKUP,
-  type BottAction,
-  BottEventType,
   type BottService,
-  type BottServiceFactory,
-  type BottUser,
-} from "@bott/model";
-
-import { addEventListener, BottEvent } from "@bott/service";
+  type BottServiceSettings,
+  createService,
+} from "@bott/services";
 import {
   AttachmentBuilder,
   ChannelType,
   Client,
   Events as DiscordEvents,
   GatewayIntentBits,
-  type JSONEncodable,
   type Message,
-  type MessageCreateOptions,
   REST,
   Routes,
 } from "discord.js";
 
-import { getCommandJson } from "./command/json.ts";
-import { resolveCommandRequestEvent } from "./command/request.ts";
-import { resolveBottEventFromMessage } from "./message/event.ts";
+import { commandInteractionToActionCallEvent } from "./command/interaction.ts";
+import { actionToCommandJSON } from "./command/json.ts";
+import { messageToEvent } from "./message/event.ts";
 
 const REQUIRED_INTENTS = [
   GatewayIntentBits.GuildMembers,
@@ -45,162 +40,164 @@ const REQUIRED_INTENTS = [
   GatewayIntentBits.MessageContent,
 ];
 
-export const startDiscordService: BottServiceFactory = async ({
-  identityToken: token = "",
-  actions = {},
-}: { identityToken?: string; actions?: Record<string, BottAction> }) => {
-  const client = new Client({ intents: REQUIRED_INTENTS });
+const settings: BottServiceSettings = {
+  name: "discord",
+  events: new Set([
+    BottEventType.MESSAGE,
+    BottEventType.REPLY,
+    BottEventType.REACTION,
+  ]),
+};
 
-  await client.login(token);
+export const discordService: BottService = createService(
+  async function () {
+    const client = new Client({ intents: REQUIRED_INTENTS });
 
-  if (!client.user) {
-    throw new Error("Discord user is not set!");
-  }
-
-  const localService: BottService = {
-    user: {
-      id: client.user.id,
-      name: client.user.username,
-    },
-  };
-
-  client.on(DiscordEvents.MessageCreate, async (message) => {
-    if (message.channel.type !== ChannelType.GuildText) return;
-
-    const event = (await resolveBottEventFromMessage(
-      message as Message<true>,
-    )) as BottEvent;
-
-    globalThis.dispatchEvent(event);
-  });
-
-  client.on(DiscordEvents.MessageReactionAdd, async (reaction) => {
-    const currentChannel = reaction.message.channel;
-    if (currentChannel.type !== ChannelType.GuildText) return;
-
-    const reactor = reaction.users.cache.first();
-    let user: BottUser | undefined;
-    if (reactor) {
-      user = { id: reactor.id, name: reactor.username };
-    }
-
-    let parent: BottEvent | undefined;
-    if (reaction.message.content) {
-      parent = await resolveBottEventFromMessage(
-        reaction.message as Message<true>,
+    if (!SERVICE_DISCORD_TOKEN) {
+      throw new Error(
+        "discordService: Cannot start: the `SERVICE_DISCORD_TOKEN` is not set",
       );
     }
 
-    globalThis.dispatchEvent(
-      new BottEvent(BottEventType.REACTION, {
-        detail: { content: reaction.emoji.toString() },
-        channel: {
-          id: currentChannel.id,
-          name: currentChannel.name,
-          space: {
-            id: currentChannel.guild.id,
-            name: currentChannel.guild.name,
-          },
-        },
-        user,
-        parent,
-      }),
-    );
-  });
+    await client.login(SERVICE_DISCORD_TOKEN);
 
-  client.on(DiscordEvents.InteractionCreate, async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const action = Object.values(actions).find(
-      ({ name }) => interaction.commandName === name,
-    );
-
-    if (!action) return;
-
-    globalThis.dispatchEvent(
-      await resolveCommandRequestEvent(
-        interaction,
-        localService,
-      ),
-    );
-  });
-
-  const forwardSystemEvent = async (
-    event: BottEvent,
-    service?: BottService,
-  ) => {
-    if (!event.channel) return;
-    if (service?.user?.id === localService.user.id) return;
-    if (!service) return;
-
-    const content = event.detail.content as string;
-
-    const channel = await client.channels.fetch(event.channel.id);
-    if (!channel || channel.type !== ChannelType.GuildText) return;
-
-    if (event.type === BottEventType.REACTION && event.parent) {
-      const message = await channel.messages.fetch(
-        event.parent.id,
+    if (!client.user) {
+      throw new Error(
+        "discordService: Failed to start: the `client.user` was not set",
       );
-
-      return message.react(content);
     }
 
-    // Message or Reply (or force reaction)
-    const attachments = event.attachments || [];
+    const api = new REST({ version: "10" }).setToken(SERVICE_DISCORD_TOKEN);
 
-    if (!content && attachments.length === 0) return;
+    const actions = this.settings.actions;
 
-    const files = [];
+    let commandRegistrationPromise: Promise<unknown> | undefined;
+    if (actions) {
+      commandRegistrationPromise = api.put(
+        Routes.applicationCommands(client.user.id),
+        { body: Object.values(actions).map(actionToCommandJSON) },
+      );
+    }
 
-    for (const attachment of attachments) {
-      if (!attachment.raw?.file) {
-        continue;
-      }
+    // Forward messages from Discord to the system
+    client.on(DiscordEvents.MessageCreate, async (message) => {
+      if (message.channel.type !== ChannelType.GuildText) return;
 
-      files.push(
-        new AttachmentBuilder(
-          Buffer.from(
-            new Uint8Array(await attachment.raw.file.arrayBuffer()),
-          ),
-          {
-            name: `${attachment.id}.${
-              BOTT_ATTACHMENT_TYPE_LOOKUP[
-                attachment.raw.file
-                  .type as keyof typeof BOTT_ATTACHMENT_TYPE_LOOKUP
-              ].toLowerCase()
-            }`,
-          },
+      this.dispatchEvent(
+        await messageToEvent(
+          message as Message<true>,
         ),
       );
-    }
+    });
 
-    const payload: MessageCreateOptions = { content, files };
+    client.on(DiscordEvents.MessageReactionAdd, async (reaction) => {
+      const currentChannel = reaction.message.channel;
+      if (currentChannel.type !== ChannelType.GuildText) return;
 
-    if (event.detail.embed) {
-      // deno-lint-ignore no-explicit-any
-      payload.embeds = [event.detail.embed as JSONEncodable<any>];
-    }
+      const currentSpace = currentChannel.guild;
 
-    if (event.type === BottEventType.REPLY && event.parent) {
-      payload.reply = { messageReference: event.parent.id };
-    }
+      const reactor = reaction.users.cache.first();
+      let user: BottUser | undefined;
+      if (reactor) {
+        user = { id: reactor.id, name: reactor.username };
+      }
 
-    return channel.send(payload);
-  };
+      let parent: BottEvent | undefined;
+      if (reaction.message.content) {
+        parent = await messageToEvent(
+          reaction.message as Message<true>,
+        );
+      }
 
-  addEventListener(BottEventType.MESSAGE, forwardSystemEvent);
-  addEventListener(BottEventType.REPLY, forwardSystemEvent);
-  addEventListener(BottEventType.REACTION, forwardSystemEvent);
+      this.dispatchEvent(
+        new BottEvent(BottEventType.REACTION, {
+          detail: { content: reaction.emoji.toString() },
+          channel: {
+            id: currentChannel.id,
+            name: currentChannel.name,
+            space: {
+              id: currentSpace.id,
+              name: currentSpace.name,
+            },
+          },
+          user,
+          parent,
+        }),
+      );
+    });
 
-  if (actions) {
-    // Register actions as commands
-    const body = Object.values(actions).map((cmd) => getCommandJson(cmd));
-    await new REST({ version: "10" }).setToken(token).put(
-      Routes.applicationCommands(String(localService.user.id)),
-      { body },
-    );
-  }
+    client.on(DiscordEvents.InteractionCreate, async (interaction) => {
+      if (!interaction.isChatInputCommand()) return;
 
-  return localService;
-};
+      const action = Object.values(actions).find(
+        ({ name }) => interaction.commandName === name,
+      );
+
+      if (!action) return;
+
+      this.dispatchEvent(
+        await commandInteractionToActionCallEvent(
+          interaction,
+        ),
+      );
+    });
+
+    // Forward events from Bott (App) to Discord
+    const forwardAppEventToChannel = async (event: BottEvent) => {
+      if (!event.channel) return;
+      if (event.user?.id !== APP_USER.id) return;
+
+      const targetChannel = await client.channels.fetch(event.channel.id);
+      if (!targetChannel || targetChannel.type !== ChannelType.GuildText) {
+        return;
+      }
+
+      // Reaction
+      const content = event.detail.content as string;
+      if (event.type === BottEventType.REACTION && event.parent) {
+        const message = await targetChannel.messages.fetch(
+          event.parent.id,
+        );
+
+        return message.react(content);
+      }
+
+      // Message or Reply
+      const attachments = event.attachments ?? [];
+
+      if (!content && attachments.length === 0) return;
+
+      const files = [];
+
+      for (const attachment of attachments) {
+        const file = attachment.raw.file ?? attachment.compressed.file;
+
+        files.push(
+          new AttachmentBuilder(
+            // @ts-expect-error: Uint8Array is supported by the internal `setFileData` method
+            // See: https://discord.js.org/docs/packages/discord.js/main/AttachmentBuilder:Class
+            new Uint8Array(await file.arrayBuffer()),
+            {
+              name: file.name,
+            },
+          ),
+        );
+      }
+
+      return targetChannel.send({
+        content,
+        files,
+        reply: event.type === BottEventType.REPLY && event.parent
+          ? { messageReference: event.parent.id }
+          : undefined,
+      });
+    };
+
+    this.addEventListener(BottEventType.MESSAGE, forwardAppEventToChannel);
+    this.addEventListener(BottEventType.REPLY, forwardAppEventToChannel);
+    this.addEventListener(BottEventType.REACTION, forwardAppEventToChannel);
+
+    await commandRegistrationPromise;
+  },
+  settings,
+);

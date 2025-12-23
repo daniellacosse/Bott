@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { NonEmptyArray } from "./utility.ts";
+import type { NonEmptyArray } from "./common.ts";
 
 /**
  * Defines the structure for a "Rating Scale" in Bott.

@@ -9,54 +9,36 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import {
-  DISCORD_TOKEN,
-  ENABLED_SERVICES,
-  PORT,
-  STORAGE_DEPLOY_NONCE_LOCATION,
-  STORAGE_ROOT,
-} from "@bott/constants";
-import { startDiscordService } from "@bott/discord";
-import { serviceRegistry } from "@bott/service";
-import { startEventStorageService } from "@bott/storage";
-import * as actions from "./actions/main.ts";
-import { startMainService } from "./service.ts";
+import { actionService } from "@bott/actions";
+import { PORT, SERVICE_LIST } from "@bott/constants";
+import { discordService } from "@bott/discord";
+import { log } from "@bott/log";
+import { BottServicesManager } from "@bott/services";
+import { eventStorageService } from "@bott/storage";
+
+import { appService } from "./service/main.ts";
+import { settings } from "./settings/main.ts";
 
 if (import.meta.main) {
-  // Prevent multiple deployments from conflicting with each other.
-  const deploymentNonce = crypto.randomUUID();
-  Deno.mkdirSync(STORAGE_ROOT, { recursive: true });
-  Deno.writeTextFileSync(STORAGE_DEPLOY_NONCE_LOCATION, deploymentNonce);
+  const servicesManager = new BottServicesManager(settings);
 
-  serviceRegistry.nonce = deploymentNonce;
+  servicesManager.register(eventStorageService);
+  servicesManager.register(discordService);
+  servicesManager.register(actionService);
+  servicesManager.register(appService);
 
-  if (ENABLED_SERVICES.includes("eventStorage")) {
-    serviceRegistry.register(
-      await startEventStorageService({
-        root: STORAGE_ROOT,
-      }),
-    );
-  }
-
-  if (ENABLED_SERVICES.includes("discord") && DISCORD_TOKEN) {
-    serviceRegistry.register(
-      await startDiscordService({
-        // TODO(#64): Unify action infrastructure
-        actions: { help: actions.help },
-        identityToken: DISCORD_TOKEN,
-      }),
-    );
-  }
-
-  if (ENABLED_SERVICES.includes("main")) {
-    serviceRegistry.register(
-      await startMainService({ actions }),
-    );
+  for (const serviceName of SERVICE_LIST) {
+    servicesManager.start(serviceName);
   }
 }
 
 // Need to respond to GCP health probe:
 Deno.serve(
-  { port: PORT },
+  {
+    port: PORT,
+    onListen: ({ port, hostname }) => {
+      log.info(`main: Listening on ${hostname}:${port}`);
+    },
+  },
   () => new Response("OK", { status: 200 }),
 );

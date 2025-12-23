@@ -11,32 +11,41 @@
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'lineColor': '#5e5e5e', 'fontSize': '14px' }}}%%
 flowchart TD
-  subgraph Model["<a href='https://github.com/daniellacosse-code/Bott/tree/main/model'>**@bott/model**</a>"]
-    BottDiscord["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/discord'>**@bott/discord**</a>"]
-    
-    subgraph App["<a href='https://github.com/daniellacosse-code/Bott/tree/main/app'>./app</a>"]
-      BottAppLayer["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/task'>**@bott/task**</a>"]
-      BottDataLayer["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/storage'>**@bott/storage**</a><br>Persistence layer"]
-      
-      BottAppLayer --> BottDataLayer
-      BottDataLayer --> BottAppLayer
-    end
-    
-    BottGemini["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/gemini'>**@bott/gemini**</a>"]
+  ServicesManager(ServicesManager)
+  
+  subgraph Services
+    direction TB
+    DiscordService["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/chatSpaces/discord'>**DiscordService**</a><br>(Input/Output)"]
+    AppService["<a href='https://github.com/daniellacosse-code/Bott/tree/main/app/service'>**AppService**</a><br>(Core Logic)"]
+    ActionService["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/system/actions'>**ActionService**</a><br>(Tool Execution)"]
+    StorageService["<a href='https://github.com/daniellacosse-code/Bott/tree/main/libraries/system/storage'>**EventStorageService**</a><br>(Persistence)"]
+  end
+  
+  subgraph External
+    DiscordAPI(Discord API)
+    GeminiAPI(Gemini API)
+    DB[(SQLite)]
   end
 
-  %% Flow from Discord User to Bot and back
-  Discord -- "User Message" --> BottDiscord
-  BottDiscord -- "BottEvent" --> App
-  App -- "BottEvent" --> BottGemini
-  BottGemini -- "Calls Gemini API" --> Gemini
-  Gemini -- "Generated Data" --> BottGemini
-  BottGemini -- "BottEvent" --> App
-  App -- "BottEvent" --> BottDiscord
-  BottDiscord -- "System Message" --> Discord
+  ServicesManager --> DiscordService
+  ServicesManager --> AppService
+  ServicesManager --> ActionService
+  ServicesManager --> StorageService
 
-  style App fill:#f2896f,color:black,stroke:#333,stroke-width:2px
-  style Model fill:#c7e2e2,color:black,stroke:#333,stroke-width:2px
+  DiscordService <--> DiscordAPI
+  DiscordService -- "BottEvent" --> AppService
+  
+  AppService -- "Saves Events" --> StorageService
+  StorageService <--> DB
+  
+  AppService -- "Calls Actions" --> ActionService
+  ActionService -- "Uses" --> GeminiAPI
+  ActionService -- "Result" --> AppService
+  
+  AppService -- "Response" --> DiscordService
+
+  style AppService fill:#f2896f,color:black
+  style ServicesManager fill:#c7e2e2,color:black
 ```
 
 ## Configuration

@@ -1,0 +1,5 @@
+{
+  "name": "@bott/actions",
+  "exports": "./module.ts",
+  "private": true
+}
