@@ -63,7 +63,6 @@ export const appService: BottService = createService(
             {
               detail: {
                 id: actionId,
-                name: RESPONSE_ACTION_NAME,
               },
               user: appUser,
               channel: event.channel,
@@ -94,10 +93,10 @@ export const appService: BottService = createService(
     const respondIfNotSelf = (event: BottEvent) => {
       if (!event.user || event.user.id === APP_NAME) return;
 
-      // Don't respond to errors/aborts from responses to prevent loops
+      // Don't respond to errors/aborts from response actions to prevent loops
       if (
         event.type === BottEventType.ACTION_ERROR &&
-        event.detail.name === RESPONSE_ACTION_NAME
+        event.parent?.detail?.name === RESPONSE_ACTION_NAME
       ) return;
 
       callResponseAction(event);

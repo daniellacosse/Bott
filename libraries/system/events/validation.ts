@@ -22,7 +22,7 @@ export function applyParameterDefaults(
     return {};
   }
 
-  const mergedParameters = { ...parameters };
+  const mergedParameters = structuredClone(parameters);
 
   for (const field of schema) {
     mergedParameters[field.name] ??= field.defaultValue;

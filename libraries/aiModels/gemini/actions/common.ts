@@ -17,5 +17,5 @@ export function generateFilename(extension: string, prefix = "file"): string {
     FILENAME_PREFIX_CHARACTER_LIMIT,
   );
 
-  return `${prefix}--${crypto.randomUUID()}.${extension}`;
+  return `${prefix}.${extension}`;
 }

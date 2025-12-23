@@ -34,10 +34,11 @@ export const eventStorageService: BottService = createService(
     const saveEvent = (event: BottEvent) => {
       const result = upsertEvents(event);
 
+      // Not important enough for the system to know about.
       if ("error" in result) {
-        log.error("Failed to add event to database:", result);
+        log.error("eventStorageService: Failed to store event:", result);
       } else {
-        log.info("Event added to database:", result);
+        log.info("eventStorageService: Event stored:", result);
       }
     };
 

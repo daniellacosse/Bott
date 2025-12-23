@@ -31,6 +31,8 @@ import {
 } from "./ffmpeg.ts";
 import { prepareHtmlAsMarkdown } from "./html.ts";
 
+const UNNAMED_FILE_PREFIX = "unnamed";
+
 /**
  * Prepares an attachment from a remote URL by downloading, storing raw, and compressing.
  * @param sourceUrl The remote URL to fetch from
@@ -139,15 +141,18 @@ export async function prepareAttachmentFromFile(
 ): Promise<BottEventAttachment> {
   const fileSystemRoot = getFileSystemRoot();
 
+  const [name] = file.name.split(".");
+
   const attachmentId = crypto.randomUUID();
 
   const type = file.type as BottAttachmentType;
   const rawExtension = BOTT_ATTACHMENT_TYPE_LOOKUP[type].toLowerCase();
-  const rawPath = join(fileSystemRoot, `${attachmentId}.raw.${rawExtension}`);
+  const rawFileName = `${name || UNNAMED_FILE_PREFIX}.${attachmentId}.raw.${rawExtension}`;
+  const rawPath = join(fileSystemRoot, rawFileName);
 
   // Save raw file
   const rawData = new Uint8Array(await file.arrayBuffer());
-  log.debug(`Writing raw file: ${attachmentId}, type: ${type}`);
+  log.debug(`Writing raw file: ${rawFileName}, type: ${type}`);
   Deno.writeFileSync(rawPath, rawData);
 
   // Generate compressed
@@ -157,13 +162,11 @@ export async function prepareAttachmentFromFile(
   const compressedExtension = BOTT_ATTACHMENT_TYPE_LOOKUP[
     compressedFile.type as BottAttachmentType
   ].toLowerCase();
-  const compressedPath = join(
-    fileSystemRoot,
-    `${attachmentId}.compressed.${compressedExtension}`,
-  );
+  const compressedFileName = `${name || UNNAMED_FILE_PREFIX}.${attachmentId}.compressed.${compressedExtension}`;
+  const compressedPath = join(fileSystemRoot, compressedFileName);
 
   log.debug(
-    `Writing compressed file: ${attachmentId}, type: ${compressedFile.type}`,
+    `Writing compressed file: ${compressedFileName}, type: ${compressedFile.type}`,
   );
   Deno.writeFileSync(
     compressedPath,

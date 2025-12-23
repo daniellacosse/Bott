@@ -10,7 +10,7 @@
  */
 
 
-import { SERVICE_DISCORD_TOKEN } from "@bott/constants";
+import { APP_USER, SERVICE_DISCORD_TOKEN } from "@bott/constants";
 import {
   BottEvent,
   BottEventType,
@@ -32,9 +32,9 @@ import {
   Routes,
 } from "discord.js";
 
+import { commandInteractionToActionCallEvent } from "./command/interaction.ts";
 import { actionToCommandJSON } from "./command/json.ts";
-import { resolveCommandRequestEvent } from "./command/request.ts";
-import { resolveEventFromMessage } from "./message/event.ts";
+import { messageToEvent } from "./message/event.ts";
 
 const REQUIRED_INTENTS = [
   GatewayIntentBits.GuildMembers,
@@ -58,13 +58,13 @@ export const discordService: BottService = createService(
     const client = new Client({ intents: REQUIRED_INTENTS });
 
     if (!SERVICE_DISCORD_TOKEN) {
-      throw new Error("Discord service cannot start: the `SERVICE_DISCORD_TOKEN` is not set");
+      throw new Error("discordService: Cannot start: the `SERVICE_DISCORD_TOKEN` is not set");
     }
 
     await client.login(SERVICE_DISCORD_TOKEN);
 
     if (!client.user) {
-      throw new Error("Discord service failed to start: the `client.user` was not set");
+      throw new Error("discordService: Failed to start: the `client.user` was not set");
     }
 
     const api = new REST({ version: "10" }).setToken(SERVICE_DISCORD_TOKEN);
@@ -79,10 +79,11 @@ export const discordService: BottService = createService(
       );
     }
 
+    // Forward messages from Discord to the system
     client.on(DiscordEvents.MessageCreate, async (message) => {
       if (message.channel.type !== ChannelType.GuildText) return;
 
-      this.dispatchEvent(await resolveEventFromMessage(
+      this.dispatchEvent(await messageToEvent(
         message as Message<true>,
       ));
     });
@@ -101,7 +102,7 @@ export const discordService: BottService = createService(
 
       let parent: BottEvent | undefined;
       if (reaction.message.content) {
-        parent = await resolveEventFromMessage(
+        parent = await messageToEvent(
           reaction.message as Message<true>,
         );
       }
@@ -133,15 +134,16 @@ export const discordService: BottService = createService(
       if (!action) return;
 
       this.dispatchEvent(
-        await resolveCommandRequestEvent(
+        await commandInteractionToActionCallEvent(
           interaction,
         ),
       );
     });
 
-    const forwardEventToChannelIfNotSelf = async (event: BottEvent) => {
+    // Forward events from Bott (App) to Discord
+    const forwardAppEventToChannel = async (event: BottEvent) => {
       if (!event.channel) return;
-      if (event.user?.id === client.user?.id) return;
+      if (event.user?.id !== APP_USER.id) return;
 
       const targetChannel = await client.channels.fetch(event.channel.id);
       if (!targetChannel || targetChannel.type !== ChannelType.GuildText) return;
@@ -179,15 +181,17 @@ export const discordService: BottService = createService(
       }
 
       return targetChannel.send({
-        content, files, reply: event.type === BottEventType.REPLY && event.parent ? {
-          messageReference: event.parent.id,
-        } : undefined,
+        content,
+        files,
+        reply: event.type === BottEventType.REPLY && event.parent
+          ? { messageReference: event.parent.id }
+          : undefined,
       });
     };
 
-    this.addEventListener(BottEventType.MESSAGE, forwardEventToChannelIfNotSelf);
-    this.addEventListener(BottEventType.REPLY, forwardEventToChannelIfNotSelf);
-    this.addEventListener(BottEventType.REACTION, forwardEventToChannelIfNotSelf);
+    this.addEventListener(BottEventType.MESSAGE, forwardAppEventToChannel);
+    this.addEventListener(BottEventType.REPLY, forwardAppEventToChannel);
+    this.addEventListener(BottEventType.REACTION, forwardAppEventToChannel);
 
     await commandRegistrationPromise;
   },

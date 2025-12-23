@@ -11,6 +11,7 @@
 
 import type { BottEvent } from "@bott/events";
 import { log } from "@bott/log";
+import { resolveOutputEvents } from "../../common/events.ts";
 import { getEventSchema } from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
@@ -34,6 +35,8 @@ export const patchOutput: EventPipelineProcessor = async function () {
       useIdentity: false,
     },
   );
+
+  this.data.output = await resolveOutputEvents(this);
 
   log.debug(this.data.output);
 

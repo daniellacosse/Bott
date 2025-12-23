@@ -9,12 +9,12 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-export { eventStorageService } from "./data/events/service.ts";
-export { upsertEvents } from "./data/events/upsert.ts";
-export { getEvents, getEventHistory } from "./data/events/get.ts";
+export { commit } from "./database/commit.ts";
+export { eventStorageService } from "./database/events/service.ts";
+export { getEvents, getEventHistory } from "./database/events/get.ts";
+export { sql } from "./database/sql.ts";
+export { upsertEvents } from "./database/events/upsert.ts";
 export {
   prepareAttachmentFromFile,
   prepareAttachmentFromUrl,
-} from "./prepare/attachment.ts";
-export { commit } from "./data/commit.ts";
-export { sql } from "./data/sql.ts";
+} from "./attachment/prepare.ts";

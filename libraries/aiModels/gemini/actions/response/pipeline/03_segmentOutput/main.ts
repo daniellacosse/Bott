@@ -11,6 +11,7 @@
 
 import type { BottEvent } from "@bott/events";
 import { log } from "@bott/log";
+import { resolveOutputEvents } from "../../common/events.ts";
 import { getEventSchema } from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
@@ -52,7 +53,9 @@ export const segmentOutput: EventPipelineProcessor = async function () {
   }
 
   const segments = await Promise.all(segmentPromises);
+
   this.data.output = segments.flat();
+  this.data.output = await resolveOutputEvents(this);
 
   log.debug(this.data.output);
 

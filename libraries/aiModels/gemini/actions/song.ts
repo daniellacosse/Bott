@@ -11,7 +11,7 @@
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { ACTION_RATE_LIMIT_MUSIC, GEMINI_SONG_MODEL } from "@bott/constants";
+import { APP_USER, ACTION_RATE_LIMIT_MUSIC, GEMINI_SONG_MODEL } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import { delay } from "@std/async";
@@ -103,7 +103,7 @@ export const songAction: BottAction = createAction(
     const resultEvent = new BottEvent(
       BottEventType.MESSAGE,
       {
-        // user: this.user, // TODO?
+        user: APP_USER,
         channel: this.channel,
       },
     );

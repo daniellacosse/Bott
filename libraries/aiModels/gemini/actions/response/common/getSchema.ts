@@ -10,7 +10,7 @@
  */
 
 import type { BottAction } from "@bott/actions";
-import { type BottEventActionParameter, BottEventType } from "@bott/events";
+import { type BottEventActionParameterDefinition, BottEventType } from "@bott/events";
 import type { BottServiceSettings } from "@bott/services";
 import {
   type Schema as GeminiStructuredResponseSchema,
@@ -76,20 +76,16 @@ export const getEventSchema = (
           detail: {
             type: GeminiStructuredResponseType.OBJECT,
             description:
-              "The specifics of the abort request. You must provide the action name and ID to abort.",
+              "The specifics of the abort request. You must provide the action ID to abort.",
             properties: {
-              name: {
-                type: GeminiStructuredResponseType.STRING,
-                description:
-                  "The name of the action to abort. Must match the name from the ACTION_START or ACTION_OUTPUT event.",
-              },
+
               id: {
                 type: GeminiStructuredResponseType.STRING,
                 description:
                   "The unique ID of the action call to abort. Must match the id from the ACTION_CALL event.",
               },
             },
-            required: ["name", "id"],
+            required: ["id"],
           },
           parent: {
             type: GeminiStructuredResponseType.OBJECT,
@@ -163,7 +159,7 @@ export const getActionSchema = (
 };
 
 const getActionParametersSchema = (
-  parameters: BottEventActionParameter[],
+  parameters: BottEventActionParameterDefinition[],
 ): GeminiStructuredResponseSchema => ({
   type: GeminiStructuredResponseType.ARRAY,
   items: {

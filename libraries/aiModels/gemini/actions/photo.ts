@@ -11,7 +11,7 @@
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { ACTION_RATE_LIMIT_PHOTOS, GEMINI_PHOTO_MODEL } from "@bott/constants";
+import { ACTION_RATE_LIMIT_PHOTOS, APP_USER, GEMINI_PHOTO_MODEL } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
@@ -40,7 +40,7 @@ const settings: BottActionSettings = {
     name: "media",
     type: "file",
     description:
-      "Optional reference media for the image generation. Only images are supported.",
+      "Optional reference media for the image generation (image or text).",
     required: false,
   }],
 };
@@ -73,9 +73,13 @@ export const photoAction: BottAction = createAction(
           },
         });
         break;
+      case "text/plain":
+      case "text/markdown":
+        parts.push({ text: await mediaFile.text() });
+        break;
       default:
         throw new Error(
-          `Unsupported media type: ${mediaFile.type}. Only images are supported.`,
+          `Unsupported media type: ${mediaFile.type}. Only images and text are supported.`,
         );
     }
 
@@ -109,7 +113,7 @@ export const photoAction: BottAction = createAction(
     const resultEvent = new BottEvent(
       BottEventType.MESSAGE,
       {
-        // user: this.user, // TODO?
+        user: APP_USER,
         channel: this.channel,
       },
     );

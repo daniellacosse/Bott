@@ -129,12 +129,10 @@ export type BottActionCallEvent = BottEvent<BottEventType.ACTION_CALL, {
 }>;
 
 export type BottActionStartEvent = BottEvent<BottEventType.ACTION_START, {
-  name: string;
   id: string;
 }>;
 
 export type BottActionOutputEvent = BottEvent<BottEventType.ACTION_OUTPUT, {
-  name: string;
   id: string;
   event: BottEvent;
   shouldInterpretOutput?: boolean;
@@ -142,17 +140,14 @@ export type BottActionOutputEvent = BottEvent<BottEventType.ACTION_OUTPUT, {
 }>;
 
 export type BottActionErrorEvent = BottEvent<BottEventType.ACTION_ERROR, {
-  name: string;
   id: string;
   error: Error;
 }>;
 
 export type BottActionCompleteEvent = BottEvent<BottEventType.ACTION_COMPLETE, {
-  name: string;
   id: string;
 }>;
 
 export type BottActionAbortEvent = BottEvent<BottEventType.ACTION_ABORT, {
-  name: string;
   id: string;
 }>;

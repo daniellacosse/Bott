@@ -23,7 +23,7 @@ import {
   type GuildTextBasedChannel,
 } from "discord.js";
 
-export async function resolveCommandRequestEvent(
+export async function commandInteractionToActionCallEvent(
   interaction: ChatInputCommandInteraction,
 ): Promise<BottActionCallEvent> {
   let channel: BottChannel | undefined = undefined;

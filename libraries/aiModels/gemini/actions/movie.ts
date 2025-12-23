@@ -11,7 +11,15 @@
 
 import { createAction } from "@bott/actions";
 import type { BottAction, BottActionSettings } from "@bott/actions";
-import { ACTION_RATE_LIMIT_VIDEOS, GEMINI_MOVIE_MODEL } from "@bott/constants";
+import {
+  APP_USER,
+  ACTION_MOVIE_ASPECT_RATIO,
+  ACTION_MOVIE_FPS,
+  ACTION_MOVIE_JOB_INTERVAL_MS,
+  ACTION_MOVIE_RESOLUTION,
+  ACTION_RATE_LIMIT_VIDEOS,
+  GEMINI_MOVIE_MODEL,
+} from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
@@ -24,10 +32,6 @@ import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
 import gemini from "../client.ts";
 import { generateFilename } from "./common.ts";
 
-const MOVIE_ASPECT_RATIO = "16:9";
-const MOVIE_FPS = 24;
-const MOVIE_RESOLUTION = "720p";
-const MOVIE_JOB_INTERVAL_MS = 10000;
 
 const settings: BottActionSettings = {
   name: "movie",
@@ -93,19 +97,19 @@ export const movieAction: BottAction = createAction(
       // source: {}, // TODO?
       config: {
         abortSignal: this.signal,
-        aspectRatio: MOVIE_ASPECT_RATIO,
+        aspectRatio: ACTION_MOVIE_ASPECT_RATIO,
         enhancePrompt: true,
-        fps: MOVIE_FPS,
+        fps: ACTION_MOVIE_FPS,
         numberOfVideos: 1,
         personGeneration: PersonGeneration.ALLOW_ADULT,
-        resolution: MOVIE_RESOLUTION,
+        resolution: ACTION_MOVIE_RESOLUTION,
       },
     });
 
     const resultEvent = new BottEvent(
       BottEventType.MESSAGE,
       {
-        // user: this.user, // TODO?
+        user: APP_USER,
         channel: this.channel,
       },
     );
@@ -147,6 +151,6 @@ async function _doVideoJob(
         reject(error);
         return clearInterval(intervalId);
       }
-    }, MOVIE_JOB_INTERVAL_MS);
+    }, ACTION_MOVIE_JOB_INTERVAL_MS);
   });
 }

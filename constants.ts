@@ -84,6 +84,11 @@ export const ACTION_RESPONSE_VIDEO_COUNT_LIMIT = resolveEnv(
 export const ACTION_RESPONSE_OUTPUT_WORDS_PER_MINUTE = 200;
 export const ACTION_RESPONSE_OUTPUT_TIME_LIMIT_MS = 3 * SECOND_TO_MS;
 
+export const ACTION_MOVIE_ASPECT_RATIO = "16:9";
+export const ACTION_MOVIE_FPS = 24;
+export const ACTION_MOVIE_RESOLUTION = "720p";
+export const ACTION_MOVIE_JOB_INTERVAL_MS = 10000;
+
 // -- Models --
 
 // Gemini
@@ -156,7 +161,7 @@ export const LOG_TOPICS = resolveEnv(
 );
 export const LOG_CHARACTER_LIMIT = 256;
 
-// -- Utils --
+// -- Common --
 function resolveEnv<T>(key: string, defaultValue: T): T {
   const value = Deno.env.get(key);
 

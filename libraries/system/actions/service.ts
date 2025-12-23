@@ -60,11 +60,11 @@ export const actionService: BottService = createService(
           new BottEvent(type, {
             detail: {
               id: actionCallId,
-              name: actionCallName,
               ...detail,
             },
             user: actionUser,
             channel: actionCallLocation,
+            parent: event,
           }),
         );
       };
@@ -72,21 +72,21 @@ export const actionService: BottService = createService(
       if (controllerMap.has(actionCallId)) {
         return _dispatch(BottEventType.ACTION_ERROR, {
           error: new Error(
-            `An action with id ${actionCallId} is already in progress`,
+            `actionService: An action with id ${actionCallId} is already in progress`,
           ),
         });
       }
 
       if (!actionCallLocation) {
         return _dispatch(BottEventType.ACTION_ERROR, {
-          error: new Error(`Can't call action ${actionCallName}: missing channel`),
+          error: new Error(`actionService: Can't call action ${actionCallName}: missing call location`),
         });
       }
 
       const action = this.settings.actions[actionCallName];
       if (!action) {
         return _dispatch(BottEventType.ACTION_ERROR, {
-          error: new Error(`Can't call action ${actionCallName}: there's no action with that name registered`),
+          error: new Error(`actionService: Can't call action ${actionCallName}: there's no action with that name registered`),
         });
       }
 
@@ -129,9 +129,7 @@ export const actionService: BottService = createService(
 
         validateParameters(action.parameters, parameters);
 
-        _dispatch(BottEventType.ACTION_START, {
-          name: action.name,
-        });
+        _dispatch(BottEventType.ACTION_START);
 
         const actionOutputIterator = action.call(
           {
@@ -147,16 +145,13 @@ export const actionService: BottService = createService(
 
         for await (const event of actionOutputIterator) {
           _dispatch(BottEventType.ACTION_OUTPUT, {
-            name: action.name,
             event,
             shouldInterpretOutput: action.shouldInterpretOutput,
             shouldForwardOutput: action.shouldForwardOutput,
           });
         }
 
-        _dispatch(BottEventType.ACTION_COMPLETE, {
-          name: action.name,
-        });
+        _dispatch(BottEventType.ACTION_COMPLETE);
       } catch (error) {
         _dispatch(BottEventType.ACTION_ERROR, {
           error: error as Error,

@@ -16,7 +16,7 @@ import type { Message } from "discord.js";
 
 import { getMarkdownLinks } from "./markdown.ts";
 
-export const resolveEventFromMessage = async (
+export const messageToEvent = async (
   message: Message<true>,
 ): Promise<BottEvent> => {
   const [possibleEvent] = await getEvents(message.id);
@@ -31,7 +31,7 @@ export const resolveEventFromMessage = async (
   if (message.reference?.messageId) {
     type = BottEventType.REPLY;
     try {
-      parent = await resolveEventFromMessage(
+      parent = await messageToEvent(
         await message.channel.messages.fetch(message.reference.messageId),
       );
     } catch {

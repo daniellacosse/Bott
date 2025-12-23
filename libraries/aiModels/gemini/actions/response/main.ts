@@ -44,22 +44,13 @@ export const responseAction: BottAction = createAction(
     };
 
     for (const step of pipelineProcess) {
-      try {
-        log.perf(step.name);
-        await step.call(pipeline);
-        log.perf(step.name);
-      } catch (error) {
-        log.error(error);
-        break;
-      }
+      log.perf(step.name);
+      await step.call(pipeline);
+      log.perf(step.name);
     }
 
     // Update processed input events
-    try {
-      await upsertEvents(...pipeline.data.input);
-    } catch (error) {
-      log.warn(error);
-    }
+    await upsertEvents(...pipeline.data.input);
 
     for (const event of pipeline.data.output) {
       if (!pipeline.evaluationState.get(event)?.outputReasons?.length) {
