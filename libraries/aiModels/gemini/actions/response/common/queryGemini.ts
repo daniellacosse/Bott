@@ -122,8 +122,8 @@ export const _transformMentionsToHandles = async (
 ): Promise<string> => {
   const content = event.detail?.content;
   
-  if (!content || typeof content !== "string" || !event.channel?.space) {
-    return content || "";
+  if (typeof content !== "string" || !event.channel?.space) {
+    return "";
   }
 
   // Match @<personaId> patterns - restricting to alphanumeric, hyphens, and underscores
@@ -190,6 +190,9 @@ export const _transformBottEventToContent = async (
   const transformedContent = await _transformMentionsToHandles(event);
   if (transformedContent && _detail) {
     _detail = { ..._detail, content: transformedContent };
+  } else if (transformedContent === "" && _detail?.content) {
+    // Handle empty string transformation (valid case)
+    _detail = { ..._detail, content: "" };
   }
 
   const eventToSerialize = {

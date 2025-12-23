@@ -33,9 +33,10 @@ export const upsertPersona = (persona: BottPersona): void => {
   }
 
   // Upsert user if provided (use persona displayName as canonical name if user.name not provided)
-  if (persona.user || persona.displayName) {
-    const userId = persona.user?.id ?? persona.id;
-    const userName = persona.user?.name ?? persona.displayName ?? persona.handle;
+  let userId: string | null = null;
+  if (persona.user) {
+    userId = persona.user.id;
+    const userName = persona.user.name ?? persona.displayName ?? persona.handle;
 
     const userResult = commit(
       sql`
@@ -57,7 +58,7 @@ export const upsertPersona = (persona: BottPersona): void => {
       insert into personas (id, user_id, display_name, handle, space_id)
       values (
         ${persona.id},
-        ${persona.user?.id ?? persona.id},
+        ${userId},
         ${persona.displayName ?? null},
         ${persona.handle},
         ${persona.space.id}
