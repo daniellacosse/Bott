@@ -15,6 +15,7 @@ import {
   ACTION_RESPONSE_FILE_TOKEN_LIMIT,
   ACTION_RESPONSE_HISTORY_SIZE_MS as INPUT_EVENT_TIME_LIMIT_MS,
   ACTION_RESPONSE_VIDEO_COUNT_LIMIT as INPUT_FILE_VIDEO_COUNT_LIMIT,
+  APP_USER,
 } from "@bott/constants";
 import {
   type BottActionCallEvent,
@@ -23,8 +24,8 @@ import {
   type BottEventAttachment,
   BottEventType,
 } from "@bott/events";
-import { getEvents } from "@bott/storage";
 import { cloneBottEvent } from "@bott/events";
+import { getEvents } from "@bott/storage";
 import type { EventPipelineContext } from "../pipeline/types.ts";
 
 export const prepareInputEvents = (events: BottEvent[]): BottEvent[] => {
@@ -51,6 +52,10 @@ export const prepareInputEvents = (events: BottEvent[]): BottEvent[] => {
 
     if (!event.attachments) {
       preparedInput.unshift(event);
+      continue;
+    }
+
+    if (!event.user) {
       continue;
     }
 
@@ -115,6 +120,10 @@ export const resolveOutputEvents = async (
 
       // Force read-only assignment
       Object.assign(event.parent, fetchedParent);
+    }
+
+    if (!event.user) {
+      Object.assign(event, { user: APP_USER });
     }
 
     // Ensure file parameters are resolved

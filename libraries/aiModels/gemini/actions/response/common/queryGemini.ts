@@ -11,6 +11,7 @@
 
 import { APP_USER, GEMINI_EVENT_MODEL } from "@bott/constants";
 import type { BottEvent } from "@bott/events";
+import { cloneBottEvent } from "@bott/events";
 import type {
   Content,
   GenerateContentConfig,
@@ -20,7 +21,6 @@ import type {
 import { encodeBase64 } from "@std/encoding/base64";
 import ejs from "ejs";
 import gemini from "../../../client.ts";
-import { cloneBottEvent } from "@bott/events";
 import type { EventPipelineContext } from "../pipeline/types.ts";
 
 const eventStructure = (await Deno.readTextFile(

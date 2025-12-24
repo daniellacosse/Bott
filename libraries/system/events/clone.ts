@@ -13,6 +13,7 @@
  * cloning a BottEvent is non-trivial because structuredClone destroys File objects.
  * This function handles deep cloning while preserving File instances.
  */
+// TODO: general circular reference utility
 export const cloneBottEvent = <T>(
   value: T,
   memo: Map<object, object> = new Map(),
@@ -46,7 +47,7 @@ export const cloneBottEvent = <T>(
     return clone;
   }
 
-  const clone = {} as T;
+  const clone = Object.create(Object.getPrototypeOf(value)) as T;
   memo.set(value, clone as object);
 
   for (const key in value) {

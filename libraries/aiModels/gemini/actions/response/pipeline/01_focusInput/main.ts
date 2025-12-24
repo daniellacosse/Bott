@@ -10,9 +10,9 @@
  */
 
 import { APP_USER, GEMINI_RATING_MODEL } from "@bott/constants";
-
 import { BottEventType } from "@bott/events";
 import { log } from "@bott/log";
+import type { AnyShape } from "@bott/model";
 import { type Schema, Type } from "@google/genai";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
@@ -61,6 +61,12 @@ export const focusInput: EventPipelineProcessor = async function () {
   };
 
   const geminiCalls: Promise<void>[] = [];
+  const focusLogQueue: {
+    id: string;
+    type: string;
+    detail: AnyShape;
+    focusReasons: string[];
+  }[] = [];
 
   let pointer = 0;
   while (pointer < input.length) {
@@ -125,13 +131,22 @@ export const focusInput: EventPipelineProcessor = async function () {
 
       event.lastProcessedAt = new Date();
 
-      log.debug(event.id, scoresWithRationale, triggeredFocusReasons);
+      if (triggeredFocusReasons.length) {
+        focusLogQueue.push({
+          id: event.id,
+          type: event.type,
+          detail: event.detail,
+          focusReasons: triggeredFocusReasons.map((reason) => reason.name),
+        });
+      }
     })());
 
     pointer++;
   }
 
   await Promise.all(geminiCalls);
+
+  log.debug(this.action.id, focusLogQueue);
 
   this.data.input = input;
 };

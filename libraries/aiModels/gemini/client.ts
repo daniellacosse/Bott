@@ -12,6 +12,8 @@
 import { GCP_PROJECT, GCP_REGION, GEMINI_ACCESS_TOKEN } from "@bott/constants";
 import { GoogleGenAI } from "@google/genai";
 
+// TODO: just have two separate clients and check before use
+
 export default makeLazyObject(() => {
   if (GCP_PROJECT) {
     return new GoogleGenAI({
@@ -26,6 +28,17 @@ export default makeLazyObject(() => {
     });
   } else {
     throw new Error("No GCP Project or API Key provided");
+  }
+});
+
+export const geminiStudio = makeLazyObject(() => {
+  if (GEMINI_ACCESS_TOKEN) {
+    return new GoogleGenAI({
+      vertexai: false,
+      apiKey: GEMINI_ACCESS_TOKEN,
+    });
+  } else {
+    throw new Error("No API Key provided for Studio client");
   }
 });
 

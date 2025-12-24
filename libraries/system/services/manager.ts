@@ -96,7 +96,7 @@ export class BottServicesManager {
       try {
         await handler(bottEvent, this.rootContext);
       } catch (error) {
-        log.warn("Failed to handle event:", event, error);
+        log.error("Failed to handle event:", event, error);
       }
     };
 

@@ -17,10 +17,11 @@ import {
   GEMINI_SONG_MODEL,
 } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
+import { log } from "@bott/log";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import { delay } from "@std/async";
 
-import gemini from "../client.ts";
+import { geminiStudio } from "../client.ts";
 import { generateFilename } from "./common.ts";
 
 const settings: BottActionSettings = {
@@ -63,13 +64,15 @@ export const songAction: BottAction = createAction(
     fileData.set(WAV_HEADER);
 
     let writeOffset = WAV_HEADER.length;
-    const stream = await gemini.live.music.connect({
+    const stream = await geminiStudio.live.music.connect({
       model: GEMINI_SONG_MODEL,
       callbacks: {
         onmessage: (message) => {
           if (!message.serverContent?.audioChunks) {
             return;
           }
+
+          log.debug("Song job progress", message);
 
           for (const chunk of message.serverContent.audioChunks) {
             for (const char of atob(chunk?.data ?? "")) {
