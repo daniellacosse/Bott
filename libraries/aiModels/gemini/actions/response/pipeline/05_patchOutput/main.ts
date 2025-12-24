@@ -20,7 +20,6 @@ const systemPrompt = await Deno.readTextFile(
   new URL("./systemPrompt.md", import.meta.url),
 );
 
-// TODO: how to handle metadata in this case?
 export const patchOutput: EventPipelineProcessor = async function () {
   if (!this.data.output.length) {
     return;
