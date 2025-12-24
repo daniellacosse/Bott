@@ -158,13 +158,13 @@ This metadata is separate from the core `BottEvent` data model and contains eval
 The `ratings` object contains scores based on these definitions:
 
 <%_ for (const reason of service.app.reasons.input) { _%>
-  <%_ for (const ratingsScale of reason.ratingScales) { _%>
+<%_ for (const ratingScale of reason.ratingScales) { _%>
     <%- include('./partials/ratingScales.md.ejs', { ratingScale }) %>
   <%_ } _%>
 <%_ } _%>
 
 <%_ for (const reason of service.app.reasons.output) { _%>
-  <%_ for (const ratingsScale of reason.ratingScales) { _%>
+<%_ for (const ratingScale of reason.ratingScales) { _%>
     <%- include('./partials/ratingScales.md.ejs', { ratingScale }) %>
   <%_ } _%>
 <%_ } _%>
