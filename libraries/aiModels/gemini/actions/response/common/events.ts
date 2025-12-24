@@ -20,7 +20,7 @@ import {
 import {
   type BottActionCallEvent,
   BottAttachmentType,
-  type BottEvent,
+  BottEvent,
   type BottEventAttachment,
   BottEventType,
 } from "@bott/events";
@@ -111,20 +111,23 @@ export const resolveOutputEvents = async (
   const resolvedEvents: BottEvent[] = [];
 
   for (const unresolvedEvent of outputEvents) {
-    const event = cloneBottEvent(unresolvedEvent);
+    let parent = unresolvedEvent.parent;
 
     // Ensure full parent object is fetched
-    if (event.parent) {
-      const [fetchedParent] = await getEvents(event.parent.id);
-
-      // Force read-only assignment
-      // TODO: avoid this
-      Object.assign(event.parent, fetchedParent);
+    if (parent?.id) {
+      const [fetchedParent] = await getEvents(parent.id);
+      if (fetchedParent) {
+        parent = fetchedParent;
+      }
     }
 
-    if (!event.user) {
-      Object.assign(event, { user: APP_USER });
-    }
+    const event = new BottEvent(unresolvedEvent.type as BottEventType, {
+      ...unresolvedEvent,
+      detail: unresolvedEvent.detail,
+      parent,
+      user: unresolvedEvent.user ?? APP_USER,
+      channel: context.action.channel,
+    });
 
     // Ensure file parameters are resolved
     if (

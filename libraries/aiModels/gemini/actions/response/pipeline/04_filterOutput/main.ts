@@ -15,7 +15,6 @@ import { BottEventType } from "@bott/events";
 import { log } from "@bott/log";
 import type { AnyShape } from "@bott/model";
 import { type Schema, Type } from "@google/genai";
-import { resolveOutputEvents } from "../../common/events.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
@@ -66,11 +65,18 @@ export const filterOutput: EventPipelineProcessor = async function () {
   };
 
   const geminiCalls: Promise<void>[] = [];
-  const outputLogQueue: {
+  const filteredLogQueue: {
     id: string;
     type: string;
     detail: AnyShape;
     output: false;
+    ratings: Record<string, { rating: string; rationale: string | undefined }>;
+  }[] = [];
+  const outputLogQueue: {
+    id: string;
+    type: string;
+    detail: AnyShape;
+    outputReasons: string[];
     ratings: Record<string, { rating: string; rationale: string | undefined }>;
   }[] = [];
 
@@ -86,9 +92,15 @@ export const filterOutput: EventPipelineProcessor = async function () {
     // No need to filter reactions, really.
     if (event.type === BottEventType.REACTION) {
       pointer++;
+      outputLogQueue.push({
+        id: event.id,
+        type: event.type,
+        detail: event.detail,
+        outputReasons: outputReasons.map((reason) => reason.name),
+        ratings: {},
+      });
       continue;
     }
-
     geminiCalls.push((async () => {
       const scoresWithRationale = await queryGemini<
         Record<string, { rating: string; rationale: string | undefined }>
@@ -122,12 +134,20 @@ export const filterOutput: EventPipelineProcessor = async function () {
       });
 
       if (!triggeredOutputReasons.length) {
-        outputLogQueue.push({
+        filteredLogQueue.push({
           id: event.id,
           type: event.type,
           detail: event.detail,
           ratings: scoresWithRationale ?? {},
-          output: false
+          output: false,
+        });
+      } else {
+        outputLogQueue.push({
+          id: event.id,
+          type: event.type,
+          detail: event.detail,
+          outputReasons: triggeredOutputReasons.map((reason) => reason.name),
+          ratings: scoresWithRationale ?? {},
         });
       }
     })());
@@ -137,8 +157,6 @@ export const filterOutput: EventPipelineProcessor = async function () {
 
   await Promise.all(geminiCalls);
 
-  this.data.output = output;
-  this.data.output = await resolveOutputEvents(this);
-
-  log.debug(this.action.id, outputLogQueue);
+  log.debug("filtered", this.action.id, filteredLogQueue);
+  log.debug("output", this.action.id, outputLogQueue);
 };

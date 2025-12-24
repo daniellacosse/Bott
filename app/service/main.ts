@@ -55,7 +55,7 @@ export const appService: BottService = createService(
             BottEventType.ACTION_ABORT,
             {
               detail: {
-                id: currentResponse.detail.id,
+                id: currentResponse.id,
               },
               user: APP_USER,
               channel: event.channel,
@@ -147,7 +147,7 @@ export const appService: BottService = createService(
 
       if (!channelState) return;
 
-      if (channelState.currentResponse?.detail.id === event.detail.id) {
+      if (channelState.currentResponse?.id === event.detail.id) {
         channelState.currentResponse = undefined;
       }
     };

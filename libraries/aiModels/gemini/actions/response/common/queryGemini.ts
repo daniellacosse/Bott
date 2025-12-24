@@ -99,7 +99,9 @@ export const queryGemini = async <O>(
   } catch (error) {
     if (responseSchema) {
       throw new Error(
-        `queryGemini: Failed to parse JSON response: ${cleanedResult || "(empty)"}`,
+        `queryGemini: Failed to parse JSON response: ${
+          cleanedResult || "(empty)"
+        }`,
         { cause: error },
       );
     }

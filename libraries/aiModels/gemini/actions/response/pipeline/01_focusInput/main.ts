@@ -148,7 +148,5 @@ export const focusInput: EventPipelineProcessor = async function () {
 
   await Promise.all(geminiCalls);
 
-  log.debug(this.action.id, focusLogQueue);
-
-  this.data.input = input;
+  log.debug("focused", this.action.id, focusLogQueue);
 };

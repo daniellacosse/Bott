@@ -12,6 +12,7 @@
 import { Buffer } from "node:buffer";
 import { APP_USER, SERVICE_DISCORD_TOKEN } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
+import { log } from "@bott/log";
 import type { BottUser } from "@bott/model";
 import {
   type BottService,
@@ -169,11 +170,27 @@ export const discordService: BottService = createService(
 
     // Forward events from Bott (App) to Discord
     const forwardAppEventToChannel = async (event: BottEvent) => {
-      if (!event.channel) return;
-      if (event.user?.id !== APP_USER.id) return;
+      if (!event.channel) {
+        log.debug("Not fowarding: No channel in event.", event);
+        return;
+      }
+
+      if (event.user?.id !== APP_USER.id) {
+        log.debug(
+          "Not fowarding: not from Bott App Service User, user: ",
+          event.user?.id,
+          event,
+        );
+        return;
+      }
 
       const targetChannel = await client.channels.fetch(event.channel.id);
+
       if (!targetChannel || targetChannel.type !== ChannelType.GuildText) {
+        log.debug(
+          "Not fowarding: Discord channel not found or not GuildText.",
+          event,
+        );
         return;
       }
 
@@ -218,9 +235,16 @@ export const discordService: BottService = createService(
       });
     };
 
-    this.addEventListener(BottEventType.MESSAGE, forwardAppEventToChannel);
-    this.addEventListener(BottEventType.REPLY, forwardAppEventToChannel);
-    this.addEventListener(BottEventType.REACTION, forwardAppEventToChannel);
+    const forwardMessageToChannel = (event: BottEvent) =>
+      forwardAppEventToChannel(event);
+    const forwardReplyToChannel = (event: BottEvent) =>
+      forwardAppEventToChannel(event);
+    const forwardReactionToChannel = (event: BottEvent) =>
+      forwardAppEventToChannel(event);
+
+    this.addEventListener(BottEventType.MESSAGE, forwardMessageToChannel);
+    this.addEventListener(BottEventType.REPLY, forwardReplyToChannel);
+    this.addEventListener(BottEventType.REACTION, forwardReactionToChannel);
 
     await commandRegistrationPromise;
   },

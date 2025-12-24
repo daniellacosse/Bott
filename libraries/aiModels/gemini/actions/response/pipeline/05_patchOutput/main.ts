@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEvent } from "@bott/events";
+import { type BottEvent, BottEventType } from "@bott/events";
 import { log } from "@bott/log";
 import { resolveOutputEvents } from "../../common/events.ts";
 import { getEventSchema } from "../../common/getSchema.ts";
@@ -47,13 +47,20 @@ const _formatTimestampAsRelative = (
   }
 };
 
-
 export const patchOutput: EventPipelineProcessor = async function () {
   if (!this.data.output.length) {
     return;
   }
 
-  const eventsToPatch = this.data.output.map((event) => {
+  const reactions = this.data.output.filter(
+    (event) => event.type === BottEventType.REACTION,
+  );
+
+  const nonReactions = this.data.output.filter(
+    (event) => event.type !== BottEventType.REACTION,
+  );
+
+  const eventsToPatch = nonReactions.map((event) => {
     const {
       attachments: _attachments,
       parent: _parent,
@@ -92,17 +99,25 @@ export const patchOutput: EventPipelineProcessor = async function () {
     };
   });
 
-  // TODO: allow to be set as "user" event dynamically
-  // treat as user input to avoid "continuation" bias
-  this.data.output = await queryGemini<BottEvent[]>(
-    JSON.stringify(eventsToPatch),
-    {
-      systemPrompt,
-      responseSchema: getEventSchema(this.action.service.settings),
-      pipeline: this,
-      useIdentity: false,
-    },
-  );
+  let patchedEvents: BottEvent[] = [];
+
+  if (eventsToPatch.length) {
+    log.debug(this.action.id, eventsToPatch);
+
+    // TODO: allow to be set as "user" event dynamically
+    // treat as user input to avoid "continuation" bias
+    patchedEvents = await queryGemini<BottEvent[]>(
+      JSON.stringify(eventsToPatch),
+      {
+        systemPrompt,
+        responseSchema: getEventSchema(this.action.service.settings),
+        pipeline: this,
+        useIdentity: false,
+      },
+    );
+  }
+
+  this.data.output = [...patchedEvents, ...reactions];
 
   this.data.output = await resolveOutputEvents(this);
 
