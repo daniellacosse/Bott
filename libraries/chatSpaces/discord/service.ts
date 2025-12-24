@@ -130,11 +130,16 @@ export const discordService: BottService = createService(
 
       if (!action) return;
 
+      await interaction.deferReply({ ephemeral: true });
+
       this.dispatchEvent(
         await commandInteractionToActionCallEvent(
           interaction,
         ),
       );
+
+      // TODO: wait for the first action event to be dispatched 
+      await interaction.deleteReply();
     });
 
     // Forward events from Bott (App) to Discord

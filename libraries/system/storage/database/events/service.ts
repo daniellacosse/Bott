@@ -30,7 +30,7 @@ export const eventStorageService: BottService = createService(
 
       if (event.type === BottEventType.ACTION_ERROR) {
         log.error(
-          "eventStorageService: Action error received:",
+          "Action error received:",
           event.id,
           event.detail.error,
         );
@@ -39,14 +39,14 @@ export const eventStorageService: BottService = createService(
       // Not important enough for the system to know about.
       if ("error" in result) {
         log.error(
-          "eventStorageService: Failed to store event:",
+          "Failed to store event:",
           event.id,
           event.type,
           result.error,
         );
       } else {
         log.info(
-          "eventStorageService: Event stored:",
+          "Event stored:",
           event.id,
           event.type,
         );
