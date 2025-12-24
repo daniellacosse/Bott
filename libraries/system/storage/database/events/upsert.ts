@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import type { BottEvent, BottEventAttachment } from "@bott/events";
+import { BottEvent, type BottEventAttachment } from "@bott/events";
 import type { BottChannel, BottSpace, BottUser } from "@bott/model";
 
 import { commit, type TransactionResults } from "../commit.ts";
@@ -23,19 +23,16 @@ const getAddChannelsSql = (
   }
 
   const values = channels.map((channel) =>
-    sql`(${channel.id}, ${channel.space.id}, ${channel.name}, ${channel.description}, ${
-      JSON.stringify({})
-    })`
+    sql`(${channel.id}, ${channel.space.id}, ${channel.name}, ${channel.description})`
   );
 
   return sql`
-    insert into channels (id, space_id, name, description, config)
+    insert into channels (id, space_id, name, description)
     values ${values} 
     on conflict(id) do update set
       space_id = excluded.space_id,
       name = excluded.name,
-      description = excluded.description,
-      config = excluded.config
+      description = excluded.description
   `;
 };
 
@@ -44,13 +41,19 @@ const getAddEventsSql = (...events: BottEvent[]) => {
     return;
   }
 
-  const values = events.map((event) =>
-    sql`(${event.id}, ${event.type}, ${
-      JSON.stringify(event.detail)
-    }, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${
-      event.lastProcessedAt?.toISOString() ?? null
-    })`
-  );
+  const values = events.map((event) => {
+    // Keep detail string concise and avoid circular references
+    const detailString = JSON.stringify(event.detail, (_, value) => {
+      if (value instanceof BottEvent) {
+        return { id: value.id };
+      }
+
+      return value;
+    });
+
+    return sql`(${event.id}, ${event.type}, ${detailString}, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${event.lastProcessedAt?.toISOString() ?? null
+      })`;
+  });
 
   return sql`
     insert into events (id, type, detail, parent_id, channel_id, user_id, created_at, last_processed_at)

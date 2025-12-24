@@ -9,6 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
+import { Buffer } from "node:buffer";
 import { APP_USER, SERVICE_DISCORD_TOKEN } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
 import type { BottUser } from "@bott/model";
@@ -177,8 +178,10 @@ export const discordService: BottService = createService(
       }
 
       // Reaction
-      const content = event.detail.content as string;
-      if (event.type === BottEventType.REACTION && event.parent) {
+      const content = event.detail?.content as string | undefined;
+      if (
+        content && event.type === BottEventType.REACTION && event.parent
+      ) {
         const message = await targetChannel.messages.fetch(
           event.parent.id,
         );
@@ -198,9 +201,7 @@ export const discordService: BottService = createService(
 
         files.push(
           new AttachmentBuilder(
-            // @ts-expect-error: Uint8Array is supported by the internal `setFileData` method
-            // See: https://discord.js.org/docs/packages/discord.js/main/AttachmentBuilder:Class
-            new Uint8Array(await file.arrayBuffer()),
+            Buffer.from(await file.arrayBuffer()),
             {
               name: file.name,
             },
