@@ -39,7 +39,10 @@ jobs:
         run: |
           deno test --allow-all --coverage=.output/cov_profile
           mkdir -p .output/coverage
-          deno coverage .output/cov_profile --lcov --output=.output/coverage/lcov.info
+          deno coverage .output/cov_profile --lcov --output=.output/coverage/lcov.info \
+            --include="^file://.*/app/.*\.ts$" \
+            --include="^file://.*/libraries/.*\.ts$" \
+            --include="^file://.*/model/.*\.ts$"
 
       - name: Upload Coverage
         uses: qltysh/qlty-action/coverage@v2
