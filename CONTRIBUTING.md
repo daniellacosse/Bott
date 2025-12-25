@@ -67,6 +67,14 @@ cp .env.example .env.production
 ENV=production ./run deno task deploy_gcp
 ```
 
+> [!TIP]
+> You can select your container runtime by setting the `RUNTIME` environment
+> variable to `docker` or `podman`:
+>
+> ```sh
+> RUNTIME=podman ./run deno task deploy_gcp
+> ```
+
 4. Verify your new deployment by tailing the logs:
 
 ```sh
