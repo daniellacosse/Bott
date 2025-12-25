@@ -30,7 +30,6 @@ content generation capabilities.
 
 ### Manual Validation Steps
 
-- Container builds successfully when running `./run`
 - Format check passes: `./run deno fmt --check` reports "Checked X files" with
   exit code 0
 - Application starts automatically in the devcontainer without TypeScript
