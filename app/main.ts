@@ -17,12 +17,12 @@ import { BottServicesManager } from "@bott/services";
 import { eventStorageService } from "@bott/storage";
 
 import { appService } from "./service/main.ts";
-// import { settings } from "./settings/main.ts";
-import { testSettings } from "./settings/main.ts";
+import { settings } from "./settings/main.ts";
+// import { testSettings } from "./settings/main.ts";
 
 if (import.meta.main) {
-  // const servicesManager = new BottServicesManager(settings);
-  const servicesManager = new BottServicesManager(testSettings);
+  const servicesManager = new BottServicesManager(settings);
+  // const servicesManager = new BottServicesManager(testSettings);
 
   servicesManager.register(eventStorageService);
   servicesManager.register(discordService);
