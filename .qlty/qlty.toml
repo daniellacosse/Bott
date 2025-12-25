@@ -9,6 +9,9 @@ exclude_patterns = [
 name = "default"
 default = true
 
+[smells.function_complexity]
+threshold = 20
+
 [smells.boolean_logic]
 threshold = 6
 
