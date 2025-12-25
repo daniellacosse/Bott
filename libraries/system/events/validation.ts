@@ -18,10 +18,10 @@ export function applyParameterDefaults(
   schema: BottEventActionParameterDefinition[] = [],
   parameters: BottEventActionParameterRecord = {},
 ): BottEventActionParameterRecord {
-  const result = structuredClone(parameters);
+  const result: BottEventActionParameterRecord = {};
 
   for (const field of schema) {
-    result[field.name] ??= field.defaultValue;
+    result[field.name] = parameters[field.name] ?? field.defaultValue;
   }
 
   return result;

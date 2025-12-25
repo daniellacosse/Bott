@@ -60,8 +60,9 @@ const getAddEventsSql = (...events: BottEvent[]) => {
       return value;
     });
 
-    return sql`(${event.id}, ${event.type}, ${detailString}, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${event.lastProcessedAt?.toISOString() ?? null
-      })`;
+    return sql`(${event.id}, ${event.type}, ${detailString}, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${
+      event.lastProcessedAt?.toISOString() ?? null
+    })`;
   });
 
   return sql`

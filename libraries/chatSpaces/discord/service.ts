@@ -229,7 +229,7 @@ export const discordService: BottService = createService(
         // TODO: ensure we have the original discord message id
         // to reply to
         reply: event.type === BottEventType.REPLY && event.parent &&
-          /^\d+$/.test(event.parent.id)
+            /^\d+$/.test(event.parent.id)
           ? { messageReference: event.parent.id }
           : undefined,
       });

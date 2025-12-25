@@ -121,66 +121,9 @@ export const actionService: BottService = createService(
       controllerMap.set(callEvent.id, controller);
 
       try {
-        // Create a mutable copy of parameters to resolve files into
-        const effectiveParameters: typeof callParameters = { ...callParameters };
-        const fileResolutions: typeof callParameters = {};
-
-        for (const field of action.parameters ?? []) {
-          if (field.type !== "file") continue;
-
-          let value = effectiveParameters[field.name];
-
-          // Handle null or empty object case (common from LLMs)
-          if (
-            value === null ||
-            (typeof value === "object" && Object.keys(value).length === 0)
-          ) {
-            effectiveParameters[field.name] = undefined;
-            continue;
-          }
-
-          // Resolve Attachment IDs to File objects
-          if (value && !(value instanceof File)) {
-            // Handle the empty object case from LLMs (redundant check but safe)
-            if (typeof value === "object" && Object.keys(value).length === 0) {
-              fileResolutions[field.name] = undefined;
-              effectiveParameters[field.name] = undefined;
-              continue;
-            }
-
-            const result = commit(sql`
-              select f.path, f.type
-              from attachments a
-              join files f on a.raw_file_id = f.id
-              where a.id = ${value as string}
-            `);
-
-            if (("error" in result)) {
-              return _dispatch(BottEventType.ACTION_ERROR, {
-                error: result.error,
-              });
-            }
-
-            if (result.reads.length === 0) {
-              // If we can't find the attachment, we treat it as missing/undefined
-              // validation will fail if it is required
-              effectiveParameters[field.name] = undefined;
-              continue;
-            }
-
-            const [{ path, type }] = result.reads;
-            const fileContent = Deno.readFileSync(path);
-            effectiveParameters[field.name] = new File(
-              [fileContent],
-              path,
-              { type },
-            );
-          }
-        }
-
         const parameters = applyParameterDefaults(
           action.parameters,
-          effectiveParameters,
+          callParameters,
         );
 
         validateParameters(action.parameters, parameters);

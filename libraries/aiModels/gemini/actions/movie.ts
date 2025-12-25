@@ -71,16 +71,13 @@ export const movieAction: BottAction = createAction(
         case "image/gif":
         case "image/webp":
         case "image/avif":
-        case "image/bmp":
-        case "image/tiff":
-        case "image/svg+xml":
+        case "image/svg+xml": {
           mediaData = {
-            inlineData: {
-              data: encodeBase64(await mediaFile.arrayBuffer()),
-              mimeType: mediaFile.type,
-            },
+            imageBytes: encodeBase64(await mediaFile.arrayBuffer()),
+            mimeType: mediaFile.type,
           } as Image;
           break;
+        }
         case "text/plain":
         case "text/markdown":
           promptString += `\n\nAttachment: ${await mediaFile.text()}`;
@@ -96,7 +93,6 @@ export const movieAction: BottAction = createAction(
       model: GEMINI_MOVIE_MODEL,
       prompt: promptString,
       image: mediaData,
-      // source: {}, // TODO?
       config: {
         abortSignal: this.signal,
         aspectRatio: ACTION_MOVIE_ASPECT_RATIO,
