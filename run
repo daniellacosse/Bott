@@ -9,4 +9,4 @@
 #
 # Copyright (C) 2025 DanielLaCos.se
 
-exec bash "$@"
+exec bash -c "$*"
