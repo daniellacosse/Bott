@@ -88,7 +88,6 @@ export enum BottEventAttachmentType {
  */
 export type ShallowBottEvent = {
   id: string;
-  originId?: string;
   type: BottEventType;
   detail: AnyShape;
   createdAt: string;
