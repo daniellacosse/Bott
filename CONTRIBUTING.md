@@ -48,13 +48,6 @@ When running locally (`ENV=local`), console output is automatically written to
 extension. Then open `.output/logs/bott.log` in VS Code to view logs in a
 filterable AG Grid table.
 
-See the [Observability Guide](./docs/OBSERVABILITY.md) for more details on:
-
-- Using the VS Code extension
-- Configuring OpenTelemetry with Deno
-- Exporting logs, traces, and metrics
-- Integration with cloud platforms (GCP, AWS, Azure)
-
 ### Pull Requests
 
 There are numerous issues tracked in the

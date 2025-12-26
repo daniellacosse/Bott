@@ -1,5 +1,0 @@
-{
-  "name": "@bott/otel",
-  "exports": "./module.ts",
-  "private": true
-}
