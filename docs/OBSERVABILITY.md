@@ -3,36 +3,65 @@
 Bott uses standard `console` methods for logging, which makes it easy to
 integrate with OpenTelemetry and other observability platforms.
 
-## Quick Start
+## Quick Start: VS Code Extension
 
-The easiest way to get started with observability for local development:
+The simplest way to view and analyze logs during development is using the
+**OpenTelemetry Log Viewer** VS Code extension.
 
-1. Start the observability stack:
+### Setup
 
-   ```bash
-   docker compose up -d
+1. Install the extension:
+   - Extension: **OpenTelemetry Log Viewer** by Tobias Streng
+   - VS Code Marketplace:
+     [OpenTelemetry Log Viewer](https://marketplace.visualstudio.com/items?itemName=TobiasStreng.vscode-opentelemetry-log-viewer)
+
+2. Configure Bott to write logs to a JSONL file:
+
+   ```typescript
+   // Example: Write console output to a log file in JSONL format
+   const logFile = "./logs/bott.log";
+
+   const originalConsole = {
+     info: console.info,
+     debug: console.debug,
+     warn: console.warn,
+     error: console.error,
+   };
+
+   function writeToLog(level: string, ...args: unknown[]) {
+     const logEntry = {
+       timestamp: new Date().toISOString(),
+       level,
+       message: args.map((arg) =>
+         typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+       ).join(" "),
+     };
+
+     Deno.writeTextFileSync(
+       logFile,
+       JSON.stringify(logEntry) + "\n",
+       { append: true },
+     );
+   }
+
+   console.info = (...args: unknown[]) => {
+     originalConsole.info(...args);
+     writeToLog("info", ...args);
+   };
+   // Similar for debug, warn, error...
    ```
 
-2. Configure Bott to send telemetry (add to `.env.local`):
+3. Open the log file in VS Code and activate the extension
+   - The extension displays logs in a dynamic, filterable AG Grid table
+   - Click to expand JSON fields and filter by level, timestamp, or content
 
-   ```bash
-   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-   OTEL_SERVICE_NAME=bott
-   ```
+### Benefits
 
-3. Access the UIs:
-   - **Jaeger** (traces): http://localhost:16686
-   - **Prometheus** (metrics): http://localhost:9090
-
-4. Stop the stack when done:
-   ```bash
-   docker compose down
-   ```
-
-The `compose.yml` file includes:
-
-- **Jaeger**: Distributed tracing UI and backend
-- **Prometheus**: Metrics collection and storage
+- **Pure Deno workflow** - No Docker required
+- **VS Code integration** - View logs directly in your editor
+- **Interactive filtering** - Search and filter logs with AG Grid
+- **JSON expansion** - Easily inspect complex log objects
+- **Real-time updates** - Watch logs as they're written
 
 ## Overview
 
@@ -265,55 +294,37 @@ requestCounter.add(1, { status: "success" });
 
 ## Local Development
 
-The repository includes a `compose.yml` file that sets up a complete local
-observability stack with Jaeger and Prometheus.
+### Running with Jaeger (Local Tracing)
 
-### Using Docker Compose (Recommended)
-
-1. Start the observability stack:
-
+1. Start Jaeger using Docker:
    ```bash
-   docker compose up -d
+   docker run -d --name jaeger \
+     -e COLLECTOR_OTLP_ENABLED=true \
+     -p 16686:16686 \
+     -p 4318:4318 \
+     jaegertracing/all-in-one:latest
    ```
 
-   This starts:
-   - **Jaeger** on ports 16686 (UI), 4318 (OTLP HTTP), and 4317 (OTLP gRPC)
-   - **Prometheus** on port 9090
-
-2. Configure Bott to send telemetry:
-
+2. Configure Bott to send traces to Jaeger:
    ```bash
    # In .env.local
    OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-   OTEL_SERVICE_NAME=bott
    ```
 
-3. Access the UIs:
-   - Jaeger (traces): http://localhost:16686
-   - Prometheus (metrics): http://localhost:9090
+3. View traces at http://localhost:16686
 
-4. Stop the stack:
-   ```bash
-   docker compose down
+### Running with Prometheus (Local Metrics)
+
+1. Create `prometheus.yml`:
+   ```yaml
+   global:
+     scrape_interval: 15s
+
+   scrape_configs:
+     - job_name: "bott"
+       static_configs:
+         - targets: ["host.docker.internal:8888"]
    ```
-
-### Manual Setup (Alternative)
-
-If you prefer to run services individually:
-
-#### Running Jaeger Only
-
-```bash
-docker run -d --name jaeger \
-  -e COLLECTOR_OTLP_ENABLED=true \
-  -p 16686:16686 \
-  -p 4318:4318 \
-  jaegertracing/all-in-one:latest
-```
-
-#### Running Prometheus Only
-
-1. The repository includes a `prometheus.yml` configuration file.
 
 2. Start Prometheus:
    ```bash
@@ -322,6 +333,8 @@ docker run -d --name jaeger \
      -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
      prom/prometheus
    ```
+
+3. View metrics at http://localhost:9090
 
 ## Production Deployment
 
