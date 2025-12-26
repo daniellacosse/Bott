@@ -44,9 +44,11 @@ const getAddEventsSql = (...events: BottEvent[]) => {
   const values = events.map((event) => {
     const shallowEvent = event.toJSON();
 
-    return sql`(${shallowEvent.id}, ${shallowEvent.type}, ${JSON.stringify(shallowEvent.detail)
-      }, ${shallowEvent.parent?.id}, ${shallowEvent.channel?.id}, ${shallowEvent.user.id}, ${shallowEvent.createdAt}, ${shallowEvent.lastProcessedAt ?? null
-      })`;
+    return sql`(${shallowEvent.id}, ${shallowEvent.type}, ${
+      JSON.stringify(shallowEvent.detail)
+    }, ${shallowEvent.parent?.id}, ${shallowEvent.channel?.id}, ${shallowEvent.user.id}, ${shallowEvent.createdAt}, ${
+      shallowEvent.lastProcessedAt ?? null
+    })`;
   });
 
   return sql`
