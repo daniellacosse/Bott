@@ -38,11 +38,22 @@ cp .env.example .env.local
 2. Open the `.env.local` file and add the relevant credentials.
 3. Run `./run` to start the application.
 
-> [!TIP]
-> **View logs in VS Code**: Install the
-> [OpenTelemetry Log Viewer](https://marketplace.visualstudio.com/items?itemName=TobiasStreng.vscode-opentelemetry-log-viewer)
-> extension for an interactive log viewing experience. See the
-> [Observability Guide](./docs/OBSERVABILITY.md) for setup details.
+#### Viewing Logs
+
+When running locally (`ENV=local`), console output is automatically written to
+`.output/logs/bott.log` in JSONL format.
+
+**VS Code Extension**: For an interactive log viewing experience, install the
+[OpenTelemetry Log Viewer](https://marketplace.visualstudio.com/items?itemName=TobiasStreng.vscode-opentelemetry-log-viewer)
+extension. Then open `.output/logs/bott.log` in VS Code to view logs in a
+filterable AG Grid table.
+
+See the [Observability Guide](./docs/OBSERVABILITY.md) for more details on:
+
+- Using the VS Code extension
+- Configuring OpenTelemetry with Deno
+- Exporting logs, traces, and metrics
+- Integration with cloud platforms (GCP, AWS, Azure)
 
 ### Pull Requests
 

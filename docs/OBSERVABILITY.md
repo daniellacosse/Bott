@@ -3,65 +3,36 @@
 Bott uses standard `console` methods for logging, which makes it easy to
 integrate with OpenTelemetry and other observability platforms.
 
-## Quick Start: VS Code Extension
+## Local Development
 
-The simplest way to view and analyze logs during development is using the
-**OpenTelemetry Log Viewer** VS Code extension.
+When running Bott with `ENV=local`, console output is automatically written to a
+JSONL log file at `.output/logs/bott.log`. This file can be viewed using the
+**OpenTelemetry Log Viewer** VS Code extension for an interactive, filterable
+experience.
 
 ### Setup
 
-1. Install the extension:
+1. Install the VS Code extension:
    - Extension: **OpenTelemetry Log Viewer** by Tobias Streng
    - VS Code Marketplace:
      [OpenTelemetry Log Viewer](https://marketplace.visualstudio.com/items?itemName=TobiasStreng.vscode-opentelemetry-log-viewer)
 
-2. Configure Bott to write logs to a JSONL file:
-
-   ```typescript
-   // Example: Write console output to a log file in JSONL format
-   const logFile = "./logs/bott.log";
-
-   const originalConsole = {
-     info: console.info,
-     debug: console.debug,
-     warn: console.warn,
-     error: console.error,
-   };
-
-   function writeToLog(level: string, ...args: unknown[]) {
-     const logEntry = {
-       timestamp: new Date().toISOString(),
-       level,
-       message: args.map((arg) =>
-         typeof arg === "object" ? JSON.stringify(arg) : String(arg)
-       ).join(" "),
-     };
-
-     Deno.writeTextFileSync(
-       logFile,
-       JSON.stringify(logEntry) + "\n",
-       { append: true },
-     );
-   }
-
-   console.info = (...args: unknown[]) => {
-     originalConsole.info(...args);
-     writeToLog("info", ...args);
-   };
-   // Similar for debug, warn, error...
+2. Run Bott locally:
+   ```bash
+   ./run deno run --allow-all app/main.ts
    ```
 
-3. Open the log file in VS Code and activate the extension
+3. Open `.output/logs/bott.log` in VS Code
    - The extension displays logs in a dynamic, filterable AG Grid table
    - Click to expand JSON fields and filter by level, timestamp, or content
 
 ### Benefits
 
-- **Pure Deno workflow** - No Docker required
+- **Automatic logging** - No code changes required
+- **Pure Deno workflow** - No Docker or external services needed
 - **VS Code integration** - View logs directly in your editor
 - **Interactive filtering** - Search and filter logs with AG Grid
 - **JSON expansion** - Easily inspect complex log objects
-- **Real-time updates** - Watch logs as they're written
 
 ## Overview
 

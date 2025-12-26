@@ -20,6 +20,7 @@
     "@bott/discord": "./libraries/chatSpaces/discord/module.ts",
     "@bott/events": "./libraries/system/events/module.ts",
     "@bott/gemini": "./libraries/aiModels/gemini/module.ts",
+    "@bott/otel": "./libraries/otel/module.ts",
     "@bott/services": "./libraries/system/services/module.ts",
     "@bott/storage": "./libraries/system/storage/module.ts",
     "@extractus/article-extractor": "npm:@extractus/article-extractor@^8.0.19",
@@ -33,6 +34,7 @@
     "@std/encoding": "jsr:@std/encoding@^1.0.9",
     "@std/encoding/base64": "jsr:@std/encoding@^1.0.9/base64",
     "@std/fmt": "jsr:@std/fmt@^1.0.3",
+    "@std/fs": "jsr:@std/fs@^1.0.8",
     "@std/jsonc": "jsr:@std/jsonc@^1.0.2",
     "@std/log": "jsr:@std/log@^0.224",
     "@std/path": "jsr:@std/path@^1.0.8",
@@ -53,6 +55,7 @@
   "nodeModulesDir": "auto",
   "workspace": [
     "./model",
+    "./libraries/otel",
     "./libraries/system/events",
     "./libraries/system/actions",
     "./libraries/system/services",
