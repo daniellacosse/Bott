@@ -10,9 +10,22 @@
  */
 
 export {
+  type BottActionAbortEvent,
+  type BottActionCallEvent,
+  type BottActionCompleteEvent,
+  type BottActionErrorEvent,
+  type BottActionOutputEvent,
+  type BottActionStartEvent,
+  type BottEventActionParameterDefinition,
+  type BottEventActionParameterRecord,
+  type BottEventActionParameterValue,
   type BottEventAttachment,
   BottEventAttachmentType as BottAttachmentType,
   BottEventType,
+  type BottMessageEvent,
+  type BottReactionEvent,
+  type BottReplyEvent,
+  type ShallowBottEvent,
 } from "./types.ts";
 export * from "./event.ts";
 export * from "./attachment.ts";

@@ -56,12 +56,10 @@ export const messageToEvent = async (
         name: message.guild.name,
       },
     },
-    user: message.author
-      ? {
-        id: message.author.id,
-        name: message.author.username,
-      }
-      : undefined,
+    user: {
+      id: message.author.id,
+      name: message.author.username,
+    },
     parent,
   });
 

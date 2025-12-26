@@ -38,9 +38,9 @@ export interface BottEvent<
   detail: D;
   createdAt: Date;
   lastProcessedAt?: Date;
+  user: BottUser;
   channel?: BottChannel;
   parent?: BottEvent;
-  user?: BottUser;
   attachments?: BottEventAttachment[];
 }
 
@@ -81,3 +81,140 @@ export enum BottEventAttachmentType {
   WAV = "audio/x-wav",
   WEBP = "image/webp",
 }
+
+/**
+ * Represents a shallow version of a BottEvent, containing only the most basic information. This version is safe to serialize and is used for communication between different parts of the application.
+ */
+export type ShallowBottEvent = {
+  id: string;
+  originId?: string;
+  type: BottEventType;
+  detail: AnyShape;
+  createdAt: string;
+  lastProcessedAt?: string;
+  channel?: {
+    id: string;
+    name: string;
+    description?: string;
+    space: {
+      id: string;
+      name: string;
+      description?: string;
+    };
+  };
+  parent?: {
+    id: string;
+    type: BottEventType;
+    detail: AnyShape;
+    createdAt: string;
+    lastProcessedAt?: string;
+    user: {
+      id: string;
+      name: string;
+    };
+  };
+  user: {
+    id: string;
+    name: string;
+  };
+  attachments?: {
+    id: string;
+    type: string;
+    originalSource: string;
+    raw: {
+      id: string;
+      path: string;
+      file: {
+        name: string;
+        size: number;
+        type: string;
+      };
+    };
+    compressed: {
+      id: string;
+      path: string;
+      file: {
+        name: string;
+        size: number;
+        type: string;
+      };
+    };
+  }[];
+};
+
+export type BottMessageEvent = BottEvent<BottEventType.MESSAGE, {
+  content: string;
+}>;
+
+export type BottReplyEvent = BottEvent<BottEventType.REPLY, {
+  content: string;
+}>;
+
+export type BottReactionEvent = BottEvent<BottEventType.REACTION, {
+  content: string;
+}>;
+
+// The Action Events probably belong it @bott/actions?, however
+// having them here simplifies things greatly.
+
+// All of the libraries/system modules (and to a lesser extent the whole app)
+// are currently _loosely_ coupled, so I'll take the simplicity over the correctness.
+
+export type BottEventActionParameterValue = string | number | boolean | File;
+
+type _ParameterDefinitionBase = {
+  name: string;
+  description?: string;
+  required?: boolean;
+};
+
+type _StringParameterDefinition = _ParameterDefinitionBase & {
+  type: "string";
+  allowedValues?: string[];
+  defaultValue?: string;
+};
+
+type _NonStringParameterDefinition = _ParameterDefinitionBase & {
+  type: "number" | "boolean" | "file";
+  allowedValues?: never;
+  defaultValue?: number | boolean | File;
+};
+
+export type BottEventActionParameterDefinition =
+  | _StringParameterDefinition
+  | _NonStringParameterDefinition;
+
+export type BottEventActionParameterRecord = Record<
+  string,
+  BottEventActionParameterValue | undefined
+>;
+
+export type BottActionCallEvent = BottEvent<BottEventType.ACTION_CALL, {
+  name: string;
+  parameters: BottEventActionParameterRecord;
+}>;
+
+export type BottActionStartEvent = BottEvent<BottEventType.ACTION_START, {
+  name: string; // required for rate limiting
+  id: string;
+}>;
+
+export type BottActionOutputEvent = BottEvent<BottEventType.ACTION_OUTPUT, {
+  id: string;
+  event: BottEvent;
+  shouldInterpretOutput?: boolean;
+  shouldForwardOutput?: boolean;
+}>;
+
+export type BottActionErrorEvent = BottEvent<BottEventType.ACTION_ERROR, {
+  id: string;
+  error: Error;
+}>;
+
+export type BottActionCompleteEvent = BottEvent<BottEventType.ACTION_COMPLETE, {
+  id: string;
+}>;
+
+export type BottActionAbortEvent = BottEvent<BottEventType.ACTION_ABORT, {
+  id: string;
+}>;

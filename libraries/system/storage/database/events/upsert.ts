@@ -42,26 +42,12 @@ const getAddEventsSql = (...events: BottEvent[]) => {
   }
 
   const values = events.map((event) => {
-    // Keep detail string concise and avoid circular references
-    const seen = new WeakSet();
-    const detailString = JSON.stringify(event.detail, (_, value) => {
-      if (typeof value === "object" && value !== null) {
-        // If it's a BottEvent, we rely on its toJSON(), which handles circular references.
-        // However, if we're dealing with a plain object (e.g. from JSON.parse), we
-        // need to handle it manually:
-        if (value.id && value.type && value.createdAt && !value.toJSON) {
-          return { id: value.id };
-        }
-        if (seen.has(value)) {
-          return "[Circular]";
-        }
-        seen.add(value);
-      }
-      return value;
-    });
+    const shallowEvent = event.toJSON();
 
-    return sql`(${event.id}, ${event.type}, ${detailString}, ${event.parent?.id}, ${event.channel?.id}, ${event.user?.id}, ${event.createdAt.toISOString()}, ${
-      event.lastProcessedAt?.toISOString() ?? null
+    return sql`(${shallowEvent.id}, ${shallowEvent.type}, ${
+      JSON.stringify(shallowEvent.detail)
+    }, ${shallowEvent.parent?.id}, ${shallowEvent.channel?.id}, ${shallowEvent.user.id}, ${shallowEvent.createdAt}, ${
+      shallowEvent.lastProcessedAt ?? null
     })`;
   });
 

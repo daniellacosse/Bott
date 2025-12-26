@@ -12,9 +12,11 @@
 import type { AnyShape, BottChannel, BottUser } from "@bott/model";
 import type {
   BottEvent as BottEventInterface,
+  BottEventActionParameterRecord,
   BottEventAttachment,
-  BottEventType,
+  ShallowBottEvent,
 } from "./types.ts";
+import { BottEventType } from "./types.ts";
 
 /**
  * Represents a generic event in Bott.
@@ -30,127 +32,174 @@ export class BottEvent<
     return super.type as T;
   }
 
+  public readonly user: BottUser;
   public attachments?: BottEventAttachment[];
   public lastProcessedAt?: Date;
   public readonly channel?: BottChannel;
   public readonly createdAt: Date;
   public readonly parent?: BottEvent;
-  public readonly user?: BottUser;
 
   constructor(
     type: T,
-    {
-      id,
-      detail,
-      createdAt,
-      lastProcessedAt,
-      channel,
-      parent,
-      user,
-      attachments,
-    }: Partial<Omit<BottEventInterface<T, D>, "type">>,
+    properties: Partial<Omit<BottEventInterface<T, D>, "type">> & {
+      user: BottUser;
+    },
   ) {
-    super(type, { detail });
-    this.id = id ?? crypto.randomUUID();
-    this.createdAt = createdAt ?? new Date();
-    this.lastProcessedAt = lastProcessedAt;
-    this.channel = channel;
-    this.parent = parent as BottEvent | undefined;
-    this.user = user;
-    this.attachments = attachments;
+    super(type, { detail: properties.detail });
+    this.id = properties.id ?? crypto.randomUUID();
+    this.createdAt = properties.createdAt ?? new Date();
+    this.lastProcessedAt = properties.lastProcessedAt;
+    this.channel = properties.channel;
+    this.parent = properties.parent as BottEvent | undefined;
+    this.user = properties.user;
+    this.attachments = properties.attachments;
   }
 
-  toJSON(): Record<string, unknown> {
-    return {
-      type: this.type,
-      detail: this.detail,
+  toJSON(): ShallowBottEvent {
+    const result: ShallowBottEvent = {
       id: this.id,
-      createdAt: this.createdAt,
-      lastProcessedAt: this.lastProcessedAt,
-      channel: this.channel,
-      parent: this.parent ? { id: this.parent.id } : undefined,
-      user: this.user,
-      attachments: this.attachments?.map((attachment) => ({
-        ...attachment,
-        parent: { id: attachment.parent.id },
-      })),
+      createdAt: this.createdAt.toJSON(),
+      type: this.type,
+      detail: {},
+      user: {
+        id: this.user.id,
+        name: this.user.name,
+      },
     };
+
+    switch (result.type) {
+      case BottEventType.REACTION:
+      case BottEventType.REPLY:
+      case BottEventType.MESSAGE:
+        result.detail = {
+          content: this.detail.content,
+        };
+        break;
+      case BottEventType.ACTION_CALL: {
+        const parameters: Record<
+          string,
+          string | number | boolean | {
+            name: string;
+            size: number;
+            type: string;
+          }
+        > = {};
+
+        for (
+          const [key, value] of Object.entries(
+            this.detail.parameters as BottEventActionParameterRecord,
+          )
+        ) {
+          if (value instanceof File) {
+            parameters[key] = {
+              name: value.name,
+              size: value.size,
+              type: value.type,
+            };
+          } else if (value) {
+            parameters[key] = value;
+          }
+        }
+
+        result.detail = {
+          name: this.detail.name,
+          parameters,
+        };
+        break;
+      }
+      case BottEventType.ACTION_OUTPUT:
+        result.detail = {
+          id: this.detail.id,
+          event: (this.detail.event as BottEvent).toJSON(),
+          shouldInterpretOutput: this.detail.shouldInterpretOutput,
+          shouldForwardOutput: this.detail.shouldForwardOutput,
+        };
+        break;
+      case BottEventType.ACTION_START:
+        result.detail = {
+          id: this.detail.id,
+          name: this.detail.name,
+        };
+        break;
+      case BottEventType.ACTION_ERROR: {
+        const error = this.detail.error as Error;
+
+        result.detail = {
+          id: this.detail.id,
+          error: {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+            cause: error.cause,
+          },
+        };
+        break;
+      }
+      case BottEventType.ACTION_COMPLETE:
+        result.detail = {
+          id: this.detail.id,
+        };
+        break;
+      case BottEventType.ACTION_ABORT:
+        result.detail = {
+          id: this.detail.id,
+        };
+        break;
+    }
+
+    if (this.parent) {
+      result.parent = {
+        id: this.parent.id,
+        type: this.parent.type,
+        detail: this.parent.detail,
+        createdAt: this.parent.createdAt.toJSON(),
+        lastProcessedAt: this.parent.lastProcessedAt?.toJSON(),
+        user: {
+          id: this.parent.user.id,
+          name: this.parent.user.name,
+        },
+      };
+    }
+
+    if (this.channel) {
+      result.channel = {
+        id: this.channel.id,
+        name: this.channel.name,
+        description: this.channel.description,
+        space: {
+          id: this.channel.space.id,
+          name: this.channel.space.name,
+          description: this.channel.space.description,
+        },
+      };
+    }
+
+    if (this.attachments) {
+      result.attachments = this.attachments.map((attachment) => ({
+        id: attachment.id,
+        type: attachment.type,
+        originalSource: attachment.originalSource.toJSON(),
+        raw: {
+          id: attachment.raw.id,
+          path: attachment.raw.path,
+          file: {
+            name: attachment.raw.file.name,
+            size: attachment.raw.file.size,
+            type: attachment.raw.file.type,
+          },
+        },
+        compressed: {
+          id: attachment.compressed.id,
+          path: attachment.compressed.path,
+          file: {
+            name: attachment.compressed.file.name,
+            size: attachment.compressed.file.size,
+            type: attachment.compressed.file.type,
+          },
+        },
+      }));
+    }
+
+    return result;
   }
 }
-
-export type BottMessageEvent = BottEvent<BottEventType.MESSAGE, {
-  content: string;
-}>;
-
-export type BottReplyEvent = BottEvent<BottEventType.REPLY, {
-  content: string;
-}>;
-
-export type BottReactionEvent = BottEvent<BottEventType.REACTION, {
-  content: string;
-}>;
-
-// The Action Events probably belong it @bott/actions?, however
-// having them here simplifies things greatly.
-
-// All of the libraries/system modules (and to a lesser extent the whole app)
-// are currently _loosely_ coupled, so I'll take the simplicity over the correctness.
-
-export type BottEventActionParameterValue = string | number | boolean | File;
-
-type _ParameterDefinitionBase = {
-  name: string;
-  description?: string;
-  required?: boolean;
-};
-
-type _StringParameterDefinition = _ParameterDefinitionBase & {
-  type: "string";
-  allowedValues?: string[];
-  defaultValue?: string;
-};
-
-type _NonStringParameterDefinition = _ParameterDefinitionBase & {
-  type: "number" | "boolean" | "file";
-  allowedValues?: never;
-  defaultValue?: number | boolean | File;
-};
-
-export type BottEventActionParameterDefinition =
-  | _StringParameterDefinition
-  | _NonStringParameterDefinition;
-
-export type BottEventActionParameterRecord = Record<
-  string,
-  BottEventActionParameterValue | undefined
->;
-
-export type BottActionCallEvent = BottEvent<BottEventType.ACTION_CALL, {
-  name: string;
-  parameters: BottEventActionParameterRecord;
-}>;
-
-export type BottActionStartEvent = BottEvent<BottEventType.ACTION_START, {
-  name: string; // required for rate limiting
-  id: string;
-}>;
-
-export type BottActionOutputEvent = BottEvent<BottEventType.ACTION_OUTPUT, {
-  id: string;
-  event: BottEvent;
-  shouldInterpretOutput?: boolean;
-  shouldForwardOutput?: boolean;
-}>;
-
-export type BottActionErrorEvent = BottEvent<BottEventType.ACTION_ERROR, {
-  id: string;
-  error: Error;
-}>;
-
-export type BottActionCompleteEvent = BottEvent<BottEventType.ACTION_COMPLETE, {
-  id: string;
-}>;
-
-export type BottActionAbortEvent = BottEvent<BottEventType.ACTION_ABORT, {
-  id: string;
-}>;
