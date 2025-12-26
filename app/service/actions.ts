@@ -27,7 +27,6 @@ import {
   responseAction,
   // songAction,
 } from "@bott/gemini";
-import { log } from "@bott/log";
 import ejs from "ejs";
 
 const _actions: Record<string, BottAction> = {};
@@ -88,7 +87,7 @@ async function getVersion(): Promise<string | undefined> {
     const appDenoConfig = JSON.parse(configText);
     _versionCache = appDenoConfig.version;
   } catch (error) {
-    log.warn("Failed to read version from deno.jsonc:", error);
+    console.warn("Failed to read version from deno.jsonc:", error);
     return;
   }
 

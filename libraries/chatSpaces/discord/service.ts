@@ -15,7 +15,6 @@ import {
   SERVICE_DISCORD_TOKEN,
 } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
-import { log } from "@bott/log";
 import type { BottUser } from "@bott/model";
 import {
   type BottService,
@@ -175,12 +174,12 @@ export const discordService: BottService = createService(
     // Forward events from Bott (App) to Discord
     const forwardAppEventToChannel = async (event: BottEvent) => {
       if (!event.channel) {
-        log.debug("Not fowarding: No channel in event.", event);
+        console.debug("Not fowarding: No channel in event.", event);
         return;
       }
 
       if (event.user?.id !== APP_USER.id) {
-        log.debug(
+        console.debug(
           "Not fowarding: not from Bott App Service User, user: ",
           event.user?.id,
           event,
@@ -191,7 +190,7 @@ export const discordService: BottService = createService(
       const targetChannel = await client.channels.fetch(event.channel.id);
 
       if (!targetChannel || targetChannel.type !== ChannelType.GuildText) {
-        log.debug(
+        console.debug(
           "Not fowarding: Discord channel not found or not GuildText.",
           event,
         );

@@ -10,7 +10,6 @@
  */
 
 import { type BottEvent, BottEventType } from "@bott/events";
-import { log } from "@bott/log";
 import { resolveOutputEvents } from "../../common/events.ts";
 import { getEventSchema } from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
@@ -106,7 +105,7 @@ export const patchOutput: EventPipelineProcessor = async function () {
   let patchedEvents: BottEvent[] = [];
 
   if (eventsToPatch.length) {
-    log.debug(this.action.id, eventsToPatch);
+    console.debug(this.action.id, eventsToPatch);
 
     // TODO: allow to be set as "user" event dynamically
     // treat as user input to avoid "continuation" bias
@@ -125,7 +124,7 @@ export const patchOutput: EventPipelineProcessor = async function () {
 
   this.data.output = await resolveOutputEvents(this);
 
-  log.debug(this.data.output);
+  console.debug(this.data.output);
 
   // Trusted Patching:
   // Since this step is explicitly designed to fix issues, we treat its output as "trusted".

@@ -20,7 +20,6 @@
     "@bott/discord": "./libraries/chatSpaces/discord/module.ts",
     "@bott/events": "./libraries/system/events/module.ts",
     "@bott/gemini": "./libraries/aiModels/gemini/module.ts",
-    "@bott/log": "./libraries/log/module.ts",
     "@bott/services": "./libraries/system/services/module.ts",
     "@bott/storage": "./libraries/system/storage/module.ts",
     "@extractus/article-extractor": "npm:@extractus/article-extractor@^8.0.19",
@@ -54,7 +53,6 @@
   "nodeModulesDir": "auto",
   "workspace": [
     "./model",
-    "./libraries/log",
     "./libraries/system/events",
     "./libraries/system/actions",
     "./libraries/system/services",

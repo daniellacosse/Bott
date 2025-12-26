@@ -16,7 +16,6 @@ import {
   ACTION_RESPONSE_OUTPUT_TIME_LIMIT_MS,
   ACTION_RESPONSE_OUTPUT_WORDS_PER_MINUTE,
 } from "@bott/constants";
-import { log } from "@bott/log";
 import { getEventHistory, upsertEvents } from "@bott/storage";
 
 import { delay } from "@std/async";
@@ -44,16 +43,16 @@ export const responseAction: BottAction = createAction(
     };
 
     for (const step of pipelineProcess) {
-      log.perf(step.name);
+      console.info(step.name);
       await step.call(pipeline);
-      log.perf(step.name);
+      console.info(step.name);
     }
 
     // Update processed input events
     const result = await upsertEvents(...pipeline.data.input);
 
     if ("error" in result) {
-      log.error("Failed to update processed events", result.error);
+      console.error("Failed to update processed events", result.error);
     }
 
     for (const event of pipeline.data.output) {

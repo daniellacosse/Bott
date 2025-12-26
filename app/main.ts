@@ -12,7 +12,6 @@
 import { actionService } from "@bott/actions";
 import { PORT, SERVICE_LIST } from "@bott/constants";
 import { discordService } from "@bott/discord";
-import { log } from "@bott/log";
 import { BottServicesManager } from "@bott/services";
 import { eventStorageService } from "@bott/storage";
 
@@ -23,12 +22,12 @@ import { settings } from "./settings/main.ts";
 if (import.meta.main) {
   addEventListener("unhandledrejection", (event) => {
     event.preventDefault();
-    log.error("Unhandled rejection:", event.reason);
+    console.error("Unhandled rejection:", event.reason);
   });
 
   addEventListener("error", (event) => {
     event.preventDefault();
-    log.error("Uncaught exception:", event.error);
+    console.error("Uncaught exception:", event.error);
   });
 
   const servicesManager = new BottServicesManager(settings);
@@ -48,7 +47,7 @@ if (import.meta.main) {
     {
       port: PORT,
       onListen: ({ port, hostname }) => {
-        log.info(`main: Listening on ${hostname}:${port}`);
+        console.info(`main: Listening on ${hostname}:${port}`);
       },
     },
     () => new Response("OK", { status: 200 }),

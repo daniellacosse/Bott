@@ -20,7 +20,6 @@ import {
   type BottEvent,
   type BottEventAttachment,
 } from "@bott/events";
-import { log } from "@bott/log";
 import { join } from "@std/path";
 
 import { throwIfUnsafeFileSize, throwIfUnsafeUrl } from "../validation.ts";
@@ -49,7 +48,7 @@ export async function prepareAttachmentFromUrl(
 
   const attachmentId = crypto.randomUUID();
 
-  log.debug(`Fetching attachment from URL: ${sourceUrl}`);
+  console.debug(`Fetching attachment from URL: ${sourceUrl}`);
 
   const response = await fetch(sourceUrl, {
     signal: AbortSignal.timeout(STORAGE_FETCH_TIME_LIMIT_MS),
@@ -84,7 +83,7 @@ export async function prepareAttachmentFromUrl(
     .toLowerCase();
   const rawPath = join(fileSystemRoot, `${attachmentId}.raw.${rawExtension}`);
 
-  log.debug(`Writing raw file: ${attachmentId}, type: ${type}`);
+  console.debug(`Writing raw file: ${attachmentId}, type: ${type}`);
   Deno.writeFileSync(rawPath, data);
 
   // Generate compressed
@@ -102,7 +101,7 @@ export async function prepareAttachmentFromUrl(
     `${attachmentId}.compressed.${compressedExtension}`,
   );
 
-  log.debug(
+  console.debug(
     `Writing compressed file: ${attachmentId}, type: ${compressedFile.type}`,
   );
   Deno.writeFileSync(
@@ -154,7 +153,7 @@ export async function prepareAttachmentFromFile(
 
   // Save raw file
   const rawData = new Uint8Array(await file.arrayBuffer());
-  log.debug(`Writing raw file: ${rawFileName}, type: ${type}`);
+  console.debug(`Writing raw file: ${rawFileName}, type: ${type}`);
   Deno.writeFileSync(rawPath, rawData);
 
   // Generate compressed
@@ -169,7 +168,7 @@ export async function prepareAttachmentFromFile(
   }.${attachmentId}.compressed.${compressedExtension}`;
   const compressedPath = join(fileSystemRoot, compressedFileName);
 
-  log.debug(
+  console.debug(
     `Writing compressed file: ${compressedFileName}, type: ${compressedFile.type}`,
   );
   Deno.writeFileSync(

@@ -10,7 +10,6 @@
  */
 
 import { BottEvent, BottEventType } from "@bott/events";
-import { log } from "@bott/log";
 import type {
   BottChannel,
   BottRatingScale,
@@ -30,7 +29,7 @@ import { patchOutput } from "./05_patchOutput/main.ts";
 import type { EventPipelineContext, EventPipelineProcessor } from "./types.ts";
 
 if (import.meta.main) {
-  log.perf("pipeline");
+  console.info("pipeline");
 
   const pipelineToTest: EventPipelineProcessor[] = [
     focusInput,
@@ -43,20 +42,20 @@ if (import.meta.main) {
   let result: EventPipelineContext | object = {};
 
   for (const processor of pipelineToTest) {
-    log.perf(processor.name);
+    console.info(processor.name);
     const context = createMockContext();
     await processor.call(context);
     result = context;
-    log.perf(processor.name);
+    console.info(processor.name);
   }
 
   if (!("data" in result)) {
     throw new Error("NO DATA");
   }
 
-  log.debug(result.data);
+  console.debug(result.data);
 
-  log.perf("pipeline");
+  console.info("pipeline");
 }
 
 // ---

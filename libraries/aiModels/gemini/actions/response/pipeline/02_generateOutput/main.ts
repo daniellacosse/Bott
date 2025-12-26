@@ -11,7 +11,6 @@
 
 import type { BottEvent } from "@bott/events";
 
-import { log } from "@bott/log";
 import { join } from "@std/path";
 
 import ejs from "ejs";
@@ -49,5 +48,5 @@ export const generateOutput: EventPipelineProcessor = async function () {
 
   this.data.output = await resolveOutputEvents(this);
 
-  log.debug(this.data.output);
+  console.debug(this.data.output);
 };

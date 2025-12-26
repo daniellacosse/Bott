@@ -16,8 +16,6 @@ import {
   GCP_REGION,
   GCP_SERVICE_NAME,
 } from "@bott/constants";
-import { log } from "@bott/log";
-
 import { loadEnv, updateEnv } from "./common/env.ts";
 import { gcloud } from "./common/gcloud.ts";
 
@@ -35,7 +33,7 @@ if (!project) {
   await updateEnv(ENV, { GCP_PROJECT: project });
 }
 
-log.info(`Enabling ${project} is properly configured...`);
+console.info(`Enabling ${project} is properly configured...`);
 await gcloud.project.ensure(project);
 
 await gcloud.services.enable(
@@ -61,7 +59,7 @@ await gcloud.project.addIamBinding({
   role: "roles/storage.objectAdmin",
 });
 
-log.info(`Deploying ${GCP_SERVICE_NAME} to ${GCP_REGION}...`);
+console.info(`Deploying ${GCP_SERVICE_NAME} to ${GCP_REGION}...`);
 
 await gcloud.deploy(GCP_SERVICE_NAME, {
   source: ".",
@@ -76,7 +74,7 @@ await gcloud.deploy(GCP_SERVICE_NAME, {
   allowUnauthenticated: GCP_ALLOW_UNAUTHENTICATED,
 });
 
-log.info(
+console.info(
   `Deployment successful! Service URL: ${await gcloud.run.getUrl({
     service: GCP_SERVICE_NAME,
     region: GCP_REGION,

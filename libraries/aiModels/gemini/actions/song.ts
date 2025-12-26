@@ -17,7 +17,6 @@ import {
   GEMINI_SONG_MODEL,
 } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
-import { log } from "@bott/log";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import { delay } from "@std/async";
 
@@ -72,7 +71,7 @@ export const songAction: BottAction = createAction(
             return;
           }
 
-          log.debug("Song job progress", message);
+          console.debug("Song job progress", message);
 
           for (const chunk of message.serverContent.audioChunks) {
             for (const char of atob(chunk?.data ?? "")) {

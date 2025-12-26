@@ -17,7 +17,6 @@ import {
   BottEventType,
   validateParameters,
 } from "@bott/events";
-import { log } from "@bott/log";
 import type { BottUser } from "@bott/model";
 import {
   type BottService,
@@ -109,7 +108,7 @@ export const actionService: BottService = createService(
         }
 
         const count = result.reads[0]?.count ?? 0;
-        log.info(
+        console.info(
           `Quota check for action '${action.name}'. Limit: ${action.limitPerMonth}/month. Usage: ${count}`,
         );
 

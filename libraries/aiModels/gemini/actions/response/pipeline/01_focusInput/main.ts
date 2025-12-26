@@ -11,7 +11,6 @@
 
 import { APP_USER, GEMINI_RATING_MODEL } from "@bott/constants";
 import { BottEventType } from "@bott/events";
-import { log } from "@bott/log";
 import type { AnyShape } from "@bott/model";
 import { type Schema, Type } from "@google/genai";
 import { queryGemini } from "../../common/queryGemini.ts";
@@ -171,6 +170,6 @@ export const focusInput: EventPipelineProcessor = async function () {
 
   await Promise.all(geminiCalls);
 
-  log.debug("focused", this.action.id, focusLogQueue);
-  log.debug("blurred", this.action.id, blurLogQueue);
+  console.debug("focused", this.action.id, focusLogQueue);
+  console.debug("blurred", this.action.id, blurLogQueue);
 };

@@ -12,7 +12,6 @@
 import type { BottAction } from "@bott/actions";
 import { STORAGE_DEPLOY_NONCE_LOCATION, STORAGE_ROOT } from "@bott/constants";
 import type { BottEvent, BottEventType } from "@bott/events";
-import { log } from "@bott/log";
 import type { BottResponseSettings } from "@bott/model";
 import type { BottService, BottServiceContext } from "./types.ts";
 
@@ -55,7 +54,7 @@ export class BottServicesManager {
       });
     }
 
-    log.info(`Service "${service.name}" registered`);
+    console.info(`Service "${service.name}" registered`);
   }
 
   start(serviceName: string) {
@@ -70,7 +69,7 @@ export class BottServicesManager {
 
     service.call(context);
 
-    log.info(`Service "${serviceName}" started`);
+    console.info(`Service "${serviceName}" started`);
   }
 
   private listeners = new Map<
@@ -96,7 +95,7 @@ export class BottServicesManager {
       try {
         await handler(bottEvent, this.rootContext);
       } catch (error) {
-        log.error("Failed to handle event:", event, error);
+        console.error("Failed to handle event:", event, error);
       }
     };
 

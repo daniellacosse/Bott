@@ -10,7 +10,6 @@
  */
 
 import type { BottEvent } from "@bott/events";
-import { log } from "@bott/log";
 import { resolveOutputEvents } from "../../common/events.ts";
 import { getEventSchema } from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
@@ -59,5 +58,5 @@ export const segmentOutput: EventPipelineProcessor = async function () {
   this.data.output = segments.flat();
   this.data.output = await resolveOutputEvents(this);
 
-  log.debug(this.data.output);
+  console.debug(this.data.output);
 };

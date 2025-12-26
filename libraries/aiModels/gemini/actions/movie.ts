@@ -21,7 +21,6 @@ import {
   GEMINI_MOVIE_MODEL,
 } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
-import { log } from "@bott/log";
 import { prepareAttachmentFromFile } from "@bott/storage";
 import {
   type GenerateVideosParameters,
@@ -146,7 +145,7 @@ async function _doVideoJob(
         }
 
         operation = await gemini.operations.getVideosOperation({ operation });
-        log.debug("Movie job progress", operation);
+        console.debug("Movie job progress", operation);
       } catch (error) {
         reject(error);
         return clearInterval(intervalId);

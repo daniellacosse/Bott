@@ -11,7 +11,6 @@
 
 import { BottEventType } from "@bott/events";
 import { BottEvent } from "@bott/events";
-import { log } from "@bott/log";
 import { BottServicesManager } from "@bott/services";
 import { assertEquals, assertExists } from "@std/assert";
 
@@ -63,15 +62,15 @@ Deno.test("Storage - addEventsData, getEvents", async () => {
     parent: bobReply,
   });
 
-  log.debug("Adding events.");
+  console.debug("Adding events.");
 
   upsertEvents(nancyGreeting, bobReply, nancyReaction);
 
-  log.debug("Getting events.");
+  console.debug("Getting events.");
 
   const [dbResult] = await getEvents(nancyReaction.id);
 
-  log.debug("Final result:", dbResult);
+  console.debug("Final result:", dbResult);
 
   assertExists(dbResult.id);
   assertExists(dbResult.type);

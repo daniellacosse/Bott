@@ -11,7 +11,6 @@
 
 import { BottEvent, BottEventType } from "@bott/events";
 
-import { log } from "@bott/log";
 import { getEvents, prepareAttachmentFromUrl } from "@bott/storage";
 import type { Message } from "discord.js";
 
@@ -77,7 +76,7 @@ export const messageToEvent = async (
       );
     }
   } catch (error) {
-    log.error(error);
+    console.error(error);
   }
 
   return event;

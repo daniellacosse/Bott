@@ -163,13 +163,6 @@ export const STORAGE_FILE_DIMENSION_LIMIT = 480;
 export const STORAGE_FETCH_TIME_LIMIT_MS = 30 * SECOND_TO_MS;
 export const STORAGE_FFMPEG_TIME_LIMIT_MS = 5 * MINUTE_TO_MS;
 
-// Log
-export const LOG_TOPICS = readEnv(
-  "LOG_TOPICS",
-  ["info", "warn", "error"],
-);
-export const LOG_CHARACTER_LIMIT = 4096;
-
 // -- Common --
 function readEnv<T>(key: string, defaultValue: T): T {
   const value = Deno.env.get(key);
