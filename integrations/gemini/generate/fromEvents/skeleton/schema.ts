@@ -11,7 +11,7 @@
 
 import { ACTION_RESPONSE_NAME } from "@bott/common";
 import {
-  type BottEventActionParameterDefinition,
+  type BottActionParameterDefinition,
   BottEventType,
 } from "@bott/system";
 import type { BottAction } from "@bott/system";
@@ -144,7 +144,7 @@ export const getActionSchema = (
 };
 
 const getActionParametersSchema = (
-  parameters: BottEventActionParameterDefinition[],
+  parameters: BottActionParameterDefinition[],
 ): GeminiStructuredResponseSchema => {
   const properties: Record<string, GeminiStructuredResponseSchema> = {};
   const required: string[] = [];

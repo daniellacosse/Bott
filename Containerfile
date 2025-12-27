@@ -18,10 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 
 COPY ./deno.jsonc ./deno.lock* ./
-COPY ./app ./app
-COPY ./libraries ./libraries
-COPY ./model ./model
-
+COPY . .
 ENV PORT=8080
 EXPOSE $PORT
 

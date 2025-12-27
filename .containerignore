@@ -4,5 +4,9 @@
 .github
 .output
 .qlty
-gallery
+.vscode
+docs
+node_modules
 Containerfile
+*.md
+run

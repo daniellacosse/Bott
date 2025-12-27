@@ -11,7 +11,7 @@
 
 import type { AnyShape, BottChannel, BottUser } from "@bott/model";
 import type {
-  BottEventActionParameterRecord,
+  BottActionParameterRecord,
   BottEventAttachment,
   BottEventInterface,
   ShallowBottEvent,
@@ -98,7 +98,7 @@ export class BottEvent<
 
             for (
               const [key, value] of Object.entries(
-                (this.detail.parameters as BottEventActionParameterRecord) ??
+                (this.detail.parameters as BottActionParameterRecord) ??
                   {},
               )
             ) {
@@ -221,7 +221,7 @@ export class BottEvent<
         detail = {
           name: shallow.detail.name,
           parameters: {
-            ...(shallow.detail.parameters as BottEventActionParameterRecord),
+            ...(shallow.detail.parameters as BottActionParameterRecord),
           },
         };
         break;

@@ -11,15 +11,15 @@
 
 import { STORAGE_FILE_SIZE_LIMIT } from "@bott/common";
 import type {
-  BottEventActionParameterDefinition,
-  BottEventActionParameterRecord,
+  BottActionParameterDefinition,
+  BottActionParameterRecord,
 } from "../types.ts";
 
 export function applyParameterDefaults(
-  schema: BottEventActionParameterDefinition[] = [],
-  parameters: BottEventActionParameterRecord = {},
-): BottEventActionParameterRecord {
-  const result: BottEventActionParameterRecord = {};
+  schema: BottActionParameterDefinition[] = [],
+  parameters: BottActionParameterRecord = {},
+): BottActionParameterRecord {
+  const result: BottActionParameterRecord = {};
 
   for (const field of schema) {
     result[field.name] = parameters[field.name] ?? field.defaultValue;
@@ -29,8 +29,8 @@ export function applyParameterDefaults(
 }
 
 export function validateParameters(
-  schema: BottEventActionParameterDefinition[] = [],
-  parameters: BottEventActionParameterRecord = {},
+  schema: BottActionParameterDefinition[] = [],
+  parameters: BottActionParameterRecord = {},
 ) {
   // Check for unknown parameters
   for (const param of Object.keys(parameters)) {

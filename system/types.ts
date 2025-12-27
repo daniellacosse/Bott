@@ -54,24 +54,6 @@ export enum BottEventAttachmentType {
   WEBP = "image/webp",
 }
 
-export const BOTT_ATTACHMENT_TYPE_LOOKUP: Record<
-  BottEventAttachmentType,
-  string
-> = {
-  [BottEventAttachmentType.PDF]: "pdf",
-  [BottEventAttachmentType.GIF]: "gif",
-  [BottEventAttachmentType.HTML]: "html",
-  [BottEventAttachmentType.JPEG]: "jpeg",
-  [BottEventAttachmentType.MD]: "md",
-  [BottEventAttachmentType.MP3]: "mp3",
-  [BottEventAttachmentType.MP4]: "mp4",
-  [BottEventAttachmentType.OPUS]: "opus",
-  [BottEventAttachmentType.PNG]: "png",
-  [BottEventAttachmentType.TXT]: "txt",
-  [BottEventAttachmentType.WAV]: "wav",
-  [BottEventAttachmentType.WEBP]: "webp",
-};
-
 /**
  * Represents a generic event in Bott.
  */
@@ -175,7 +157,7 @@ export type BottReactionEvent = BottEventInterface<BottEventType.REACTION, {
   content: string;
 }>;
 
-export type BottEventActionParameterValue = string | number | boolean | File;
+export type BottActionParameterValue = string | number | boolean | File;
 
 type _ParameterDefinitionBase = {
   name: string;
@@ -195,20 +177,20 @@ type _NonStringParameterDefinition = _ParameterDefinitionBase & {
   defaultValue?: number | boolean | File;
 };
 
-export type BottEventActionParameterDefinition =
+export type BottActionParameterDefinition =
   | _StringParameterDefinition
   | _NonStringParameterDefinition;
 
-export type BottEventActionParameterRecord = Record<
+export type BottActionParameterRecord = Record<
   string,
-  BottEventActionParameterValue | undefined
+  BottActionParameterValue | undefined
 >;
 
 export type BottActionCallEvent = BottEventInterface<
   BottEventType.ACTION_CALL,
   {
     name: string;
-    parameters: BottEventActionParameterRecord;
+    parameters: BottActionParameterRecord;
   }
 >;
 
@@ -260,14 +242,14 @@ export type BottAction = BottActionFunction & BottActionSettings;
 
 export type BottActionFunction = (
   this: BottActionContext,
-  parameters: BottEventActionParameterRecord,
+  parameters: BottActionParameterRecord,
 ) => AsyncGenerator<BottEventInterface, void, void>;
 
 export type BottActionSettings = {
   instructions: string;
   limitPerMonth?: number;
   name: string;
-  parameters?: NonEmptyArray<BottEventActionParameterDefinition>;
+  parameters?: NonEmptyArray<BottActionParameterDefinition>;
   shouldForwardOutput?: boolean;
   shouldInterpretOutput?: boolean;
 };

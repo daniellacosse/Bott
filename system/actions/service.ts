@@ -9,9 +9,10 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { commit, log, sql } from "@bott/common";
+import { log, sql } from "@bott/common";
 import type { BottUser } from "@bott/model";
 import { BottEvent } from "../events/create.ts";
+import { commit } from "../events/storage/client.ts"; // TODO: action client?
 
 import {
   applyParameterDefaults,

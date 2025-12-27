@@ -12,8 +12,8 @@
 import type { BottChannel } from "@bott/model";
 import {
   type BottActionCallEvent,
+  type BottActionParameterRecord,
   BottEvent,
-  type BottEventActionParameterRecord,
   BottEventType,
 } from "@bott/system";
 import {
@@ -61,8 +61,8 @@ export async function commandInteractionToActionCallEvent(
 
 async function extractResolvedOptions(
   interaction: ChatInputCommandInteraction,
-): Promise<BottEventActionParameterRecord> {
-  const parameters: BottEventActionParameterRecord = {};
+): Promise<BottActionParameterRecord> {
+  const parameters: BottActionParameterRecord = {};
 
   for (const option of interaction.options.data) {
     switch (option.type) {
