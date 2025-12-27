@@ -42,17 +42,16 @@ cp .env.example .env.local
 
 For local development with OpenTelemetry logging:
 
-1. **Start the OTLP to JSONL converter** (in a separate terminal):
+1. **Start the OpenTelemetry Collector**:
 
    ```bash
-   deno run --allow-net --allow-write --allow-read --allow-env tools/otlp-to-jsonl.ts
+   docker compose -f compose.local.yml up -d
    ```
 
-   This tool:
-   - Acts as an OTLP receiver on `http://localhost:4318`
-   - Receives OpenTelemetry logs from your application
-   - Writes them to `.output/logs/local/{timestamp}_{sessionid}.log` in JSONL
-     format
+   This starts the OpenTelemetry Collector which:
+   - Receives OpenTelemetry logs via OTLP on `http://localhost:4318`
+   - Writes logs to `.output/logs/local/otel-logs.jsonl` in JSONL format
+   - Runs as a Docker container in the background
 
 2. **Configure your application** to send logs to the OTLP endpoint:
 
@@ -68,15 +67,17 @@ For local development with OpenTelemetry logging:
 
    Install the
    [OpenTelemetry Log Viewer](https://marketplace.visualstudio.com/items?itemName=TobiasStreng.vscode-opentelemetry-log-viewer)
-   extension. Then open any log file from `.output/logs/local/` in VS Code to
-   view logs in a filterable AG Grid table.
+   extension. Then open `.output/logs/local/otel-logs.jsonl` in VS Code to view
+   logs in a filterable AG Grid table.
 
-**Log Format**: Logs use compact keys for data savings:
+4. **Stop the collector** when done:
 
-- `ts`: Timestamp (ISO 8601 format)
-- `l`: Level (d=debug, i=info, w=warn, e=error)
-- `m`: Message
-- `attrs`: Additional attributes from OpenTelemetry (if present)
+   ```bash
+   docker compose -f compose.local.yml down
+   ```
+
+**Log Format**: The OpenTelemetry Collector writes logs in standard OTLP JSON
+format.
 
 ### Pull Requests
 
