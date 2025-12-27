@@ -14,14 +14,13 @@ import {
   ACTION_RESPONSE_NAME,
   APP_USER,
 } from "@bott/common";
-import {
+import System, {
   type BottActionCallEvent,
   type BottActionErrorEvent,
   type BottActionOutputEvent,
-  BottEvent,
+  type BottEventInterface as BottEvent,
   BottEventType,
   type BottService,
-  createService,
 } from "@bott/system";
 
 import { debounce } from "@std/async";
@@ -34,7 +33,7 @@ type ChannelResponseState = {
 
 const channelResponseStateIndex = new Map<string, ChannelResponseState>();
 
-export const appService: BottService = createService({
+export const appService: BottService = System.Services.create({
   name: APP_USER.name,
   user: APP_USER,
 }, function () {
@@ -46,7 +45,7 @@ export const appService: BottService = createService({
 
     if (currentResponse) {
       this.dispatchEvent(
-        new BottEvent(
+        System.Events.create(
           BottEventType.ACTION_ABORT,
           {
             detail: {
@@ -60,7 +59,7 @@ export const appService: BottService = createService({
       );
     }
 
-    const responseCall = new BottEvent(
+    const responseCall = System.Events.create(
       BottEventType.ACTION_CALL,
       {
         detail: {

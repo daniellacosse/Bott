@@ -14,11 +14,10 @@ import {
   SERVICE_DISCORD_ATTACHMENT_SIZE_LIMIT,
   SERVICE_DISCORD_TOKEN,
 } from "@bott/common";
-import {
-  BottEvent,
+import System, {
+  type BottEventInterface as BottEvent,
   BottEventType,
   type BottService,
-  createService,
 } from "@bott/system";
 import { retry } from "@std/async";
 import {
@@ -45,7 +44,7 @@ const REQUIRED_INTENTS = [
   GatewayIntentBits.MessageContent,
 ];
 
-export const discordService: BottService = createService({
+export const discordService: BottService = System.Services.create({
   name: "discord",
   // TODO: resolve user
 }, async function () {
@@ -108,7 +107,7 @@ export const discordService: BottService = createService({
     }
 
     this.dispatchEvent(
-      new BottEvent(BottEventType.REACTION, {
+      System.Events.create(BottEventType.REACTION, {
         detail: { content: reaction.emoji.toString() },
         channel: {
           id: currentChannel.id,

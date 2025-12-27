@@ -25,12 +25,8 @@ import {
   responseAction,
   // songAction,
 } from "@bott/gemini";
-import {
-  type BottAction,
-  BottEvent,
-  BottEventType,
-  createAction,
-} from "@bott/system";
+import { type BottAction, BottEventType } from "@bott/system";
+import System from "@bott/system";
 import ejs from "ejs";
 
 const _actions: BottAction[] = [];
@@ -58,12 +54,12 @@ const helpMessage = await Deno.readTextFile(
   new URL("./help.md.ejs", import.meta.url),
 );
 
-_actions.push(createAction({
+_actions.push(System.Actions.create({
   name: "help",
   instructions: "Show the help menu.",
   shouldForwardOutput: true,
 }, async function* () {
-  yield new BottEvent(BottEventType.MESSAGE, {
+  yield System.Events.create(BottEventType.MESSAGE, {
     detail: {
       content: ejs.render(helpMessage, {
         actions: _actions,

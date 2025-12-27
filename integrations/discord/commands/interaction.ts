@@ -10,10 +10,9 @@
  */
 
 import type { BottChannel } from "@bott/model";
-import {
+import System, {
   type BottActionCallEvent,
   type BottActionParameterRecord,
-  BottEvent,
   BottEventType,
 } from "@bott/system";
 import {
@@ -44,7 +43,7 @@ export async function commandInteractionToActionCallEvent(
     };
   }
 
-  return new BottEvent(BottEventType.ACTION_CALL, {
+  return System.Events.create(BottEventType.ACTION_CALL, {
     detail: {
       name: interaction.commandName,
       parameters: await extractResolvedOptions(

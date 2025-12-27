@@ -18,9 +18,7 @@ import type {
 } from "../types.ts";
 import { BottEventType } from "../types.ts";
 
-// TODO: createEvent. solves weird BottEventInterface<T, D> issue
-
-type BottEventConstructorProperties<
+export type BottEventConstructorProperties<
   T extends BottEventType,
   D extends AnyShape,
 > = Partial<Omit<BottEventInterface<T, D>, "type" | "parent">> & {

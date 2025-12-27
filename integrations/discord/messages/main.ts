@@ -11,8 +11,10 @@
 
 import { log } from "@bott/common";
 
-import { BottEvent, BottEventType } from "@bott/system";
-import { getEvents, prepareAttachmentFromUrl } from "@bott/system";
+import System, {
+  type BottEventInterface as BottEvent,
+  BottEventType,
+} from "@bott/system";
 import type { Message } from "discord.js";
 
 import { getMarkdownLinks } from "./markdown.ts";
@@ -20,7 +22,7 @@ import { getMarkdownLinks } from "./markdown.ts";
 export const messageToEvent = async (
   message: Message<true>,
 ): Promise<BottEvent> => {
-  const [possibleEvent] = await getEvents(message.id);
+  const [possibleEvent] = await System.Events.Storage.get(message.id);
 
   if (possibleEvent) {
     return possibleEvent;
@@ -42,7 +44,7 @@ export const messageToEvent = async (
     }
   }
 
-  const event = new BottEvent(type, {
+  const event = System.Events.create(type, {
     id: message.id,
     createdAt: new Date(message.createdTimestamp),
     detail: {
@@ -71,7 +73,9 @@ export const messageToEvent = async (
   try {
     if (urls.length) {
       event.attachments = await Promise.all(
-        urls.map((url) => prepareAttachmentFromUrl(new URL(url), event)),
+        urls.map((url) =>
+          System.Events.Attachments.prepareFromUrl(new URL(url), event)
+        ),
       );
     }
   } catch (error) {

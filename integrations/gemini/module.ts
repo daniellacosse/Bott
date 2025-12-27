@@ -10,7 +10,6 @@
  */
 
 export * from "./actions/response/main.ts";
-
 export * from "./actions/movie.ts";
 export * from "./actions/photo.ts";
 export * from "./actions/song.ts";
