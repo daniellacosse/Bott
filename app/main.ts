@@ -11,7 +11,7 @@
 
 import { log, PORT, SERVICE_LIST } from "@bott/common";
 import { discordService } from "@bott/discord";
-import System from "@bott/system";
+import BottSystem from "@bott/system";
 
 import { actions } from "./actions/main.ts";
 import { appService } from "./service.ts";
@@ -28,7 +28,7 @@ if (import.meta.main) {
     log.error("Uncaught exception:", event.error);
   });
 
-  const systemManager = new System.Manager({ settings, actions });
+  const systemManager = new BottSystem.Manager({ settings, actions });
 
   systemManager.registerService(discordService);
   systemManager.registerService(appService);

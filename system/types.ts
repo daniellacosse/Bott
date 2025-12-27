@@ -18,6 +18,104 @@ import type {
 } from "@bott/model";
 
 // =============================================================================
+// System
+// =============================================================================
+
+export interface BottSystemContext {
+  nonce: string;
+  services: Record<string, BottService>;
+  actions: Record<string, BottAction>;
+  settings: BottSettings;
+}
+
+// =============================================================================
+// Services
+// =============================================================================
+
+export type BottService = BottServiceFunction & BottServiceSettings;
+
+export interface BottServiceFunction {
+  (this: BottServiceContext): void | Promise<void>;
+}
+
+export interface BottServiceSettings {
+  name: string;
+  user?: BottUser;
+}
+
+export interface BottServiceContext {
+  settings: Required<BottServiceSettings>;
+  system: BottSystemContext;
+  dispatchEvent: (event: BottEventInterface) => void;
+  addEventListener<E extends BottEventInterface>(
+    type: E["type"],
+    listener: (event: E, context?: BottServiceContext) => unknown,
+  ): void;
+  removeEventListener<E extends BottEventInterface>(
+    type: E["type"],
+    listener: (event: E, context?: BottServiceContext) => unknown,
+  ): void;
+}
+
+// =============================================================================
+// Actions
+// =============================================================================
+
+export type BottAction = BottActionFunction & BottActionSettings;
+
+export type BottActionFunction = (
+  this: BottActionContext,
+  parameters: BottActionParameterRecord,
+) => AsyncGenerator<BottEventInterface, void, void>;
+
+export type BottActionSettings = {
+  instructions: string;
+  limitPerMonth?: number;
+  name: string;
+  parameters?: NonEmptyArray<BottActionParameterDefinition>;
+  shouldForwardOutput?: boolean;
+  shouldInterpretOutput?: boolean;
+};
+
+export type BottActionContext = {
+  channel?: BottChannel;
+  id: string;
+  service: BottSystemContext;
+  settings: BottActionSettings;
+  signal: AbortSignal;
+  user?: BottUser;
+};
+
+export type BottActionParameterValue = string | number | boolean | File;
+
+type _ParameterDefinitionBase = {
+  name: string;
+  description?: string;
+  required?: boolean;
+};
+
+type _StringParameterDefinition = _ParameterDefinitionBase & {
+  type: "string";
+  allowedValues?: string[];
+  defaultValue?: string;
+};
+
+type _NonStringParameterDefinition = _ParameterDefinitionBase & {
+  type: "number" | "boolean" | "file";
+  allowedValues?: never;
+  defaultValue?: number | boolean | File;
+};
+
+export type BottActionParameterDefinition =
+  | _StringParameterDefinition
+  | _NonStringParameterDefinition;
+
+export type BottActionParameterRecord = Record<
+  string,
+  BottActionParameterValue | undefined
+>;
+
+// =============================================================================
 // Events
 // =============================================================================
 
@@ -93,58 +191,6 @@ export type BottEventAttachment = {
   };
 };
 
-/**
- * Represents a shallow version of a BottEvent, containing only the most basic information.
- */
-export type ShallowBottEvent = {
-  id: string;
-  type: BottEventType;
-  detail: AnyShape;
-  createdAt: string;
-  lastProcessedAt?: string;
-  channel?: {
-    id: string;
-    name: string;
-    description?: string;
-    space: {
-      id: string;
-      name: string;
-      description?: string;
-    };
-  };
-  parent?: ShallowBottEvent;
-  user: {
-    id: string;
-    name: string;
-    description?: string;
-  };
-  attachments?: ShallowBottAttachment[];
-};
-
-export type ShallowBottAttachment = {
-  id: string;
-  type: BottEventAttachmentType;
-  originalSource: string;
-  raw: {
-    id: string;
-    path: string;
-    file: {
-      name: string;
-      size: number;
-      type: string;
-    };
-  };
-  compressed: {
-    id: string;
-    path: string;
-    file: {
-      name: string;
-      size: number;
-      type: string;
-    };
-  };
-};
-
 export type BottMessageEvent = BottEventInterface<BottEventType.MESSAGE, {
   content: string;
 }>;
@@ -156,35 +202,6 @@ export type BottReplyEvent = BottEventInterface<BottEventType.REPLY, {
 export type BottReactionEvent = BottEventInterface<BottEventType.REACTION, {
   content: string;
 }>;
-
-export type BottActionParameterValue = string | number | boolean | File;
-
-type _ParameterDefinitionBase = {
-  name: string;
-  description?: string;
-  required?: boolean;
-};
-
-type _StringParameterDefinition = _ParameterDefinitionBase & {
-  type: "string";
-  allowedValues?: string[];
-  defaultValue?: string;
-};
-
-type _NonStringParameterDefinition = _ParameterDefinitionBase & {
-  type: "number" | "boolean" | "file";
-  allowedValues?: never;
-  defaultValue?: number | boolean | File;
-};
-
-export type BottActionParameterDefinition =
-  | _StringParameterDefinition
-  | _NonStringParameterDefinition;
-
-export type BottActionParameterRecord = Record<
-  string,
-  BottActionParameterValue | undefined
->;
 
 export type BottActionCallEvent = BottEventInterface<
   BottEventType.ACTION_CALL,
@@ -235,70 +252,54 @@ export type BottActionAbortEvent = BottEventInterface<
 >;
 
 // =============================================================================
-// Actions
+// Shallow
 // =============================================================================
 
-export type BottAction = BottActionFunction & BottActionSettings;
-
-export type BottActionFunction = (
-  this: BottActionContext,
-  parameters: BottActionParameterRecord,
-) => AsyncGenerator<BottEventInterface, void, void>;
-
-export type BottActionSettings = {
-  instructions: string;
-  limitPerMonth?: number;
-  name: string;
-  parameters?: NonEmptyArray<BottActionParameterDefinition>;
-  shouldForwardOutput?: boolean;
-  shouldInterpretOutput?: boolean;
-};
-
-export type BottActionContext = {
-  channel?: BottChannel;
+export type ShallowBottEvent = {
   id: string;
-  service: BottSystemContext;
-  settings: BottActionSettings;
-  signal: AbortSignal;
-  user?: BottUser;
+  type: BottEventType;
+  detail: AnyShape;
+  createdAt: string;
+  lastProcessedAt?: string;
+  channel?: {
+    id: string;
+    name: string;
+    description?: string;
+    space: {
+      id: string;
+      name: string;
+      description?: string;
+    };
+  };
+  parent?: ShallowBottEvent;
+  user: {
+    id: string;
+    name: string;
+    description?: string;
+  };
+  attachments?: ShallowBottAttachment[];
 };
 
-// =============================================================================
-// Services
-// =============================================================================
-
-export type BottService = BottServiceFunction & BottServiceSettings;
-
-export interface BottServiceFunction {
-  (this: BottServiceContext): void | Promise<void>;
-}
-
-export interface BottServiceSettings {
-  name: string;
-  user?: BottUser;
-}
-
-export interface BottServiceContext {
-  settings: Required<BottServiceSettings>;
-  system: BottSystemContext;
-  dispatchEvent: (event: BottEventInterface) => void;
-  addEventListener<E extends BottEventInterface>(
-    type: E["type"],
-    listener: (event: E, context?: BottServiceContext) => unknown,
-  ): void;
-  removeEventListener<E extends BottEventInterface>(
-    type: E["type"],
-    listener: (event: E, context?: BottServiceContext) => unknown,
-  ): void;
-}
-
-// =============================================================================
-// System
-// =============================================================================
-
-export interface BottSystemContext {
-  nonce: string;
-  services: Record<string, BottService>;
-  actions: Record<string, BottAction>;
-  settings: BottSettings;
-}
+export type ShallowBottAttachment = {
+  id: string;
+  type: BottEventAttachmentType;
+  originalSource: string;
+  raw: {
+    id: string;
+    path: string;
+    file: {
+      name: string;
+      size: number;
+      type: string;
+    };
+  };
+  compressed: {
+    id: string;
+    path: string;
+    file: {
+      name: string;
+      size: number;
+      type: string;
+    };
+  };
+};

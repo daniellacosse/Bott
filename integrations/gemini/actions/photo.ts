@@ -15,7 +15,7 @@ import {
   GEMINI_PHOTO_MODEL,
   generateFilename,
 } from "@bott/common";
-import System, { type BottAction, BottEventType } from "@bott/system";
+import BottSystem, { type BottAction, BottEventType } from "@bott/system";
 import {
   type GenerateContentParameters,
   HarmBlockThreshold,
@@ -27,7 +27,7 @@ import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
 
 import gemini from "../generate/client.ts";
 
-export const photoAction: BottAction = System.Actions.create({
+export const photoAction: BottAction = BottSystem.Actions.create({
   name: "photo",
   instructions: "Generate a photo based on the prompt.",
   limitPerMonth: ACTION_RATE_LIMIT_PHOTOS,
@@ -110,7 +110,7 @@ export const photoAction: BottAction = System.Actions.create({
     { type: imagePart.inlineData!.mimeType },
   );
 
-  const resultEvent = System.Events.create(
+  const resultEvent = BottSystem.Events.create(
     BottEventType.MESSAGE,
     {
       user: APP_USER,
@@ -118,7 +118,7 @@ export const photoAction: BottAction = System.Actions.create({
     },
   );
 
-  const attachment = await System.Events.Attachments.prepareFromFile(
+  const attachment = await BottSystem.Events.Attachments.prepareFromFile(
     file,
     resultEvent,
   );

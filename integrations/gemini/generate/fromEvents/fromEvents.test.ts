@@ -10,7 +10,7 @@
  */
 
 import { APP_USER } from "@bott/common";
-import System, { BottEventType } from "@bott/system";
+import BottSystem, { BottEventType } from "@bott/system";
 import type { Part } from "@google/genai";
 import { assert, assertEquals } from "@std/assert";
 import type { EventPipelineContext } from "../../actions/response/pipeline/types.ts";
@@ -70,7 +70,7 @@ Deno.test("formatTimestampAsRelative - ISO string format", () => {
 });
 
 Deno.test("prepareContents - basic event", async () => {
-  const event = System.Events.create(BottEventType.MESSAGE, {
+  const event = BottSystem.Events.create(BottEventType.MESSAGE, {
     detail: { content: "Hello", channel: { id: "123", name: "test" } },
     user: APP_USER,
   });
@@ -93,7 +93,7 @@ Deno.test("prepareContents - basic event", async () => {
 });
 
 Deno.test("prepareContents - with metadata", async () => {
-  const event = System.Events.create(BottEventType.MESSAGE, {
+  const event = BottSystem.Events.create(BottEventType.MESSAGE, {
     detail: { content: "Hello", channel: { id: "123", name: "test" } },
     user: APP_USER,
   });

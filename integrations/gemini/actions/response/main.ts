@@ -15,14 +15,14 @@ import {
   ACTION_RESPONSE_OUTPUT_WORDS_PER_MINUTE,
   log,
 } from "@bott/common";
-import System, {
+import BottSystem, {
   type BottAction,
   type BottEventInterface as BottEvent,
 } from "@bott/system";
 import { delay } from "@std/async";
 import pipelineProcess, { type EventPipelineContext } from "./pipeline/main.ts";
 
-export const responseAction: BottAction = System.Actions.create({
+export const responseAction: BottAction = BottSystem.Actions.create({
   name: ACTION_RESPONSE_NAME,
   instructions: "Trigger a response for this channel.",
   shouldForwardOutput: true,
@@ -33,9 +33,9 @@ export const responseAction: BottAction = System.Actions.create({
 
   const pipeline: EventPipelineContext = {
     data: {
-      input: (await System.Events.Storage.getHistory(this.channel)).map((e) =>
-        e.toJSON()
-      ),
+      input: (await BottSystem.Events.Storage.getHistory(this.channel)).map((
+        e,
+      ) => e.toJSON()),
       output: [],
     },
     evaluationState: new Map(),
@@ -53,14 +53,14 @@ export const responseAction: BottAction = System.Actions.create({
   for (const inputEvent of pipeline.data.input) {
     if (!pipeline.evaluationState.has(inputEvent.id)) continue;
 
-    processedInputEvents.push(System.Events.createFromShallow({
+    processedInputEvents.push(BottSystem.Events.createFromShallow({
       ...inputEvent,
       lastProcessedAt: pipeline.evaluationState.get(inputEvent.id)
         ?.evaluationTime?.toISOString(),
     }));
   }
 
-  await System.Events.Storage.upsert(
+  await BottSystem.Events.Storage.upsert(
     ...await Promise.all(processedInputEvents),
   );
 
@@ -77,7 +77,7 @@ export const responseAction: BottAction = System.Actions.create({
       });
     }
 
-    yield await System.Events.createFromShallow(event);
+    yield await BottSystem.Events.createFromShallow(event);
   }
 });
 

@@ -20,7 +20,7 @@ import {
   generateFilename,
   log,
 } from "@bott/common";
-import System, { type BottAction, BottEventType } from "@bott/system";
+import BottSystem, { type BottAction, BottEventType } from "@bott/system";
 import {
   type GenerateVideosParameters,
   type Image,
@@ -30,7 +30,7 @@ import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
 
 import gemini from "../generate/client.ts";
 
-export const movieAction: BottAction = System.Actions.create({
+export const movieAction: BottAction = BottSystem.Actions.create({
   name: "movie",
   instructions: "Generate a movie based on a prompt.",
   limitPerMonth: ACTION_RATE_LIMIT_VIDEOS,
@@ -99,7 +99,7 @@ export const movieAction: BottAction = System.Actions.create({
     },
   });
 
-  const resultEvent = System.Events.create(
+  const resultEvent = BottSystem.Events.create(
     BottEventType.MESSAGE,
     {
       user: APP_USER,
@@ -108,7 +108,7 @@ export const movieAction: BottAction = System.Actions.create({
   );
 
   resultEvent.attachments = [
-    await System.Events.Attachments.prepareFromFile(
+    await BottSystem.Events.Attachments.prepareFromFile(
       file,
       resultEvent,
     ),

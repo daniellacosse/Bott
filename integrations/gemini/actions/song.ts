@@ -16,7 +16,7 @@ import {
   generateFilename,
   log,
 } from "@bott/common";
-import System, { type BottAction, BottEventType } from "@bott/system";
+import BottSystem, { type BottAction, BottEventType } from "@bott/system";
 import { delay } from "@std/async";
 
 import { geminiStudio } from "../generate/client.ts";
@@ -32,7 +32,7 @@ const SONG_FILE_SIZE = WAV_HEADER.length +
   Math.floor(BYTES_PER_SECOND * SONG_DURATION_SECONDS);
 const SECOND_TO_MS = 1000;
 
-export const songAction: BottAction = System.Actions.create({
+export const songAction: BottAction = BottSystem.Actions.create({
   name: "song",
   instructions:
     "Generate a song based on the prompt. Duration is fixed to 15 seconds.",
@@ -101,7 +101,7 @@ export const songAction: BottAction = System.Actions.create({
     { type: "audio/wav" },
   );
 
-  const resultEvent = System.Events.create(
+  const resultEvent = BottSystem.Events.create(
     BottEventType.MESSAGE,
     {
       user: APP_USER,
@@ -110,7 +110,7 @@ export const songAction: BottAction = System.Actions.create({
   );
 
   resultEvent.attachments = [
-    await System.Events.Attachments.prepareFromFile(
+    await BottSystem.Events.Attachments.prepareFromFile(
       file,
       resultEvent,
     ),

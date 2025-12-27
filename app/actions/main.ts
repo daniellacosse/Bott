@@ -26,7 +26,7 @@ import {
   // songAction,
 } from "@bott/gemini";
 import { type BottAction, BottEventType } from "@bott/system";
-import System from "@bott/system";
+import BottSystem from "@bott/system";
 import ejs from "ejs";
 
 const _actions: BottAction[] = [];
@@ -59,7 +59,7 @@ _actions.push(System.Actions.create({
   instructions: "Show the help menu.",
   shouldForwardOutput: true,
 }, async function* () {
-  yield System.Events.create(BottEventType.MESSAGE, {
+  yield BottSystem.Events.create(BottEventType.MESSAGE, {
     detail: {
       content: ejs.render(helpMessage, {
         actions: _actions,
