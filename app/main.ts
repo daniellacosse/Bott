@@ -12,7 +12,6 @@
 import { actionService } from "@bott/actions";
 import { PORT, SERVICE_LIST } from "@bott/constants";
 import { discordService } from "@bott/discord";
-import "@bott/log"; // Enable JSONL logging in local environment
 import { BottServicesManager } from "@bott/services";
 import { eventStorageService } from "@bott/storage";
 

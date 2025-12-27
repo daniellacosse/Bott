@@ -15,7 +15,6 @@ import {
   GCP_REGION,
   GCP_SERVICE_NAME,
 } from "@bott/constants";
-import "@bott/log"; // Enable JSONL logging in local environment
 import { loadEnv } from "./common/env.ts";
 import { gcloud } from "./common/gcloud.ts";
 

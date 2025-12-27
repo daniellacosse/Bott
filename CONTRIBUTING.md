@@ -40,21 +40,43 @@ cp .env.example .env.local
 
 #### Viewing Logs
 
-When running locally (`ENV=local`), console output is automatically written to
-`.output/logs/local/{timestamp}_{sessionid}.log` in JSONL format. Each run
-creates a new log file with a unique session ID and timestamp.
+For local development with OpenTelemetry logging:
 
-**VS Code Extension**: For an interactive log viewing experience, install the
-[OpenTelemetry Log Viewer](https://marketplace.visualstudio.com/items?itemName=TobiasStreng.vscode-opentelemetry-log-viewer)
-extension. Then open any log file from `.output/logs/local/` in VS Code to view
-logs in a filterable AG Grid table.
+1. **Start the OTLP to JSONL converter** (in a separate terminal):
+
+   ```bash
+   deno run --allow-net --allow-write --allow-read --allow-env tools/otlp-to-jsonl.ts
+   ```
+
+   This tool:
+   - Acts as an OTLP receiver on `http://localhost:4318`
+   - Receives OpenTelemetry logs from your application
+   - Writes them to `.output/logs/local/{timestamp}_{sessionid}.log` in JSONL
+     format
+
+2. **Configure your application** to send logs to the OTLP endpoint:
+
+   Add to your `.env.local`:
+   ```bash
+   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+   ```
+
+   Then add OpenTelemetry logging to your code (see OpenTelemetry docs for
+   Deno).
+
+3. **View logs** with the VS Code extension:
+
+   Install the
+   [OpenTelemetry Log Viewer](https://marketplace.visualstudio.com/items?itemName=TobiasStreng.vscode-opentelemetry-log-viewer)
+   extension. Then open any log file from `.output/logs/local/` in VS Code to
+   view logs in a filterable AG Grid table.
 
 **Log Format**: Logs use compact keys for data savings:
 
 - `ts`: Timestamp (ISO 8601 format)
 - `l`: Level (d=debug, i=info, w=warn, e=error)
 - `m`: Message
-- `c`: Call location (file:line:col) when available
+- `attrs`: Additional attributes from OpenTelemetry (if present)
 
 ### Pull Requests
 
