@@ -11,20 +11,20 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import type {
-  BottEventActionParameterDefinition,
-  BottEventActionParameterRecord,
+  BottActionParameterDefinition,
+  BottActionParameterRecord,
 } from "../types.ts";
 import { applyParameterDefaults, validateParameters } from "./validation.ts";
 
 Deno.test("applyParameterDefaults", () => {
-  const schema: BottEventActionParameterDefinition[] = [
+  const schema: BottActionParameterDefinition[] = [
     { name: "p1", type: "string" },
     { name: "p2", type: "number", defaultValue: 42 },
     { name: "p3", type: "boolean", defaultValue: true },
     { name: "p4", type: "string", defaultValue: "default" },
   ];
 
-  const parameters: BottEventActionParameterRecord = {
+  const parameters: BottActionParameterRecord = {
     p1: "value1",
     p4: "overridden",
   };
@@ -38,11 +38,11 @@ Deno.test("applyParameterDefaults", () => {
 });
 
 Deno.test("validateParameters - Valid parameters", () => {
-  const schema: BottEventActionParameterDefinition[] = [
+  const schema: BottActionParameterDefinition[] = [
     { name: "name", type: "string", required: true },
     { name: "age", type: "number" },
   ];
-  const params: BottEventActionParameterRecord = {
+  const params: BottActionParameterRecord = {
     name: "Alice",
     age: 30,
   };
@@ -51,10 +51,10 @@ Deno.test("validateParameters - Valid parameters", () => {
 });
 
 Deno.test("validateParameters - Missing required parameter", () => {
-  const schema: BottEventActionParameterDefinition[] = [
+  const schema: BottActionParameterDefinition[] = [
     { name: "name", type: "string", required: true },
   ];
-  const params: BottEventActionParameterRecord = {};
+  const params: BottActionParameterRecord = {};
   assertThrows(
     () => validateParameters(schema, params),
     Error,
@@ -63,10 +63,10 @@ Deno.test("validateParameters - Missing required parameter", () => {
 });
 
 Deno.test("validateParameters - Invalid type (string expected)", () => {
-  const schema: BottEventActionParameterDefinition[] = [
+  const schema: BottActionParameterDefinition[] = [
     { name: "name", type: "string" },
   ];
-  const params: BottEventActionParameterRecord = {
+  const params: BottActionParameterRecord = {
     name: 123,
   };
   assertThrows(
@@ -77,10 +77,10 @@ Deno.test("validateParameters - Invalid type (string expected)", () => {
 });
 
 Deno.test("validateParameters - Invalid type (number expected)", () => {
-  const schema: BottEventActionParameterDefinition[] = [
+  const schema: BottActionParameterDefinition[] = [
     { name: "age", type: "number" },
   ];
-  const params: BottEventActionParameterRecord = {
+  const params: BottActionParameterRecord = {
     age: "30",
   };
   assertThrows(
@@ -91,10 +91,10 @@ Deno.test("validateParameters - Invalid type (number expected)", () => {
 });
 
 Deno.test("validateParameters - Invalid value (not allowed)", () => {
-  const schema: BottEventActionParameterDefinition[] = [
+  const schema: BottActionParameterDefinition[] = [
     { name: "color", type: "string", allowedValues: ["red", "blue"] },
   ];
-  const params: BottEventActionParameterRecord = {
+  const params: BottActionParameterRecord = {
     color: "green",
   };
   assertThrows(
@@ -105,8 +105,8 @@ Deno.test("validateParameters - Invalid value (not allowed)", () => {
 });
 
 Deno.test("validateParameters - Unknown parameter", () => {
-  const schema: BottEventActionParameterDefinition[] = [];
-  const params: BottEventActionParameterRecord = {
+  const schema: BottActionParameterDefinition[] = [];
+  const params: BottActionParameterRecord = {
     extra: "value",
   };
   assertThrows(

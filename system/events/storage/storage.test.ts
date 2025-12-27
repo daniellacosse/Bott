@@ -21,7 +21,7 @@ import { upsertEvents } from "./upsert.ts";
 
 const createTestManager = () => {
   const manager = new BottSystemManager({
-    app: {
+    settings: {
       identity: "test",
       reasons: { input: [], output: [] },
     },

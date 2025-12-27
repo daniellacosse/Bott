@@ -19,7 +19,7 @@ import {
 } from "@bott/common";
 
 export const modelSchema: string = Deno.readTextFileSync(
-  new URL("../../model/schema.sql", import.meta.url).pathname,
+  new URL("../../../model/schema.sql", import.meta.url).pathname,
 );
 export const eventSchema: string = Deno.readTextFileSync(
   new URL("./schema.sql", import.meta.url).pathname,

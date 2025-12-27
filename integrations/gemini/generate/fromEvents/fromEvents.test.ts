@@ -9,11 +9,12 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { APP_USER } from "@bott/constants";
+import { APP_USER } from "@bott/common";
 import { BottEvent, BottEventType } from "@bott/system";
+import type { Part } from "@google/genai";
 import { assert, assertEquals } from "@std/assert";
-import type { EventPipelineContext } from "../pipeline/types.ts";
-import { formatTimestampAsRelative, prepareContents } from "./main.ts";
+import type { EventPipelineContext } from "../../actions/response/pipeline/types.ts";
+import { formatTimestampAsRelative, prepareContents } from "./prepare.ts";
 
 Deno.test("formatTimestampAsRelative - just now", () => {
   const result = formatTimestampAsRelative(new Date().toISOString());
@@ -83,9 +84,9 @@ Deno.test("prepareContents - basic event", async () => {
   const contents = await prepareContents([shallow], context);
   assert(contents.length === 1);
   const parts = contents[0].parts;
-  assert(parts?.some((p) => p.text?.includes("Hello")));
+  assert(parts?.some((p: Part) => p.text?.includes("Hello")));
   assert(
-    parts?.some((p) =>
+    parts?.some((p: Part) =>
       p.text?.includes("pipelineEvaluationMetadata") === false
     ),
   ); // No metadata added
@@ -109,5 +110,5 @@ Deno.test("prepareContents - with metadata", async () => {
 
   const contents = await prepareContents([shallow], context);
   const parts = contents[0].parts;
-  assert(parts?.some((p) => p.text?.includes("relevance")));
+  assert(parts?.some((p: Part) => p.text?.includes("relevance")));
 });

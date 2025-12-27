@@ -10,7 +10,8 @@
  */
 
 import { assert } from "@std/assert";
-import { log, setupTestLogger, testHandler } from "./module.ts";
+import { log } from "./log.ts";
+import { setupTestLogger, testHandler } from "./testing.ts";
 
 // Setup test logger
 setupTestLogger();
@@ -46,21 +47,27 @@ Deno.test("Logger testHandler captures log messages with new format", () => {
   // Verify logs were captured
   assert(testHandler.logs.length >= 3, "Should have captured at least 3 logs");
 
-  const messages = testHandler.logs.map((l) => l.msg);
+  const messages = testHandler.logs.map((l: { msg: string }) => l.msg);
 
   // Format should be: LEVEL <ts: ...> <c: ...> Message
   // We check for key parts
 
-  const infoMsg = messages.find((msg) => msg.includes("test message 1"));
+  const infoMsg = messages.find((msg: string) =>
+    msg.includes("test message 1")
+  );
   assert(infoMsg, "Should capture info message");
   assert(infoMsg!.startsWith("INFO <ts:"), "Should start with LEVEL <ts:");
   assert(infoMsg!.includes("<c:"), "Should include caller metadata");
 
-  const warnMsg = messages.find((msg) => msg.includes("test message 2"));
+  const warnMsg = messages.find((msg: string) =>
+    msg.includes("test message 2")
+  );
   assert(warnMsg, "Should capture warn message");
   assert(warnMsg!.startsWith("WARN <ts:"), "Should start with LEVEL <ts:");
 
-  const errorMsg = messages.find((msg) => msg.includes("test message 3"));
+  const errorMsg = messages.find((msg: string) =>
+    msg.includes("test message 3")
+  );
   assert(errorMsg, "Should capture error message");
   assert(errorMsg!.startsWith("ERROR <ts:"), "Should start with LEVEL <ts:");
 });
@@ -79,8 +86,8 @@ Deno.test("Logger perf works like console.time/timeEnd with new format", async (
   log.perf("timer1");
 
   // Check that a timing message was logged
-  const messages = testHandler.logs.map((l) => l.msg);
-  const perfMessage = messages.find((msg) => msg.includes("timer1:"));
+  const messages = testHandler.logs.map((l: { msg: string }) => l.msg);
+  const perfMessage = messages.find((msg: string) => msg.includes("timer1:"));
 
   assert(perfMessage, "Should log timing message");
   // PERF <ts: ...> <c: ...> Label: Time ms
@@ -115,10 +122,10 @@ Deno.test("Logger perf supports multiple concurrent timers", async () => {
   log.perf("timer-a");
 
   // Check that both timing messages were logged
-  const messages = testHandler.logs.map((l) => l.msg);
+  const messages = testHandler.logs.map((l: { msg: string }) => l.msg);
 
-  const perfMessageA = messages.find((msg) => msg.includes("timer-a:"));
-  const perfMessageB = messages.find((msg) => msg.includes("timer-b:"));
+  const perfMessageA = messages.find((msg: string) => msg.includes("timer-a:"));
+  const perfMessageB = messages.find((msg: string) => msg.includes("timer-b:"));
 
   assert(perfMessageA, "Should log timer-a");
   assert(perfMessageB, "Should log timer-b");
@@ -133,8 +140,8 @@ Deno.test("Logger perf uses default label when none provided", () => {
   log.perf();
 
   // Check that default label was used
-  const messages = testHandler.logs.map((l) => l.msg);
-  const perfMessage = messages.find((msg) => msg.includes("default:"));
+  const messages = testHandler.logs.map((l: { msg: string }) => l.msg);
+  const perfMessage = messages.find((msg: string) => msg.includes("default:"));
 
   assert(perfMessage, "Should log with 'default' label");
 });
