@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { APP_NAME } from "@bott/constants";
+import { APP_NAME } from "@bott/common";
 import type { BottReason } from "@bott/model";
 
 import {

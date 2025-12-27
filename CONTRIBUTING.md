@@ -36,7 +36,8 @@ cp .env.example .env.local
 ```
 
 2. Open the `.env.local` file and add the relevant credentials.
-3. Run `./run` to start the application.
+
+3. TODO
 
 ### Pull Requests
 
@@ -61,25 +62,7 @@ cp .env.example .env.production
 
 2. Open the `.env.production` file and add the relevant credentials.
 
-3. Execute the deployment task:
-
-```sh
-ENV=production ./run deno task deploy_gcp
-```
-
-> [!TIP]
-> You can select your container runtime by setting the `RUNTIME` environment
-> variable to `docker` or `podman`:
->
-> ```sh
-> RUNTIME=podman ./run deno task deploy_gcp
-> ```
-
-4. Verify your new deployment by tailing the logs:
-
-```sh
-ENV=production ./run deno task logs
-```
+3. TODO
 
 ### Releasing
 
@@ -112,4 +95,4 @@ docker pull ghcr.io/daniellacosse/bott:VERSION
 ## Architecture
 
 Want to learn more about how Bott ticks? See
-[ARCHITECTURE.md](./ARCHITECTURE.md).
+[ARCHITECTURE.md](./docs/ARCHITECTURE.md).

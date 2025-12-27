@@ -1,5 +1,0 @@
-{
-  "name": "@bott/log",
-  "exports": "./module.ts",
-  "private": true
-}

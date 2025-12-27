@@ -9,8 +9,8 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { APP_NAME } from "@bott/constants";
-import type { BottResponseSettings } from "@bott/model";
+import { APP_NAME } from "@bott/common";
+import type { BottSettings } from "@bott/model";
 
 import ejs from "ejs";
 
@@ -20,7 +20,7 @@ const identityTemplate = Deno.readTextFileSync(
   new URL("./identity.md.ejs", import.meta.url),
 );
 
-export const settings: BottResponseSettings = {
+export const settings: BottSettings = {
   identity: ejs.render(identityTemplate, { name: APP_NAME }),
   reasons: {
     input: [
@@ -30,28 +30,6 @@ export const settings: BottResponseSettings = {
     output: [
       reasons.answerRequest,
       reasons.ensurePotentialImpact,
-    ],
-  },
-};
-
-// test settings
-export const testSettings: BottResponseSettings = {
-  identity:
-    `You're a test bot in a general chat. We are simply testing the system.`,
-  reasons: {
-    input: [
-      {
-        name: "Test Input Reason",
-        description: "Focuses all incoming events",
-        validator: () => true,
-      },
-    ],
-    output: [
-      {
-        name: "Test Output Reason",
-        description: "Allows all outgoing events.",
-        validator: () => true,
-      },
     ],
   },
 };

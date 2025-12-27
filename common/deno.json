@@ -1,0 +1,5 @@
+{
+  "name": "@bott/common",
+  "exports": "./module.ts",
+  "private": true
+}

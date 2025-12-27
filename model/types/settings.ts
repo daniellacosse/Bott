@@ -15,7 +15,7 @@ import type { BottReason } from "./reasons.ts";
  * Defines the structure for global settings in Bott.
  * These settings apply across all spaces and channels unless overridden.
  */
-export interface BottResponseSettings {
+export interface BottSettings {
   identity: string;
   reasons: {
     input: BottReason[];

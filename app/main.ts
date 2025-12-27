@@ -9,16 +9,13 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { actionService } from "@bott/actions";
-import { PORT, SERVICE_LIST } from "@bott/constants";
+import { log, PORT, SERVICE_LIST } from "@bott/common";
 import { discordService } from "@bott/discord";
-import { log } from "@bott/log";
-import { BottServicesManager } from "@bott/services";
-import { eventStorageService } from "@bott/storage";
+import { BottSystemManager } from "@bott/system";
 
-import { appService } from "./service/main.ts";
+import { actions } from "./actions/main.ts";
+import { appService } from "./service.ts";
 import { settings } from "./settings/main.ts";
-// import { testSettings } from "./settings/main.ts";
 
 if (import.meta.main) {
   addEventListener("unhandledrejection", (event) => {
@@ -31,16 +28,13 @@ if (import.meta.main) {
     log.error("Uncaught exception:", event.error);
   });
 
-  const servicesManager = new BottServicesManager(settings);
-  // const servicesManager = new BottServicesManager(testSettings);
+  const systemManager = new BottSystemManager({ settings, actions });
 
-  servicesManager.register(eventStorageService);
-  servicesManager.register(discordService);
-  servicesManager.register(actionService);
-  servicesManager.register(appService);
+  systemManager.registerService(discordService)
+  systemManager.registerService(appService);
 
   for (const serviceName of SERVICE_LIST) {
-    servicesManager.start(serviceName);
+    systemManager.start(serviceName);
   }
 
   // Need to respond to GCP health probe:
