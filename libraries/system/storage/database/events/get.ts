@@ -9,7 +9,7 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottEvent } from "@bott/events";
+import { BottEvent, BottEventType } from "@bott/events";
 import type { BottChannel } from "@bott/model";
 
 import { commit } from "../commit.ts";
@@ -73,11 +73,18 @@ export const getEvents = async (
     let parent: BottEvent | undefined;
 
     if (rowData.p_id) {
-      parent = (await getEvents(rowData.p_id))[0];
+      [parent] = await getEvents(rowData.p_id);
+    }
+
+    const parsedDetail = JSON.parse(detail);
+
+    if (type === BottEventType.ACTION_OUTPUT && parsedDetail.event) {
+      // Event payload may not yet be stored, so we use fromShallow
+      parsedDetail.event = await BottEvent.fromShallow(parsedDetail.event);
     }
 
     const event = new BottEvent(type, {
-      detail: JSON.parse(detail),
+      detail: parsedDetail,
       id,
       createdAt: new Date(createdAt),
       lastProcessedAt: lastProcessedAt ? new Date(lastProcessedAt) : undefined,

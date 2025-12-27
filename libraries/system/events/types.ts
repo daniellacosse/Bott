@@ -107,29 +107,31 @@ export type ShallowBottEvent = {
     id: string;
     name: string;
   };
-  attachments?: {
+  attachments?: ShallowBottAttachment[];
+};
+
+export type ShallowBottAttachment = {
+  id: string;
+  type: BottEventAttachmentType;
+  originalSource: string;
+  raw: {
     id: string;
-    type: BottEventAttachmentType;
-    originalSource: string;
-    raw: {
-      id: string;
-      path: string;
-      file: {
-        name: string;
-        size: number;
-        type: string;
-      };
+    path: string;
+    file: {
+      name: string;
+      size: number;
+      type: string;
     };
-    compressed: {
-      id: string;
-      path: string;
-      file: {
-        name: string;
-        size: number;
-        type: string;
-      };
+  };
+  compressed: {
+    id: string;
+    path: string;
+    file: {
+      name: string;
+      size: number;
+      type: string;
     };
-  }[];
+  };
 };
 
 export type BottMessageEvent = BottEvent<BottEventType.MESSAGE, {

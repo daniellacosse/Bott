@@ -15,8 +15,6 @@ import {
   SERVICE_DISCORD_TOKEN,
 } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
-import { log } from "@bott/log";
-import type { BottUser } from "@bott/model";
 import {
   type BottService,
   type BottServiceSettings,
@@ -100,9 +98,8 @@ export const discordService: BottService = createService(
       const currentSpace = currentChannel.guild;
 
       const reactor = reaction.users.cache.first();
-      let user: BottUser | undefined;
-      if (reactor) {
-        user = { id: reactor.id, name: reactor.username };
+      if (!reactor) {
+        return;
       }
 
       let parent: BottEvent | undefined;
@@ -123,7 +120,10 @@ export const discordService: BottService = createService(
               name: currentSpace.name,
             },
           },
-          user,
+          user: {
+            id: reactor.id,
+            name: reactor.username,
+          },
           parent,
         }),
       );
@@ -174,27 +174,12 @@ export const discordService: BottService = createService(
 
     // Forward events from Bott (App) to Discord
     const forwardAppEventToChannel = async (event: BottEvent) => {
-      if (!event.channel) {
-        log.debug("Not fowarding: No channel in event.", event);
-        return;
-      }
-
-      if (event.user?.id !== APP_USER.id) {
-        log.debug(
-          "Not fowarding: not from Bott App Service User, user: ",
-          event.user?.id,
-          event,
-        );
-        return;
-      }
+      if (!event.channel) return;
+      if (event.user.id !== APP_USER.id) return;
 
       const targetChannel = await client.channels.fetch(event.channel.id);
 
       if (!targetChannel || targetChannel.type !== ChannelType.GuildText) {
-        log.debug(
-          "Not fowarding: Discord channel not found or not GuildText.",
-          event,
-        );
         return;
       }
 
@@ -258,16 +243,9 @@ export const discordService: BottService = createService(
       });
     };
 
-    const forwardMessageToChannel = (event: BottEvent) =>
-      forwardAppEventToChannel(event);
-    const forwardReplyToChannel = (event: BottEvent) =>
-      forwardAppEventToChannel(event);
-    const forwardReactionToChannel = (event: BottEvent) =>
-      forwardAppEventToChannel(event);
-
-    this.addEventListener(BottEventType.MESSAGE, forwardMessageToChannel);
-    this.addEventListener(BottEventType.REPLY, forwardReplyToChannel);
-    this.addEventListener(BottEventType.REACTION, forwardReactionToChannel);
+    this.addEventListener(BottEventType.MESSAGE, forwardAppEventToChannel);
+    this.addEventListener(BottEventType.REPLY, forwardAppEventToChannel);
+    this.addEventListener(BottEventType.REACTION, forwardAppEventToChannel);
 
     await commandRegistrationPromise;
   },

@@ -25,6 +25,7 @@ export {
   type BottMessageEvent,
   type BottReactionEvent,
   type BottReplyEvent,
+  type ShallowBottAttachment,
   type ShallowBottEvent,
 } from "./types.ts";
 export * from "./event.ts";

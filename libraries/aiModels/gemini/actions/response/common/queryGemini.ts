@@ -147,6 +147,7 @@ export const prepareContents = async (
       const newTotalTokens = resourceAccumulator.tokens +
         attachment.compressed.file.size;
 
+      // TODO: PDFs clearly don't follow this rule
       if (newTotalTokens > ACTION_RESPONSE_FILE_TOKEN_LIMIT) continue;
 
       const isAudio =
@@ -169,13 +170,17 @@ export const prepareContents = async (
 
       const fileData = await Deno.readFile(attachment.compressed.path);
 
-      parts.push({
-        text: `AttachmentID: ${attachment.id}`,
-        inlineData: {
-          mimeType: attachment.compressed.file.type,
-          data: encodeBase64(fileData),
+      parts.push(
+        {
+          text: `AttachmentID: ${attachment.id}`,
         },
-      });
+        {
+          inlineData: {
+            mimeType: attachment.compressed.file.type,
+            data: encodeBase64(fileData),
+          },
+        },
+      );
 
       resourceAccumulator.tokens = newTotalTokens;
       if (isAudio) resourceAccumulator.audioFiles++;

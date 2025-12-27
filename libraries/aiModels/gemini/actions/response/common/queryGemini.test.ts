@@ -13,10 +13,7 @@ import { APP_USER } from "@bott/constants";
 import { BottEvent, BottEventType } from "@bott/events";
 import { assert, assertEquals } from "@std/assert";
 import type { EventPipelineContext } from "../pipeline/types.ts";
-import {
-  formatTimestampAsRelative,
-  prepareContents,
-} from "./queryGemini.ts";
+import { formatTimestampAsRelative, prepareContents } from "./queryGemini.ts";
 
 Deno.test("formatTimestampAsRelative - just now", () => {
   const result = formatTimestampAsRelative(new Date().toISOString());

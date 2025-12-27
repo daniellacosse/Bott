@@ -9,9 +9,14 @@
  * Copyright (C) 2025 DanielLaCos.se
  */
 
-import { BottEventType, type ShallowBottEvent } from "@bott/events";
+import { BottEventType } from "@bott/events";
 import { log } from "@bott/log";
-import { getEventSchema } from "../../common/getSchema.ts";
+import { Type } from "@google/genai";
+import {
+  type GeminiBottEventSkeleton,
+  getEventSkeletonSchema,
+  skeletonToShallowEvent,
+} from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
@@ -25,12 +30,16 @@ const patchOutputReason = {
   validator: () => true,
 };
 
+type GeminiBottEventPatchSkeleton = GeminiBottEventSkeleton & {
+  id: string;
+};
+
 export const patchOutput: EventPipelineProcessor = async function () {
   if (!this.data.output.length) {
     return;
   }
 
-  const unpatchedSequence = [];
+  const sequenceToPatch = [];
   const unsequencedOutputs = [];
 
   for (const event of this.data.output) {
@@ -42,20 +51,31 @@ export const patchOutput: EventPipelineProcessor = async function () {
       continue;
     }
 
-    unpatchedSequence.push(event);
+    sequenceToPatch.push(event);
   }
-  1
-  if (!unpatchedSequence.length) {
+
+  if (!sequenceToPatch.length) {
     return;
   }
 
-  log.debug(this.action.id, unsequencedOutputs);
+  const responseSchema = getEventSkeletonSchema(
+    this.action.service.settings,
+  );
 
-  const patchedSequence = await queryGemini<ShallowBottEvent[]>(
-    unpatchedSequence,
+  responseSchema.items!.anyOf = responseSchema.items!.anyOf!.map((schema) => {
+    schema.properties!.id = {
+      type: Type.STRING,
+      description: "The ID of the event.",
+    };
+    schema.required!.push("id");
+    return schema;
+  });
+
+  const patchedSequence = await queryGemini<GeminiBottEventPatchSkeleton[]>(
+    sequenceToPatch,
     {
       systemPrompt,
-      responseSchema: getEventSchema(this.action.service.settings),
+      responseSchema,
       pipeline: this,
       useThirdPersonAnalysis: true,
     },
@@ -71,7 +91,14 @@ export const patchOutput: EventPipelineProcessor = async function () {
     });
   }
 
-  this.data.output = [...patchedSequence, ...unsequencedOutputs];
+  this.data.output = [
+    ...patchedSequence.map((event) => {
+      const shallowEvent = skeletonToShallowEvent(event, this);
+      shallowEvent.id = event.id;
+      return shallowEvent;
+    }),
+    ...unsequencedOutputs,
+  ];
 
   log.debug(this.data.output);
 };

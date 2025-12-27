@@ -10,7 +10,8 @@
  */
 
 import type { BottAction } from "@bott/actions";
-import { ACTION_RESPONSE_NAME } from "@bott/constants";
+import { ACTION_RESPONSE_NAME, APP_USER } from "@bott/constants";
+import type { ShallowBottAttachment, ShallowBottEvent } from "@bott/events";
 import {
   type BottEventActionParameterDefinition,
   BottEventType,
@@ -20,8 +21,104 @@ import {
   type Schema as GeminiStructuredResponseSchema,
   Type as GeminiStructuredResponseType,
 } from "@google/genai";
+import type { EventPipelineContext } from "../pipeline/types.ts";
 
-export const getEventSchema = (
+export type GeminiBottEventSkeleton = {
+  type: BottEventType.MESSAGE | BottEventType.REPLY | BottEventType.REACTION;
+  detail: {
+    content: string;
+  };
+  parent?: {
+    id: string;
+  };
+} | {
+  type: BottEventType.ACTION_CALL;
+  detail: {
+    name: string;
+    parameters?: Record<string, unknown>;
+  };
+} | {
+  type: BottEventType.ACTION_ABORT;
+  detail: {
+    id: string;
+  };
+};
+
+export const skeletonToShallowEvent = (
+  skeleton: GeminiBottEventSkeleton,
+  pipeline: EventPipelineContext,
+): ShallowBottEvent => {
+  let parent: ShallowBottEvent | undefined;
+  if ("parent" in skeleton) {
+    parent = pipeline.data.input.find((inputEvent) =>
+      inputEvent.id === skeleton.parent?.id
+    );
+  }
+
+  const detail = skeleton.detail;
+  if (
+    skeleton.type === BottEventType.ACTION_CALL && "parameters" in detail &&
+    detail.parameters !== undefined
+  ) {
+    const action = pipeline.action.service.settings.actions?.[detail.name];
+    for (const parameter of action?.parameters ?? []) {
+      if (parameter.type !== "file") {
+        continue;
+      }
+
+      const attachmentId = detail.parameters?.[parameter.name] as string;
+
+      let foundAttachment: ShallowBottAttachment | undefined;
+      for (const event of pipeline.data.input) {
+        if (!("attachments" in event.detail)) continue;
+
+        for (
+          const attachment
+            of (event.detail.attachments as ShallowBottAttachment[])
+        ) {
+          if (attachment.id === attachmentId) {
+            foundAttachment = attachment;
+            break;
+          }
+        }
+      }
+
+      if (!foundAttachment) {
+        throw new Error(`Attachment ${attachmentId} not found`);
+      }
+
+      detail.parameters[parameter.name] = new File(
+        [Deno.readFileSync(foundAttachment.raw.path)],
+        foundAttachment.raw.file.name,
+        { type: foundAttachment.type },
+      );
+    }
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    type: skeleton.type,
+    detail: skeleton.detail,
+    user: {
+      id: APP_USER.id,
+      name: APP_USER.name,
+    }, // this.action.user?
+    channel: {
+      id: pipeline.action.channel?.id,
+      name: pipeline.action.channel?.name,
+      description: pipeline.action.channel?.description,
+      space: {
+        id: pipeline.action.channel?.space.id,
+        name: pipeline.action.channel?.space.name,
+        description: pipeline.action.channel?.space.description,
+      },
+    },
+    parent,
+  } as ShallowBottEvent;
+};
+
+export const getEventSkeletonSchema = (
   settings: BottServiceSettings,
 ): GeminiStructuredResponseSchema => ({
   type: GeminiStructuredResponseType.ARRAY,

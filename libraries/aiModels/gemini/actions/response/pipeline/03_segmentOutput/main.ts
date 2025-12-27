@@ -12,7 +12,11 @@
 import type { ShallowBottEvent } from "@bott/events";
 import { BottEventType } from "@bott/events";
 import { log } from "@bott/log";
-import { getEventSchema } from "../../common/getSchema.ts";
+import {
+  getEventSkeletonSchema,
+  skeletonToShallowEvent,
+} from "../../common/getSchema.ts";
+import type { GeminiBottEventSkeleton } from "../../common/getSchema.ts";
 import { queryGemini } from "../../common/queryGemini.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
@@ -42,15 +46,23 @@ export const segmentOutput: EventPipelineProcessor = async function () {
     }
 
     segmentPromises.push(
-      queryGemini<ShallowBottEvent[]>(
-        [event],
-        {
-          systemPrompt,
-          responseSchema: getEventSchema(this.action.service.settings),
-          pipeline: this,
-          useThirdPersonAnalysis: true,
-        },
-      ),
+      new Promise((resolve) => {
+        queryGemini<GeminiBottEventSkeleton[]>(
+          [event],
+          {
+            systemPrompt,
+            responseSchema: getEventSkeletonSchema(
+              this.action.service.settings,
+            ),
+            pipeline: this,
+            useThirdPersonAnalysis: true,
+          },
+        ).then((skeletons) =>
+          resolve(
+            skeletons.map((skeleton) => skeletonToShallowEvent(skeleton, this)),
+          )
+        );
+      }),
     );
 
     pointer++;

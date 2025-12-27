@@ -109,6 +109,20 @@ Deno.test("BottEvent Serialization Tests", async (t) => {
     assert(JSON.stringify(json).length > 0);
   });
 
+  await t.step("toJSON: handles ACTION_CALL with missing parameters", () => {
+    const event = new BottEvent(BottEventType.ACTION_CALL, {
+      detail: {
+        name: "testAction",
+        parameters: undefined,
+      },
+      user: MOCK_USER,
+    });
+
+    const json = event.toJSON();
+    const detail = json.detail as { parameters: Record<string, unknown> };
+    assertEquals(detail.parameters, {});
+  });
+
   await t.step("toJSON: serializes event with attachments", () => {
     const event = new BottEvent(BottEventType.MESSAGE, {
       detail: { content: "With Attachment" },

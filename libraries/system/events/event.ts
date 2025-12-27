@@ -73,83 +73,86 @@ export class BottEvent<
       },
     };
 
-    switch (result.type) {
-      case BottEventType.REACTION:
-      case BottEventType.REPLY:
-      case BottEventType.MESSAGE:
-        result.detail = {
-          content: this.detail.content,
-        };
-        break;
-      case BottEventType.ACTION_CALL:
-        {
-          const parameters: Record<
-            string,
-            string | number | boolean | {
-              name: string;
-              size: number;
-              type: string;
-            }
-          > = {};
+    if (this.detail) {
+      switch (result.type) {
+        case BottEventType.REACTION:
+        case BottEventType.REPLY:
+        case BottEventType.MESSAGE:
+          result.detail = {
+            content: this.detail.content,
+          };
+          break;
+        case BottEventType.ACTION_CALL:
+          {
+            const parameters: Record<
+              string,
+              string | number | boolean | {
+                name: string;
+                size: number;
+                type: string;
+              }
+            > = {};
 
-          for (
-            const [key, value] of Object.entries(
-              this.detail.parameters as BottEventActionParameterRecord,
-            )
-          ) {
-            if (value instanceof File) {
-              parameters[key] = {
-                name: value.name,
-                size: value.size,
-                type: value.type,
-              };
-            } else if (value) {
-              parameters[key] = value;
+            for (
+              const [key, value] of Object.entries(
+                (this.detail.parameters as BottEventActionParameterRecord) ??
+                  {},
+              )
+            ) {
+              if (value instanceof File) {
+                parameters[key] = {
+                  name: value.name,
+                  size: value.size,
+                  type: value.type,
+                };
+              } else if (value) {
+                parameters[key] = value;
+              }
             }
+
+            result.detail = {
+              name: this.detail.name,
+              parameters,
+            };
           }
+          break;
+        case BottEventType.ACTION_OUTPUT:
+          result.detail = {
+            id: this.detail.id,
+            event: (this.detail.event as BottEvent).toJSON(),
+            shouldInterpretOutput: this.detail.shouldInterpretOutput,
+            shouldForwardOutput: this.detail.shouldForwardOutput,
+          };
+          break;
+        case BottEventType.ACTION_START:
+          result.detail = {
+            id: this.detail.id,
+            name: this.detail.name,
+          };
+          break;
+        case BottEventType.ACTION_ERROR: {
+          const error = this.detail.error as Error;
 
           result.detail = {
-            name: this.detail.name,
-            parameters,
+            id: this.detail.id,
+            error: {
+              message: error.message,
+              name: error.name,
+              stack: error.stack,
+              cause: error.cause,
+            },
           };
+          break;
         }
-        break;
-      case BottEventType.ACTION_OUTPUT:
-        result.detail = {
-          id: this.detail.id,
-          event: (this.detail.event as BottEvent).toJSON(),
-          shouldInterpretOutput: this.detail.shouldInterpretOutput,
-          shouldForwardOutput: this.detail.shouldForwardOutput,
-        };
-        break;
-      case BottEventType.ACTION_START:
-        result.detail = {
-          id: this.detail.id,
-          name: this.detail.name,
-        };
-        break;
-      case BottEventType.ACTION_ERROR: {
-        const error = this.detail.error as Error;
-
-        result.detail = {
-          id: this.detail.id,
-          error: {
-            message: error.message,
-            name: error.name,
-            stack: error.stack,
-            cause: error.cause,
-          },
-        };
-        break;
+        case BottEventType.ACTION_COMPLETE:
+        case BottEventType.ACTION_ABORT:
+          result.detail = {
+            id: this.detail.id,
+          };
+          break;
+        default:
+          throw new Error("Invalid event type");
       }
-      case BottEventType.ACTION_COMPLETE:
-      case BottEventType.ACTION_ABORT:
-        result.detail = {
-          id: this.detail.id,
-        };
-        break;
-      default:
-        throw new Error("Invalid event type");
     }
 
     if (this.channel) {
