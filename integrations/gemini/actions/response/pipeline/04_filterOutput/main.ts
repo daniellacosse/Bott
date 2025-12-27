@@ -13,7 +13,7 @@ import { GEMINI_RATING_MODEL } from "@bott/common";
 
 import { BottEventType } from "@bott/system";
 import { type Schema, Type } from "@google/genai";
-import { generateFromEvents } from "../../../../generate/fromEvents/main.ts";
+import { generateFromEvents } from "../../../../generate/module.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
 const systemPrompt = await Deno.readTextFile(

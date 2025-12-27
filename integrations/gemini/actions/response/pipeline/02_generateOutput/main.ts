@@ -13,9 +13,11 @@ import { log } from "@bott/common";
 
 import { join } from "@std/path";
 import ejs from "ejs";
-import { generateFromEvents } from "../../../../generate/fromEvents/main.ts";
-import { getEventSkeletonSchema } from "../../../../generate/fromEvents/skeleton/schema.ts";
-import { skeletonToShallowEvent } from "../../../../generate/fromEvents/skeleton/shallowEvent.ts";
+import {
+  generateFromEvents,
+  getEventSkeletonSchema,
+  skeletonToShallowEvent,
+} from "../../../../generate/module.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
 const systemPromptTemplate = await Deno.readTextFile(

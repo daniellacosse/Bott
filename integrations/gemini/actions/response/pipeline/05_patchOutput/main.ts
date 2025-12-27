@@ -12,10 +12,12 @@
 import { log } from "@bott/common";
 import { BottEventType } from "@bott/system";
 import { Type } from "@google/genai";
-import { generateFromEvents } from "../../../../generate/fromEvents/main.ts";
-import { getEventSkeletonSchema } from "../../../../generate/fromEvents/skeleton/schema.ts";
-import { skeletonToShallowEvent } from "../../../../generate/fromEvents/skeleton/shallowEvent.ts";
-import type { GeminiEventSkeleton } from "../../../../generate/fromEvents/types.ts";
+import {
+  type GeminiEventSkeleton,
+  generateFromEvents,
+  getEventSkeletonSchema,
+  skeletonToShallowEvent,
+} from "../../../../generate/module.ts";
 import type { EventPipelineProcessor } from "../types.ts";
 
 const systemPrompt = await Deno.readTextFile(
